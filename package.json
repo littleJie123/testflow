@@ -1,0 +1,28 @@
+{
+  "name": "fasttest",
+  "version": "1.0.3",
+  "description": "一个单元测试框架",
+  "main": "dist/fasttest.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint --fix src --ext .ts",
+    "start": "tsc && node dist/index.js"
+  },
+  "keywords": [
+    "orm"
+  ],
+  "author": "gmj",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^24.9.0",
+    "@types/node": "^22.13.4",
+    "jest": "^24.9.0",
+    "nodemon": "^2.0.2",
+    "ts-jest": "^24.3.0",
+    "ts-node": "^8.6.1",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {}
+}
