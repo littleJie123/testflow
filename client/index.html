@@ -1,0 +1,258 @@
+<!--
+页面布局 最上面有个导航栏，可以切换测试用例列表和日志列表
+测试用例的结构如下：
+{
+    "name": "测试用例名称",
+    "id":"测试用例id",
+    "status": "测试用例状态",// init:初始化，running:运行中，processed:成功，error:失败
+}
+打开测试用例列表，请求/listTestCase接口，服务端会返回
+{
+  list:[...]
+}
+客户端根据服务端返回渲染页面
+打开日志列表，请求/listLog接口，服务端会返回
+{
+  list:[...]
+}
+日志的结构如下：
+{
+  message:"日志内容",
+  level:1,//日志等级，渲染的时候等级越大，pading-left越大
+  type:'log'|'error',//如果是error，日志内容会被渲染成红色
+  stack:"错误堆栈" //渲染时候会被渲染成pre标签，默认隐藏 点击展开
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastTest - 测试用例管理</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .nav {
+            background-color: #333;
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-item {
+            color: white;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        .nav-item.active {
+            background-color: #555;
+        }
+
+        .content {
+            padding: 1rem;
+        }
+
+        .test-case {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .test-case.init {
+            background-color: #f8f9fa;
+        }
+
+        .test-case.running {
+            background-color: #e8f4fd;
+        }
+
+        .test-case.processed {
+            background-color: #e9fbe9;
+        }
+
+        .test-case.error {
+            background-color: #fde8e8;
+        }
+
+        .log-item {
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+        }
+
+        .log-item.error {
+            color: red;
+        }
+
+        .log-stack {
+            display: none;
+            background-color: #f8f9fa;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+
+        .log-item.expanded .log-stack {
+            display: block;
+        }
+        /* 添加搜索框样式 */
+        .search-container {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .search-input {
+            padding: 0.5rem;
+            margin-right: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        
+        .search-select {
+            padding: 0.5rem;
+            margin-right: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <div class="nav-item active" onclick="switchTab('testCase')">测试用例列表</div>
+        <div class="nav-item" onclick="switchTab('log')">日志列表</div>
+    </div>
+
+    <div class="content" id="content"></div>
+
+    <script>
+        let currentTab = 'testCase';
+        let originalData = { testCase: [], log: [] };
+
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                // 保存原始数据
+                originalData[currentTab] = data.list || [];
+                return data;
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                return { list: [] };
+            }
+        }
+
+        function renderSearchBox() {
+            if (currentTab === 'testCase') {
+                return `
+                    <div class="search-container">
+                        <select class="search-select" id="searchField">
+                            <option value="name">名称</option>
+                            <option value="id">ID</option>
+                            <option value="status">状态</option>
+                        </select>
+                        <input type="text" class="search-input" id="searchInput" placeholder="请输入搜索关键词" onkeyup="handleSearch()">
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="search-container">
+                        <select class="search-select" id="searchField">
+                            <option value="message">消息内容</option>
+                            <option value="type">类型</option>
+                        </select>
+                        <input type="text" class="search-input" id="searchInput" placeholder="请输入搜索关键词" onkeyup="handleSearch()">
+                    </div>
+                `;
+            }
+        }
+
+        function handleSearch() {
+            const searchField = document.getElementById('searchField').value;
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filteredData = originalData[currentTab].filter(item => {
+                if (!searchValue) return true;
+                
+                const fieldValue = String(item[searchField]).toLowerCase();
+                return fieldValue.includes(searchValue);
+            });
+
+            const content = document.getElementById('content');
+            content.innerHTML = renderSearchBox() + 
+                filteredData.map(item =>
+                    currentTab === 'testCase' ? renderTestCase(item) : renderLog(item)
+                ).join('');
+        }
+
+        async function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.nav-item:nth-child(${tab === 'testCase' ? 1 : 2})`).classList.add('active');
+
+            const url = tab === 'testCase' ? '/listTestCase' : '/listLog';
+            const data = await fetchData(url);
+
+            const content = document.getElementById('content');
+            content.innerHTML = renderSearchBox() + 
+                data.list.map(item =>
+                    tab === 'testCase' ? renderTestCase(item) : renderLog(item)
+                ).join('');
+        }
+
+        function renderTestCase(testCase) {
+            return `
+                <div class="test-case ${testCase.status}">
+                    <h3>${testCase.name}</h3>
+                    <div>ID: ${testCase.id}</div>
+                    <div>状态: ${getStatusText(testCase.status)}</div>
+                </div>
+            `;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                init: '初始化',
+                running: '运行中',
+                processed: '成功',
+                error: '失败'
+            };
+            return statusMap[status] || status;
+        }
+
+        function renderLog(log) {
+            const padding = log.level * 20;
+            return `
+                <div class="log-item ${log.type}" style="padding-left: ${padding}px" onclick="toggleStack(this)">
+                    <div class="log-message">${log.message}</div>
+                    ${log.stack ? `<pre class="log-stack">${log.stack}</pre>` : ''}
+                </div>
+            `;
+        }
+
+        function toggleStack(element) {
+            if (element.querySelector('.log-stack')) {
+                element.classList.toggle('expanded');
+            }
+        }
+
+        // 初始加载
+        switchTab(currentTab);
+
+        // 定期刷新数据
+        setInterval(() => switchTab(currentTab), 5000);
+    </script>
+</body>
+</html>
