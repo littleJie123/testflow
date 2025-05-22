@@ -6,11 +6,15 @@ import BaseTest from "./BaseTest";
  */
 export default abstract class TestCase extends BaseTest {
     private testId;
+    private actions;
     setTestId(testId: string): void;
     getTestId(): string;
-    run(param: any, env?: string): Promise<void>;
+    protected processError(e: Error): void;
+    run(param?: any, env?: string): Promise<void>;
     protected init(): void;
     doTest(): Promise<any>;
-    abstract getActions(): ITest[];
+    getActions(): ITest[];
+    protected abstract buildActions(): ITest[];
     abstract getName(): string;
+    toJson(): any;
 }

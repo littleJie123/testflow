@@ -13,6 +13,9 @@ class TestRunner {
         this.defEnv = 'local';
         this.testMap = {};
     }
+    getTestById(id) {
+        return this.testMap[id];
+    }
     findAllTest() {
         let result = [];
         for (let key in this.testMap) {
@@ -46,8 +49,7 @@ class TestRunner {
                     // 检查文件是否符合条件：
                     // 1. 文件名以Test开头
                     // 2. 扩展名为.js或.ts（排除.d.ts）
-                    if (file.toLowerCase().startsWith('test') &&
-                        (file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
+                    if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
                         try {
                             // 动态导入测试文件
                             const TestClass = require(fullPath).default;
@@ -126,8 +128,20 @@ class TestRunner {
         };
     }
     start(param) {
+        console.log('--------- scan ----------------');
         this.scan(param === null || param === void 0 ? void 0 : param.testPath);
-        new HttpServer_1.default().start(param);
+        if (param === null || param === void 0 ? void 0 : param.testId) {
+            let testCase = this.testMap[param.testId];
+            if (testCase) {
+                testCase.run({});
+            }
+        }
+        else {
+            new HttpServer_1.default().start(param);
+        }
+        process.on('uncaughtException', (err) => {
+            console.error('Uncaught exception:', err.stack);
+        });
     }
     static get() {
         if (TestRunner.ins == null) {

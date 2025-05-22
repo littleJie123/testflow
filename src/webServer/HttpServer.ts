@@ -2,10 +2,10 @@ import ITestParam from "../inf/ITestParam";
 import * as http from 'http';
 import fs from 'fs';
 import path from "path";
-import IHttpAction from "../inf/IHttpAction";
+import IControl from "../inf/IControl";
 export default class HttpServer {
 
-  private actionMap: Map<string, IHttpAction> = new Map();
+  private actionMap: Map<string, IControl> = new Map();
 
 
   constructor(){
@@ -64,11 +64,11 @@ export default class HttpServer {
   }
 
 
-  private regAction(url:string,action:IHttpAction){
+  private regAction(url:string,action:IControl){
     this.actionMap.set(url.toLowerCase(),action);
   }
 
-  private getActionByUrl(url:string):IHttpAction{
+  private getActionByUrl(url:string):IControl{
     return this.actionMap.get(url.toLowerCase());
   }
   /**
@@ -98,6 +98,7 @@ export default class HttpServer {
     res: http.ServerResponse<http.IncomingMessage>): Promise<void> {
     // 处理健康检查请求
     let url:string = req.url || '';
+    url = url.split('?')[0];
     if (req.url === '/debug/health') {
       const responseData = JSON.stringify({ health: true });
 
@@ -110,9 +111,10 @@ export default class HttpServer {
       return;
     }
 
+
     // 处理HTML和JS文件请求
-    if(url.endsWith('.html') || url.endsWith('.js')){
-      this.processHtmlAndJs(req, res);
+    if(url.endsWith('.html') || url.endsWith('.js') || url.endsWith('.css')){
+      this.processHtmlAndJsAndCss(req, res);
       return;
     }
     await this.processAction(req,res);
@@ -182,8 +184,10 @@ export default class HttpServer {
       }
 
       // 调用action处理请求
-      const result = await action.process(param);
-      
+      let result = await action.process(param);
+      if(result == null){
+        result = {};
+      }
       // 返回JSON响应
       res.writeHead(200, {
         'Content-Type': 'application/json',
@@ -205,7 +209,7 @@ export default class HttpServer {
    * @param req 
    * @param res 
    */
-  private processHtmlAndJs(req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage>): void {
+  private processHtmlAndJsAndCss(req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage>): void {
      
     
     // 获取请求的文件路径
@@ -215,7 +219,7 @@ export default class HttpServer {
     
     // 检查文件扩展名
     const ext = path.extname(filePath).toLowerCase();
-    if (ext !== '.html' && ext !== '.js') {
+    if (ext !== '.html' && ext !== '.js' && ext !== '.css') {
       return;
     }
 
@@ -239,7 +243,18 @@ export default class HttpServer {
         }
 
         // 设置正确的Content-Type
-        const contentType = ext === '.html' ? 'text/html' : 'application/javascript';
+        let contentType;
+        switch (ext) {
+          case '.html':
+            contentType = 'text/html';
+            break;
+          case '.js':
+            contentType = 'application/javascript';
+            break;
+          case '.css':
+            contentType = 'text/css';
+            break;
+        }
         
         res.writeHead(200, {
           'Content-Type': `${contentType}; charset=utf-8`,

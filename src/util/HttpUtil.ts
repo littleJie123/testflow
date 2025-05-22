@@ -36,6 +36,17 @@ export default class {
     data?: any,
     headers?: any
   ): Promise<any> {
+    let result = await this.requestStatusAndResult(url,method,data,headers)
+    return result.result;
+  }
+
+  // 核心请求方法
+  async requestStatusAndResult(
+    url: string,
+    method: string,
+    data?: any,
+    headers?: any
+  ): Promise<any> {
     try {
       // 处理查询参数（如果是GET请求或data中包含查询参数）
       if (data && (method === 'GET' || data.params)) {
@@ -44,6 +55,9 @@ export default class {
           .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
           .join('&');
         url = `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
+        if(url.endsWith('&')){
+          url = url.substring(0,url.length-1)
+        }
       }
 
       // 设置请求配置
@@ -63,17 +77,21 @@ export default class {
       // 发送请求
       const response = await fetch(url, options);
 
-      // 检查响应状态
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+       
 
       // 返回响应数据
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-        return await response.json();
+       
+        return {
+          status:response.status,
+          result:await response.json()
+        };
       } else {
-        return await response.text();
+        return {
+          status:response.status,
+          result:await response.text()
+        };
       }
 
     } catch (error) {

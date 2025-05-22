@@ -18,10 +18,13 @@ export default abstract class BaseTest implements ITest {
     setResult(result: any): void;
     setParam(param: any): void;
     protected getParam(): any;
+    setVariable(variable: any): void;
     protected getVariable(): any;
     protected addVariable(variable: any): void;
-    protected getTestLogger(): TestLogger;
+    setTestLogger(logger: TestLogger): void;
+    getTestLogger(): TestLogger;
     test(): Promise<any>;
+    protected processError(e: Error): void;
     /**
      * 检查结果是否正确
      * @param result
@@ -35,5 +38,9 @@ export default abstract class BaseTest implements ITest {
      */
     protected buildVariable(result: any): any;
     abstract getName(): string;
-    protected abstract doTest(): Promise<void>;
+    protected abstract doTest(): Promise<any>;
+    toJson(): {
+        name: string;
+        status: string;
+    };
 }

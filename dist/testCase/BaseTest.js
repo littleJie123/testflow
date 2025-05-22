@@ -38,6 +38,9 @@ class BaseTest {
     getParam() {
         return this.param;
     }
+    setVariable(variable) {
+        this.variable = variable;
+    }
     getVariable() {
         if (this.variable == null) {
             this.variable = TestRunner_1.default.get().getVariable();
@@ -51,6 +54,9 @@ class BaseTest {
         for (let key in variable) {
             this.variable[key] = variable[key];
         }
+    }
+    setTestLogger(logger) {
+        this.testLogger = logger;
     }
     getTestLogger() {
         if (this.testLogger == null) {
@@ -70,8 +76,7 @@ class BaseTest {
             await this.processResult(result);
         }
         catch (e) {
-            logger.error(`${this.getName()} 运行出错`);
-            logger.errorOnException(e);
+            this.processError(e);
             this.status = S_Error;
             throw e;
         }
@@ -81,6 +86,11 @@ class BaseTest {
         return result;
     }
     ;
+    processError(e) {
+        let logger = this.getTestLogger();
+        logger.error(`${this.getName()} 运行出错`);
+        logger.errorOnException(e);
+    }
     /**
      * 检查结果是否正确
      * @param result
@@ -100,6 +110,12 @@ class BaseTest {
      */
     buildVariable(result) {
         return null;
+    }
+    toJson() {
+        return {
+            name: this.getName(),
+            status: this.status
+        };
     }
 }
 BaseTest.S_Init = S_Init;

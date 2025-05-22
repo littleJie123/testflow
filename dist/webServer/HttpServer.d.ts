@@ -41,5 +41,5 @@ export default class HttpServer {
      * @param req
      * @param res
      */
-    private processHtmlAndJs;
+    private processHtmlAndJsAndCss;
 }

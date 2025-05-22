@@ -82,7 +82,11 @@ class JsonUtil {
         if (val.startsWith('${') && val.endsWith('}')) {
             let key = val.substring(2, val.length - 1);
             key = key.trim();
-            return this.getByKeys(opt, key);
+            let ret = this.getByKeys(opt, key);
+            if (ret == null) {
+                throw new Error('找不到变量:' + key);
+            }
+            return ret;
         }
         else {
             return val;

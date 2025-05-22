@@ -11,20 +11,28 @@ export default abstract class TestCase extends BaseTest  {
   
   private testId:string;
   
+  private actions:ITest[];
   setTestId(testId:string){
     this.testId = testId;
   }
+
 
   getTestId():string{
     return this.testId;
   }
 
-  async run(param,env?:string): Promise<void> {
+  protected processError(e:Error){
+    let logger = this.getTestLogger();
+    logger.error(`${this.getName()} 运行出错`) 
+  }
+  async run(param?,env?:string): Promise<void> {
+    if(param == null){
+      param = {};
+    }
     this.setParam(param);
     this.init()
-    this.setEnv(env)
-    let log = this.getTestLogger();
-    await log.save();
+    this.setEnv(env)  
+    await this.test();
   }
 
   protected init(){
@@ -46,10 +54,10 @@ export default abstract class TestCase extends BaseTest  {
     }
     for(let action of this.getActions()){
       let objAction:any = action as any;
-      if(objAction.setLogger){
-        objAction.setLogger(this.getTestLogger());
+      if(objAction.setTestLogger){
+        objAction.setTestLogger(this.getTestLogger());
       }
-      if(objAction.setVar){
+      if(objAction.setVariable){
         objAction.setVariable(this.getVariable());
       }
       if(objAction.setParam){
@@ -69,8 +77,26 @@ export default abstract class TestCase extends BaseTest  {
   }
   
 
-  abstract getActions():ITest[];
+  getActions():ITest[]{
+    if(this.actions == null){
+      this.actions = this.buildActions();
+    }
+    return this.actions;
+  };
+
+  protected abstract buildActions():ITest[];
 
  
   abstract getName():string;
+
+  toJson(): any {
+    
+    let json = {
+      id:this.testId,
+      name:this.getName(),
+      status:this.getStatus(),
+      
+    }
+    return json;
+  }
 }

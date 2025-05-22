@@ -6,4 +6,5 @@ export default class {
     put(url: string, data?: any, headers?: any): Promise<any>;
     delete(url: string, data?: any, headers?: any): Promise<any>;
     request(url: string, method: string, data?: any, headers?: any): Promise<any>;
+    requestStatusAndResult(url: string, method: string, data?: any, headers?: any): Promise<any>;
 }

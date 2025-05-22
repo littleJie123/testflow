@@ -7,6 +7,7 @@ export default class TestRunner {
     private defEnv;
     private testMap;
     private constructor();
+    getTestById(id: string): TestCase;
     findAllTest(): TestCase[];
     /**
      * 扫描指定目录下的文件，

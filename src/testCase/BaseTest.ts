@@ -25,7 +25,7 @@ export default abstract class BaseTest implements ITest {
     return this.status;
   }
   beforeRun(){
-    this.status = S_Init;
+    this.status = S_Init; 
   }
   setEnv(env:string){
     this.env = env;
@@ -49,6 +49,9 @@ export default abstract class BaseTest implements ITest {
   protected getParam():any{
     return this.param;
   }
+  setVariable(variable:any){
+    this.variable = variable;
+  }
   protected getVariable():any{
     if(this.variable == null){
       this.variable = TestRunner.get().getVariable();
@@ -65,8 +68,10 @@ export default abstract class BaseTest implements ITest {
     }
        
   }
-
-  protected getTestLogger():TestLogger {
+  setTestLogger(logger:TestLogger){
+    this.testLogger = logger;
+  }
+  getTestLogger():TestLogger {
     if(this.testLogger == null){
       this.testLogger = new TestLogger();
     }
@@ -84,8 +89,7 @@ export default abstract class BaseTest implements ITest {
       await this.checkResult(result);
       await this.processResult(result);
     }catch(e){
-      logger.error(`${this.getName()} 运行出错`)
-      logger.errorOnException(e);
+      this.processError(e);
       this.status = S_Error;
       throw e;
     }
@@ -94,6 +98,12 @@ export default abstract class BaseTest implements ITest {
     logger.log(`${this.getName()} 运行结束`)
     return result;
   };
+
+  protected processError(e:Error){
+    let logger = this.getTestLogger();
+    logger.error(`${this.getName()} 运行出错`)
+    logger.errorOnException(e);
+  }
 
   /**
    * 检查结果是否正确
@@ -121,6 +131,13 @@ export default abstract class BaseTest implements ITest {
 
   abstract getName():string;
 
-  protected abstract doTest():Promise<void>;
+  protected abstract doTest():Promise<any>;
 
+
+  toJson(){
+    return {
+      name:this.getName(),
+      status:this.status
+    }
+  }
 }

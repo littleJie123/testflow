@@ -10,11 +10,7 @@ class ListTestCase {
         let testCaseList = testRunner.findAllTest();
         return {
             list: testCaseList.map(item => {
-                return {
-                    name: item.getName(),
-                    id: item.getTestId(),
-                    status: item.getStatus()
-                };
+                return item.toJson();
             })
         };
     }

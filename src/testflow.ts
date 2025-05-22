@@ -1,0 +1,11 @@
+export { default as TestRunner } from "./testRunner/TestRunner";
+export { default as TestCase } from "./testCase/TestCase";
+export { default as BaseTest } from "./testCase/BaseTest";
+export { default as UrlAction } from "./testAction/UrlAction";
+
+export { default as HttpAction } from "./testAction/HttpAction";
+export { default as IHttpActionParam } from "./inf/IHttpActionParam";
+export { default as ITest} from "./inf/ITest";
+
+export { default as SetVariable } from "./testAction/SetVariable";
+export { default as ISetVariableParam } from "./inf/ISetVarableParam";

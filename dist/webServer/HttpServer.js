@@ -124,6 +124,7 @@ class HttpServer {
     async process(req, res) {
         // 处理健康检查请求
         let url = req.url || '';
+        url = url.split('?')[0];
         if (req.url === '/debug/health') {
             const responseData = JSON.stringify({ health: true });
             res.writeHead(200, {
@@ -134,8 +135,8 @@ class HttpServer {
             return;
         }
         // 处理HTML和JS文件请求
-        if (url.endsWith('.html') || url.endsWith('.js')) {
-            this.processHtmlAndJs(req, res);
+        if (url.endsWith('.html') || url.endsWith('.js') || url.endsWith('.css')) {
+            this.processHtmlAndJsAndCss(req, res);
             return;
         }
         await this.processAction(req, res);
@@ -195,7 +196,10 @@ class HttpServer {
                 }
             }
             // 调用action处理请求
-            const result = await action.process(param);
+            let result = await action.process(param);
+            if (result == null) {
+                result = {};
+            }
             // 返回JSON响应
             res.writeHead(200, {
                 'Content-Type': 'application/json',
@@ -216,14 +220,14 @@ class HttpServer {
      * @param req
      * @param res
      */
-    processHtmlAndJs(req, res) {
+    processHtmlAndJsAndCss(req, res) {
         // 获取请求的文件路径
         const url = req.url || '/';
         // 移除查询参数
         const filePath = url.split('?')[0];
         // 检查文件扩展名
         const ext = path_1.default.extname(filePath).toLowerCase();
-        if (ext !== '.html' && ext !== '.js') {
+        if (ext !== '.html' && ext !== '.js' && ext !== '.css') {
             return;
         }
         // 构建完整的文件路径（从项目根目录开始）
@@ -244,7 +248,18 @@ class HttpServer {
                     return;
                 }
                 // 设置正确的Content-Type
-                const contentType = ext === '.html' ? 'text/html' : 'application/javascript';
+                let contentType;
+                switch (ext) {
+                    case '.html':
+                        contentType = 'text/html';
+                        break;
+                    case '.js':
+                        contentType = 'application/javascript';
+                        break;
+                    case '.css':
+                        contentType = 'text/css';
+                        break;
+                }
                 res.writeHead(200, {
                     'Content-Type': `${contentType}; charset=utf-8`,
                     'Content-Length': Buffer.byteLength(data)

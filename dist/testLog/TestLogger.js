@@ -5,6 +5,10 @@ class TestLogger {
         this.level = 0;
         this.logs = [];
     }
+    getLogs() {
+        let logs = [...this.logs];
+        return logs;
+    }
     errorOnException(e) {
         this.addLogObj({
             level: this.level,
@@ -16,9 +20,6 @@ class TestLogger {
     addLogObj(log) {
         this.logs.push(log);
     }
-    save() {
-        throw new Error("Method not implemented.");
-    }
     log(message) {
         this.addLog('log', message);
     }
@@ -26,11 +27,13 @@ class TestLogger {
         this.addLog('error', message);
     }
     addLog(type, message) {
-        this.logs.push({
+        const log = {
             level: this.level,
             message,
             type
-        });
+        };
+        this.logs.push(log);
+        console.log(log);
     }
     addLevel() {
         this.level++;

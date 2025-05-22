@@ -15,12 +15,18 @@ class TestCase extends BaseTest_1.default {
     getTestId() {
         return this.testId;
     }
+    processError(e) {
+        let logger = this.getTestLogger();
+        logger.error(`${this.getName()} 运行出错`);
+    }
     async run(param, env) {
+        if (param == null) {
+            param = {};
+        }
         this.setParam(param);
         this.init();
         this.setEnv(env);
-        let log = this.getTestLogger();
-        await log.save();
+        await this.test();
     }
     init() {
         this.variable = null;
@@ -36,10 +42,10 @@ class TestCase extends BaseTest_1.default {
         }
         for (let action of this.getActions()) {
             let objAction = action;
-            if (objAction.setLogger) {
-                objAction.setLogger(this.getTestLogger());
+            if (objAction.setTestLogger) {
+                objAction.setTestLogger(this.getTestLogger());
             }
-            if (objAction.setVar) {
+            if (objAction.setVariable) {
                 objAction.setVariable(this.getVariable());
             }
             if (objAction.setParam) {
@@ -54,6 +60,21 @@ class TestCase extends BaseTest_1.default {
             result = await action.test();
         }
         return result;
+    }
+    getActions() {
+        if (this.actions == null) {
+            this.actions = this.buildActions();
+        }
+        return this.actions;
+    }
+    ;
+    toJson() {
+        let json = {
+            id: this.testId,
+            name: this.getName(),
+            status: this.getStatus(),
+        };
+        return json;
     }
 }
 exports.default = TestCase;

@@ -1,0 +1,157 @@
+<!-- 
+页面结构：
+1、页面标题：`测试用例：${id}` id从url中获取
+2、按钮区： 
+  2.1 、运行按钮：点击后，发送请求 /runTestCase?id=${id}，
+
+3、列表区，显示左右两个列表 ，列表区的数据从后端接口/getTestCase?id=${id}获取，
+  3.1 左侧列表：显示测试用例的步骤，
+  3.2 右侧列表：显示测试用例的日志
+
+接口定义：
+1、/runTestCase?id=${id}：运行测试用例，返回测试用例的状态，
+2、/getTestCase?id=${id}：获取测试用例的状态，返回测试用例的状态，
+ 2.1 接口数据结构：
+{
+  actions:[ // 测试用例的步骤
+    {
+      name: "步骤名称",
+      status: "步骤状态" // init:初始化，running:运行中，processed:成功，error:失败
+    }
+  ],
+  logs:[ // 测试用例的日志
+    {
+      message:"日志内容",
+      type: "日志状态" // log:普通，error:错误 渲染时候颜色变红
+      level: 1 //number 类型 ，渲染时候padding-left: 10px * level
+      stack: "日志堆栈" // 可选，错误日志的堆栈信息 默认隐藏，点一下展开
+    }
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试用例详情</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <div class="header">
+    <h1 id="pageTitle">测试用例详情</h1>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" onclick="runTestCase()">运行测试</button>
+  </div>
+
+  <div class="content">
+    <div class="actions-panel">
+      <h2>测试步骤</h2>
+      <div id="actionsList"></div>
+    </div>
+    <div class="logs-panel">
+      <h2>测试日志</h2>
+      <div id="logsList"></div>
+    </div>
+  </div>
+
+  <script>
+    let testCaseId = '';
+
+    // 页面加载时获取URL参数并初始化
+    window.onload = function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      testCaseId = urlParams.get('id');
+      if (!testCaseId) {
+        alert('未指定测试用例ID');
+        return;
+      }
+      document.getElementById('pageTitle').textContent = `测试用例：${testCaseId}`;
+      fetchTestCaseData();
+    }
+
+    // 获取测试用例数据
+    async function fetchTestCaseData() {
+      try {
+        if(testCaseId == null){
+          return;
+        }
+        const response = await fetch(`/getTestCase?id=${testCaseId}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        renderActions(data.actions || []);
+        renderLogs(data.logs || []);
+      } catch (error) {
+        console.error('获取测试用例数据失败:', error);
+      }
+    }
+
+    // 渲染测试步骤
+    function renderActions(actions) {
+      const actionsList = document.getElementById('actionsList');
+      actionsList.innerHTML = actions.map(action => `
+                <div class="action-item ${action.status}">
+                    <h3>${action.name}</h3>
+                    <div>状态: ${getStatusText(action.status)}</div>
+                </div>
+            `).join('');
+    }
+
+    // 渲染日志
+    function renderLogs(logs) {
+      const logsList = document.getElementById('logsList');
+      logsList.innerHTML = logs.map(log => `
+                <div class="log-item ${log.type}" 
+                     style="padding-left: ${log.level * 20}px"
+                     onclick="toggleStack(this)">
+                    <div class="log-message">${log.message}</div>
+                    ${log.stack ? `<pre class="log-stack">${log.stack}</pre>` : ''}
+                </div>
+            `).join('');
+    }
+
+    // 切换堆栈信息显示
+    function toggleStack(element) {
+      if (element.querySelector('.log-stack')) {
+        element.classList.toggle('expanded');
+      }
+    }
+
+    // 获取状态文本
+    function getStatusText(status) {
+      const statusMap = {
+        init: '初始化',
+        running: '运行中',
+        processed: '成功',
+        error: '失败'
+      };
+      return statusMap[status] || status;
+    }
+
+    // 运行测试用例
+    async function runTestCase() {
+      try {
+        const response = await fetch('/runTestCase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id: [testCaseId] })
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
+        // 运行后立即刷新数据
+        await fetchTestCaseData();
+      } catch (error) {
+        console.error('运行测试用例失败:', error);
+      }
+    }
+    setInterval(() => {
+      fetchTestCaseData();
+    }, 3000);
+  </script>
+</body>
+
+</html>

@@ -4,6 +4,7 @@ import ITestParam from '../inf/ITestParam';
 import HttpServer from '../webServer/HttpServer';
 import TestCase from '../testCase/TestCase';
 export default class TestRunner {
+  
   private variable: any;
   private beanMap:any = {};
 
@@ -15,6 +16,10 @@ export default class TestRunner {
 
   private constructor(){
 
+  }
+
+  getTestById(id: string): TestCase {
+    return this.testMap[id];
   }
 
   findAllTest():TestCase[]{
@@ -53,7 +58,7 @@ export default class TestRunner {
           // 1. 文件名以Test开头
           // 2. 扩展名为.js或.ts（排除.d.ts）
           if (
-            file.toLowerCase().startsWith('test') &&
+             
             (file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))
           ) {
             try {
@@ -143,8 +148,19 @@ export default class TestRunner {
 
 
   start(param?:ITestParam){
+    console.log('--------- scan ----------------');
     this.scan(param?.testPath);
-    new HttpServer().start(param);
+    if(param?.testId ){
+      let testCase = this.testMap[param.testId];
+      if(testCase){
+        testCase.run({});
+      }
+    }else{
+      new HttpServer().start(param);
+    }
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught exception:', err.stack);
+    });
   }
 
   private static ins:TestRunner;

@@ -1,10 +1,12 @@
-interface ILog{
-  level:number;
-  message:string;
-  type:'log'|'error';
-  stack?:string;
-}
+import ILog from "../inf/ILog";
+
 export default class TestLogger{
+  private level = 0;
+  private logs:ILog[] = [];
+  getLogs() {
+    let logs = [... this.logs]
+    return logs;
+  }
   errorOnException(e: Error) {
     this.addLogObj({
       level:this.level,
@@ -17,12 +19,9 @@ export default class TestLogger{
   private addLogObj(log: ILog) {
     this.logs.push(log);
   }
-  save() {
-    throw new Error("Method not implemented.");
-  }
   
-  private level = 0;
-  private logs:ILog[] = [];
+  
+  
   log(message: string) {
     this.addLog('log',message);
   }
@@ -30,11 +29,13 @@ export default class TestLogger{
     this.addLog('error',message);
   }
   private addLog(type:'log'|'error',message:string){
-    this.logs.push({
+    const log = {
       level:this.level,
       message,
       type
-    })
+    }
+    this.logs.push(log)
+    console.log(log)
   }
   addLevel(){
     this.level++;
