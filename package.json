@@ -1,5 +1,5 @@
 {
-  "name": "testflow",
+  "name": "fasttestflow",
   "version": "1.0.0",
   "description": "一个单元测试框架",
   "main": "dist/testflow.js",
