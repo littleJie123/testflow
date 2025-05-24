@@ -3,6 +3,7 @@ import path from 'path';
 import ITestParam from '../inf/ITestParam';
 import HttpServer from '../webServer/HttpServer';
 import TestCase from '../testCase/TestCase';
+import FileUtil from '../util/FileUtil';
 export default class TestRunner {
   
   private variable: any;
@@ -147,13 +148,31 @@ export default class TestRunner {
   }
 
 
-  start(param?:ITestParam){
+  async start(param?:ITestParam){
     console.log('--------- scan ----------------');
     this.scan(param?.testPath);
     if(param?.testId ){
       let testCase = this.testMap[param.testId];
       if(testCase){
-        testCase.run({});
+        let result = await testCase.run({});
+        console.log(JSON.stringify(result,null,4));
+      }else{
+        if(param.actionPath){
+          FileUtil.each(param.actionPath,async (filePath?:string)=>{
+            
+            if (filePath.endsWith('.js') || (filePath.endsWith('.ts') && !filePath.endsWith('.d.ts')) ){
+              const fileName = path.basename(filePath, path.extname(filePath));
+              if(fileName.toLowerCase() == param.testId.toLowerCase()){
+                let actionClazz = require(filePath).default;
+                if(actionClazz){
+                  let action = new actionClazz();
+                  let result =await action.test();
+                  console.log(JSON.stringify(result,null,4));
+                }
+              }
+            }
+          })
+        }
       }
     }else{
       new HttpServer().start(param);

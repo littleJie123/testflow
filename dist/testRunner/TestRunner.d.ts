@@ -41,7 +41,7 @@ export default class TestRunner {
     getBean(key: string): any;
     addVariable(variable: any): void;
     getVariable(): any;
-    start(param?: ITestParam): void;
+    start(param?: ITestParam): Promise<void>;
     private static ins;
     static get(): TestRunner;
 }

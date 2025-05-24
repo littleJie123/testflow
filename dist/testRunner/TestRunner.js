@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const HttpServer_1 = __importDefault(require("../webServer/HttpServer"));
+const FileUtil_1 = __importDefault(require("../util/FileUtil"));
 class TestRunner {
     constructor() {
         this.beanMap = {};
@@ -127,13 +128,31 @@ class TestRunner {
             ...this.variable
         };
     }
-    start(param) {
+    async start(param) {
         console.log('--------- scan ----------------');
         this.scan(param === null || param === void 0 ? void 0 : param.testPath);
         if (param === null || param === void 0 ? void 0 : param.testId) {
             let testCase = this.testMap[param.testId];
             if (testCase) {
-                testCase.run({});
+                let result = await testCase.run({});
+                console.log(JSON.stringify(result, null, 4));
+            }
+            else {
+                if (param.actionPath) {
+                    FileUtil_1.default.each(param.actionPath, async (filePath) => {
+                        if (filePath.endsWith('.js') || (filePath.endsWith('.ts') && !filePath.endsWith('.d.ts'))) {
+                            const fileName = path_1.default.basename(filePath, path_1.default.extname(filePath));
+                            if (fileName.toLowerCase() == param.testId.toLowerCase()) {
+                                let actionClazz = require(filePath).default;
+                                if (actionClazz) {
+                                    let action = new actionClazz();
+                                    let result = await action.test();
+                                    console.log(JSON.stringify(result, null, 4));
+                                }
+                            }
+                        }
+                    });
+                }
             }
         }
         else {
