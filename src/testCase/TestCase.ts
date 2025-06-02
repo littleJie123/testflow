@@ -11,7 +11,6 @@ export default abstract class TestCase extends BaseTest  {
   
   private testId:string;
   
-  private actions:ITest[];
   setTestId(testId:string){
     this.testId = testId;
   }
@@ -78,10 +77,8 @@ export default abstract class TestCase extends BaseTest  {
   
 
   getActions():ITest[]{
-    if(this.actions == null){
-      this.actions = this.buildActions();
-    }
-    return this.actions;
+    
+    return this.buildActions();
   };
 
   protected abstract buildActions():ITest[];

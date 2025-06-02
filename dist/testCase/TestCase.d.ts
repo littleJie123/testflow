@@ -6,7 +6,6 @@ import BaseTest from "./BaseTest";
  */
 export default abstract class TestCase extends BaseTest {
     private testId;
-    private actions;
     setTestId(testId: string): void;
     getTestId(): string;
     protected processError(e: Error): void;

@@ -1,4 +1,5 @@
 import ITest from "../inf/ITest";
+import ITestCaseInfo from "../inf/ITestCaseInfo";
 import TestLogger from "../testLog/TestLogger";
 import TestRunner from "../testRunner/TestRunner";
 
@@ -20,6 +21,16 @@ export default abstract class BaseTest implements ITest {
   protected env:string;
 
   protected status:string = S_Init;
+
+  protected info:ITestCaseInfo ;
+
+  getInfo():ITestCaseInfo {
+    return this.info;
+  }
+
+  setInfo(info:ITestCaseInfo){
+    this.info = info;
+  }
 
   getStatus():string{
     return this.status;
@@ -76,6 +87,10 @@ export default abstract class BaseTest implements ITest {
       this.testLogger = new TestLogger();
     }
     return this.testLogger;
+  }
+
+  isStop():boolean{
+    return this.info?.config?.stop;
   }
 
   async test():Promise<any>{

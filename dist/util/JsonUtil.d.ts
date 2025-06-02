@@ -1,6 +1,8 @@
 declare class JsonUtil {
-    static parseJson(json: any, opt: any): any;
+    static parseJson(json: any, opt: any, jsonOpt: IParseJsonOpt): any;
     private static changeVal;
+    private static parseValue;
+    private static getKeyStringFromJsonOpt;
     private static parseStr;
     /**
      * 为Pojo写的copy方法
@@ -57,3 +59,4 @@ declare class JsonUtil {
     static get(obj: any, keys: string | Array<string>): any;
 }
 export default JsonUtil;
+import IParseJsonOpt from "../inf/IParseJsonOpt";

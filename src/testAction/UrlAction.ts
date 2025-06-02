@@ -55,8 +55,8 @@ export default abstract class UrlAction extends BaseTest{
     let httpUtil = HttpUtil.get()
     let datas = this.getDatas()
     let url = StrUtil.format(this.parseHttpUrl(),datas);
-    let httpParam = JsonUtil.parseJson(this.getHttpParam(),datas)
-    let headers = JsonUtil.parseJson(this.getHeader(),datas)
+    let httpParam = JsonUtil.parseJson(this.getHttpParam(),datas,{})
+    let headers = JsonUtil.parseJson(this.getHeader(),datas,{})
     let result = await httpUtil.requestStatusAndResult(url,
       this.getMethod(),httpParam,headers)
     this.httpStatus = result.status;

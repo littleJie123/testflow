@@ -62,10 +62,7 @@ class TestCase extends BaseTest_1.default {
         return result;
     }
     getActions() {
-        if (this.actions == null) {
-            this.actions = this.buildActions();
-        }
-        return this.actions;
+        return this.buildActions();
     }
     ;
     toJson() {

@@ -36,49 +36,89 @@ function setKey(obj, key, param) {
     return param;
 }
 class JsonUtil {
-    static parseJson(json, opt) {
+    static parseJson(json, opt, jsonOpt) {
         if (json == null || opt == null) {
             return json;
         }
         if (json instanceof Array) {
             let array = [];
-            for (let e of json) {
-                array.push(this.changeVal(e, opt));
+            for (let i = 0; i < json.length; i++) {
+                let e = json[i];
+                array.push(this.changeVal(i, e, opt, jsonOpt));
             }
             return array;
         }
         else {
             let ret = {};
             for (let e in json) {
-                ret[e] = this.changeVal(json[e], opt);
+                ret[e] = this.changeVal(e, json[e], opt, jsonOpt);
             }
             return ret;
         }
     }
-    static changeVal(val, opt) {
+    static changeVal(key, val, opt, jsonOpt) {
         if (val instanceof Array) {
             let array = [];
-            for (let e of val) {
-                array.push(this.changeVal(e, opt));
+            for (let i = 0; i < val.length; i++) {
+                let e = val[i];
+                array.push(this.changeVal(i, e, opt, jsonOpt));
             }
             return array;
         }
         if (NumUtil_1.default.isNum(val)) {
-            return val;
+            return this.parseValue(key, val, opt, jsonOpt);
         }
         if (val instanceof Date) {
-            return val;
+            return this.parseValue(key, val, opt, jsonOpt);
         }
         if (StrUtil_1.StrUtil.isStr(val)) {
-            return this.parseStr(val, opt);
+            return this.parseStr(key, val, opt, jsonOpt);
         }
         let ret = {};
         for (let e in val) {
-            ret[e] = this.changeVal(val[e], opt);
+            ret[e] = this.changeVal(e, val[e], opt, jsonOpt);
         }
         return ret;
     }
-    static parseStr(val, opt) {
+    static parseValue(key, val, opt, jsonOpt) {
+        let keyString = this.getKeyStringFromJsonOpt(key, jsonOpt);
+        if (keyString == null) {
+            return val;
+        }
+        let newVal = this.getByKeys(opt, keyString);
+        if (newVal == null) {
+            return val;
+        }
+        return newVal;
+    }
+    static getKeyStringFromJsonOpt(key, jsonOpt) {
+        if ((jsonOpt === null || jsonOpt === void 0 ? void 0 : jsonOpt.keyMap) == null) {
+            return null;
+        }
+        let array = jsonOpt.keyMap[key];
+        if (array instanceof Array) {
+            if (array.length == 0) {
+                return null;
+            }
+            let cntMap = jsonOpt.cntMap;
+            if (cntMap == null) {
+                cntMap = {};
+                jsonOpt.cntMap = cntMap;
+            }
+            let cnt = cntMap[key];
+            if (cnt == null) {
+                cnt = 0;
+            }
+            let ret = array[cnt % array.length];
+            cnt++;
+            cntMap[key] = cnt;
+            return ret;
+        }
+        else {
+            return array;
+        }
+    }
+    static parseStr(key, val, opt, jsonOpt) {
         if (val.startsWith('${') && val.endsWith('}')) {
             let key = val.substring(2, val.length - 1);
             key = key.trim();
@@ -89,7 +129,7 @@ class JsonUtil {
             return ret;
         }
         else {
-            return val;
+            return this.parseValue(key, val, opt, jsonOpt);
         }
     }
     /**

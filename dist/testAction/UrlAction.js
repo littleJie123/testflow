@@ -52,8 +52,8 @@ class UrlAction extends BaseTest_1.default {
         let httpUtil = HttpUtil_1.default.get();
         let datas = this.getDatas();
         let url = StrUtil_1.StrUtil.format(this.parseHttpUrl(), datas);
-        let httpParam = JsonUtil_1.default.parseJson(this.getHttpParam(), datas);
-        let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas);
+        let httpParam = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, {});
+        let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas, {});
         let result = await httpUtil.requestStatusAndResult(url, this.getMethod(), httpParam, headers);
         this.httpStatus = result.status;
         return result.result;

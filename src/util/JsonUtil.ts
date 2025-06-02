@@ -1,3 +1,14 @@
+interface IDeParseResult{
+  key:string|number;
+  val:any;
+}
+type ResultMap = {[key:string|number]:IDeParseResult|IDeParseResult[]}
+type DeparseResult = {
+  resultMap?:ResultMap;
+  cntMap?:{[key:string]:number}
+}
+
+
 
 
 let keyMap = {
@@ -36,50 +47,188 @@ function setKey(obj, key, param) {
 }
 class JsonUtil {
 
-  static parseJson(json:any,opt:any){
+
+  static deParseJson(json:any,jsonOpt:IParseJsonOpt):any{
+    let opt:DeparseResult = {};
+    this.doDeParseJson(json,jsonOpt,opt);
+    let ret = {}; 
+    if(opt.resultMap != null){
+      for(let e in opt.resultMap){
+        let vals = opt.resultMap[e];
+        if(vals instanceof Array){
+          for(let val of vals) {
+            let result = val as IDeParseResult;
+            this.setByKeys(ret,result.key as string,result.val);  
+          }
+        }else{
+          let result = vals as IDeParseResult;
+          this.setByKeys(ret,result.key as string,result.val);
+        }
+      }
+    }
+    return ret;
+  }
+
+  private static doDeParseJson(json:any,jsonOpt:IParseJsonOpt,ret:DeparseResult){
+    if(json != null){
+      if(json instanceof Array){
+        for(let i=0;i<json.length;i++){
+          let e = json[i];
+          this.doDeParseJson(e,jsonOpt,ret);
+        }
+      }else{
+        for(let e in json){
+          this.doDeParseJsonByValue(e,json[e],jsonOpt,ret);
+        }
+      }
+    }
+  }
+  private static doDeParseJsonByValue(key:string|number,val:any,jsonOpt:IParseJsonOpt,ret:DeparseResult){
+    let keyMap = jsonOpt.keyMap;
+    if(keyMap == null || val ==null){
+      return;
+    }
+    let keyString = keyMap[key];
+    
+    if(StrUtil.isStr(val) || NumUtil.isNum(val) || val instanceof Date){
+      if(StrUtil.isStr(val)){
+        let str:string = val;
+        if(str == null){
+          return;
+        }
+        str = str.trim();
+        if(str.startsWith('${') && str.endsWith('}')){
+          return;
+        }
+      }
+      if(keyString == null){
+        return;
+      }else{
+        this.addToResult(key,keyString,val,ret)
+        return;
+      }
+    }else{
+      for(let e in val){
+        if(keyString == null){
+          this.doDeParseJsonByValue(e,val[e],jsonOpt,ret);
+        }else{
+          this.addToResult(key,keyString,val,ret)
+        }
+      }
+    }
+    
+  }
+  static addToResult(key: string | number, keyString: string | string[], val: any, ret: DeparseResult) {
+    if(ret.resultMap == null){
+      ret.resultMap = {};
+    }
+    if(keyString instanceof Array  ){
+      if(keyString.length > 0){
+        if(ret.resultMap[key] == null){
+          ret.resultMap[key] = [];
+        }
+        let array = ret.resultMap[key] as IDeParseResult[];
+        let len = array.length;
+        array.push({
+          key:keyString[len % keyString.length],
+          val
+        })
+      }
+    }else{
+      ret.resultMap[key] = {
+        key:keyString as string,
+        val
+      }
+    }
+    
+  }
+
+
+
+  static parseJson(json:any,opt:any,jsonOpt:IParseJsonOpt){
     if(json == null || opt == null){
       return json;
     }
     if(json instanceof Array){
       let array:any[] = [];
-      for(let e of json){
-        array.push(this.changeVal(e,opt))
+      for(let i=0;i<json.length;i++){
+        let e = json[i];
+        array.push(this.changeVal(i,e,opt,jsonOpt))
       }
       return array;
     }else{
       let ret = {};
       for(let e in json){
-        ret[e] = this.changeVal(json[e],opt)
+        ret[e] = this.changeVal(e,json[e],opt,jsonOpt)
       }
       return ret;
     }
   }
 
-  private static changeVal(val:any,opt:any){
+  private static changeVal(key:string|number,val:any,opt:any,jsonOpt:IParseJsonOpt){
     if(val instanceof Array){
       let array:any[] = [];
-      for(let e of val){
-        array.push(this.changeVal(e,opt))
+      for(let i= 0;i<val.length;i++){
+        let e = val[i];
+        array.push(this.changeVal(i,e,opt,jsonOpt))
       }
       return array;
     } 
     if(NumUtil.isNum(val)){
-      return val;
+      return this.parseValue(key,val,opt,jsonOpt);
     }
     if(val instanceof Date){
-      return val;
+      return this.parseValue(key,val,opt,jsonOpt);
     }
     if(StrUtil.isStr(val)){
-      return this.parseStr(val,opt);
+      return this.parseStr(key,val,opt,jsonOpt);
     }
     let ret = {};
     for(let e in val){
-      ret[e] = this.changeVal(val[e],opt)
+      ret[e] = this.changeVal(e,val[e],opt,jsonOpt)
     }
     return ret;
 
   }
-  private static parseStr(val:string,opt:any){
+  private static parseValue(key:string|number,val:any,opt ,jsonOpt:IParseJsonOpt){
+    let keyString:string = this.getKeyStringFromJsonOpt(key,jsonOpt);
+    if(keyString == null){
+      return val;
+    }
+    let newVal = this.getByKeys(opt,keyString);
+    if(newVal == null){
+      return val;
+    }
+    return newVal;
+  }
+
+  private static getKeyStringFromJsonOpt(key:string|number,jsonOpt:IParseJsonOpt){
+    if(jsonOpt?.keyMap == null){
+      return null;
+    }
+    let array = jsonOpt.keyMap[key];
+    if(array instanceof Array){
+      if(array.length == 0){
+        return null;
+      }
+      let cntMap = jsonOpt.cntMap;
+      if(cntMap == null){
+        cntMap = {};
+        jsonOpt.cntMap = cntMap;
+      }
+      let cnt = cntMap[key];
+      if(cnt == null){
+        cnt = 0;
+      }
+      let ret = array[ cnt % array.length];
+      cnt++;
+      cntMap[key] = cnt;
+      return ret;
+    }else{
+      return array;
+    }
+  }
+  private static parseStr(key:string|number,val:string,opt:any,jsonOpt:IParseJsonOpt){
     if(val.startsWith('${') && val.endsWith('}')){
       let key = val.substring(2,val.length - 1);
       key = key.trim();
@@ -90,7 +239,7 @@ class JsonUtil {
       }
       return ret;
     }else{
-      return val;
+      return this.parseValue(key,val,opt,jsonOpt);
     }
   }
   /**
@@ -275,4 +424,5 @@ export default JsonUtil;
 import { ArrayUtil } from "./ArrayUtil";
 import { StrUtil } from "./StrUtil";
 import NumUtil from "./NumUtil";
+import IParseJsonOpt from "../inf/IParseJsonOpt";
 
