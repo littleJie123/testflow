@@ -6,7 +6,7 @@ class RunTest {
         let testRunner = testflow_1.TestRunner.get();
         let testCase = testRunner.getTestById(param.id);
         if (testCase) {
-            testCase.run({});
+            testCase.run(param.env, param.param);
         }
     }
 }

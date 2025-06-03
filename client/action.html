@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TestLow - 接口列表</title>
+  <link rel="stylesheet" href="index.css">
+  <script src="js/http.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/util.js"></script>
+</head>
+
+<body>
+  <div class="layout">
+    <div class="menu-container" id="menuContainer"></div>
+    <div class="main-content">
+      <div class="header">
+        <h1>TestLow - 接口列表</h1>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="searchInput" class="search-input" placeholder="输入名称或ID搜索..." oninput="handleSearch()">
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <script>
+    let actions = [];
+    let filteredActions = [];
+
+    async function fetchData() {
+      try {
+        const response = await fetch('/listAction');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        actions = data.list || [];
+        handleSearch();
+      } catch (error) {
+        console.error('获取数据失败:', error);
+      }
+    }
+
+    function handleSearch() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      if (searchTerm === '') {
+        filteredActions = actions;
+      } else {
+        filteredActions = actions.filter(action => 
+          action.name.toLowerCase().includes(searchTerm) ||
+          action.id.toLowerCase().includes(searchTerm)
+        );
+      }
+      renderActions();
+    }
+
+    function renderActions() {
+      const content = document.getElementById('content');
+      const actionsToRender = filteredActions.length > 0 || document.getElementById('searchInput').value ? 
+                           filteredActions : actions;
+      content.innerHTML = actionsToRender.map(action => renderAction(action)).join('');
+    }
+
+    function renderAction(action) {
+      return `
+        <div class="test-case ${action.status}">
+          <div class="test-case-content">
+            <h3>${action.name}</h3>
+            <div>ID: ${Util.getId(action.id)}</div>
+            <div>状态: ${getStatusText(action.status)}</div>
+          </div>
+          <div>
+            <button class="btn" onclick="show('${action.id}')">查看</button>
+            <button class="btn" onclick="runAction('${action.id}')">运行</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function show(id) {
+      window.open(`/actionDetail.html?id=${id}`, '_action');
+    }
+
+    function getStatusText(status) {
+      const statusMap = {
+        init: '初始化',
+        running: '运行中',
+        processed: '成功',
+        error: '失败'
+      };
+      return statusMap[status] || status;
+    }
+
+    async function runAction(id) {
+      try {
+        const response = await fetch(`/runAction?id=${id}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        await fetchData(); // 重新加载数据以更新状态
+      } catch (error) {
+        console.error('运行失败:', error);
+      }
+    }
+
+    async function runAll() {
+      try {
+        const response = await fetch('/runAction');
+        if (!response.ok) throw new Error('Network response was not ok');
+        await fetchData(); // 重新加载数据以更新状态
+      } catch (error) {
+        console.error('运行所有失败:', error);
+      }
+    }
+
+    // 页面加载完成后获取数据
+    document.addEventListener('DOMContentLoaded', fetchData);
+  </script>
+</body>
+</html>

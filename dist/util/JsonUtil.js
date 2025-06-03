@@ -36,6 +36,120 @@ function setKey(obj, key, param) {
     return param;
 }
 class JsonUtil {
+    /**
+     * 从已有参数中取参数
+     * @param json
+     * @param jsonOpt
+     * @returns
+     */
+    static deParseJson(json, jsonOpt) {
+        if (jsonOpt == null || jsonOpt.keyMap == null) {
+            return {};
+        }
+        let opt = {};
+        this.doDeParseJson(json, jsonOpt, opt);
+        let ret = {};
+        if (opt.resultMap != null) {
+            for (let e in opt.resultMap) {
+                let vals = opt.resultMap[e];
+                if (vals instanceof Array) {
+                    for (let val of vals) {
+                        let result = val;
+                        this.setByKeys(ret, result.key, result.val);
+                    }
+                }
+                else {
+                    let result = vals;
+                    this.setByKeys(ret, result.key, result.val);
+                }
+            }
+        }
+        return ret;
+    }
+    static doDeParseJson(json, jsonOpt, ret) {
+        if (json != null) {
+            if (json instanceof Array) {
+                for (let i = 0; i < json.length; i++) {
+                    let e = json[i];
+                    this.doDeParseJson(e, jsonOpt, ret);
+                }
+            }
+            else {
+                for (let e in json) {
+                    this.doDeParseJsonByValue(e, json[e], jsonOpt, ret);
+                }
+            }
+        }
+    }
+    static doDeParseJsonByValue(key, val, jsonOpt, ret) {
+        let keyMap = jsonOpt.keyMap;
+        if (keyMap == null || val == null) {
+            return;
+        }
+        let keyString = keyMap[key];
+        if (StrUtil_1.StrUtil.isStr(val) || NumUtil_1.default.isNum(val) || val instanceof Date) {
+            if (StrUtil_1.StrUtil.isStr(val)) {
+                let str = val;
+                if (str == null) {
+                    return;
+                }
+                str = str.trim();
+                if (str.startsWith('${') && str.endsWith('}')) {
+                    let strKey = str.substring(2, str.length - 1).trim();
+                    this.addToResult(strKey, strKey, '', ret);
+                    return;
+                }
+            }
+            if (keyString == null) {
+                return;
+            }
+            else {
+                this.addToResult(key, keyString, val, ret);
+                return;
+            }
+        }
+        else {
+            for (let e in val) {
+                if (keyString == null) {
+                    this.doDeParseJsonByValue(e, val[e], jsonOpt, ret);
+                }
+                else {
+                    this.addToResult(key, keyString, val, ret);
+                }
+            }
+        }
+    }
+    static addToResult(key, keyString, val, ret) {
+        if (ret.resultMap == null) {
+            ret.resultMap = {};
+        }
+        if (keyString instanceof Array) {
+            if (keyString.length > 0) {
+                if (ret.resultMap[key] == null) {
+                    ret.resultMap[key] = [];
+                }
+                let array = ret.resultMap[key];
+                let len = array.length;
+                array.push({
+                    key: keyString[len % keyString.length],
+                    val
+                });
+            }
+        }
+        else {
+            ret.resultMap[key] = {
+                key: keyString,
+                val
+            };
+        }
+    }
+    /**
+     * 转化json中的变量
+     * @param json
+     * @param opt
+     * @param jsonOpt
+     * @returns
+     */
     static parseJson(json, opt, jsonOpt) {
         if (json == null || opt == null) {
             return json;

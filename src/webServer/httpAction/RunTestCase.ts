@@ -6,7 +6,7 @@ export default class RunTest implements IControl {
     let testRunner = TestRunner.get();
     let testCase = testRunner.getTestById(param.id);
     if(testCase){
-      testCase.run({});
+      testCase.run(param.env,param.param);
     }
      
   }

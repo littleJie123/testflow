@@ -9,30 +9,13 @@ import BaseTest from "./BaseTest";
  */
 export default abstract class TestCase extends BaseTest  {
   
-  private testId:string;
   
-  setTestId(testId:string){
-    this.testId = testId;
-  }
-
-
-  getTestId():string{
-    return this.testId;
-  }
 
   protected processError(e:Error){
     let logger = this.getTestLogger();
     logger.error(`${this.getName()} 运行出错`) 
   }
-  async run(param?,env?:string): Promise<void> {
-    if(param == null){
-      param = {};
-    }
-    this.setParam(param);
-    this.init()
-    this.setEnv(env)  
-    await this.test();
-  }
+  
 
   protected init(){
     this.variable = null;
@@ -59,12 +42,7 @@ export default abstract class TestCase extends BaseTest  {
       if(objAction.setVariable){
         objAction.setVariable(this.getVariable());
       }
-      if(objAction.setParam){
-        objAction.setParam(this.getParam());
-      }
-      if(objAction.setResult){
-        objAction.setResult(result);
-      }
+     
       if(objAction.setEnv){
         objAction.setEnv(this.env);
       }
@@ -76,12 +54,12 @@ export default abstract class TestCase extends BaseTest  {
   }
   
 
-  getActions():ITest[]{
+  getActions():BaseTest[]{
     
     return this.buildActions();
   };
 
-  protected abstract buildActions():ITest[];
+  protected abstract buildActions():BaseTest[];
 
  
   abstract getName():string;

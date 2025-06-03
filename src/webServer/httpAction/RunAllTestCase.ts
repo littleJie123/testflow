@@ -9,7 +9,7 @@ export default class  implements IControl {
       try{
         let testCase = testRunner.getTestById(id);
         if(testCase){
-          testCase.run({});
+          testCase.run( );
         }
       }catch(e){
         

@@ -50,13 +50,20 @@ class UrlAction extends BaseTest_1.default {
     }
     async doTest() {
         let httpUtil = HttpUtil_1.default.get();
-        let datas = this.getDatas();
+        let datas = this.getVariable();
         let url = StrUtil_1.StrUtil.format(this.parseHttpUrl(), datas);
-        let httpParam = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, {});
-        let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas, {});
+        let httpParam = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
+        let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() });
         let result = await httpUtil.requestStatusAndResult(url, this.getMethod(), httpParam, headers);
         this.httpStatus = result.status;
         return result.result;
+    }
+    buildDefParam() {
+        let httpParam = this.getHttpParam();
+        return JsonUtil_1.default.deParseJson(httpParam, { keyMap: this.getParamMeta() });
+    }
+    getHeaderMeta() {
+        return null;
     }
 }
 exports.default = UrlAction;

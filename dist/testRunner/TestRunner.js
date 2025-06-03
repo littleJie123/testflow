@@ -6,13 +6,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const HttpServer_1 = __importDefault(require("../webServer/HttpServer"));
-const FileUtil_1 = __importDefault(require("../util/FileUtil"));
 class TestRunner {
     constructor() {
         this.beanMap = {};
         this.envConfig = {};
         this.defEnv = 'local';
         this.testMap = {};
+        this.actionMap = {};
+    }
+    getActionById(id) {
+        let ret = this.actionMap[id];
+        if (ret == null) {
+            return null;
+        }
+        return ret.clone();
+    }
+    findAllAction() {
+        let ret = [];
+        for (let key in this.actionMap) {
+            ret.push(this.actionMap[key]);
+        }
+        return ret;
     }
     getTestById(id) {
         return this.testMap[id];
@@ -32,35 +46,37 @@ class TestRunner {
      * testMap的key为文件名，value为实例化出来的对象
      * @param testPath
      */
-    async scan(testPath) {
+    async scan(testPath, map, rootTestPath) {
         if (testPath == null || testPath == '') {
             return;
         }
+        // 第一次调用时保存根路径
+        if (!rootTestPath) {
+            rootTestPath = [];
+        }
         try {
-            // 读取目录内容
             const files = fs_1.default.readdirSync(testPath);
             for (const file of files) {
                 const fullPath = path_1.default.join(testPath, file);
                 const stat = fs_1.default.statSync(fullPath);
                 if (stat.isDirectory()) {
-                    // 如果是目录，递归扫描
-                    await this.scan(fullPath);
+                    await this.scan(fullPath, map, [...rootTestPath, file]);
                 }
                 else {
-                    // 检查文件是否符合条件：
-                    // 1. 文件名以Test开头
-                    // 2. 扩展名为.js或.ts（排除.d.ts）
                     if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
                         try {
-                            // 动态导入测试文件
                             const TestClass = require(fullPath).default;
                             if (TestClass) {
-                                // 实例化测试类并存储到testMap中
                                 const testInstance = new TestClass();
+                                testInstance.setClazz(TestClass);
                                 const fileName = path_1.default.basename(file, path_1.default.extname(file));
+                                // 计算相对路径
+                                //let relativePath = path.relative(rootTestPath, path.dirname(fullPath));
+                                // 如果有相对路径，则组合路径和文件名
+                                let testId = `${rootTestPath.join('_')}_${fileName}`;
                                 if (testInstance.setTestId) {
-                                    testInstance.setTestId(fileName);
-                                    this.testMap[fileName] = testInstance;
+                                    testInstance.setTestId(testId);
+                                    map[testId] = testInstance;
                                 }
                             }
                         }
@@ -130,30 +146,9 @@ class TestRunner {
     }
     async start(param) {
         console.log('--------- scan ----------------');
-        this.scan(param === null || param === void 0 ? void 0 : param.testPath);
+        this.scan(param === null || param === void 0 ? void 0 : param.testPath, this.testMap);
+        this.scan(param === null || param === void 0 ? void 0 : param.actionPath, this.actionMap);
         if (param === null || param === void 0 ? void 0 : param.testId) {
-            let testCase = this.testMap[param.testId];
-            if (testCase) {
-                let result = await testCase.run({});
-                console.log(JSON.stringify(result, null, 4));
-            }
-            else {
-                if (param.actionPath) {
-                    FileUtil_1.default.each(param.actionPath, async (filePath) => {
-                        if (filePath.endsWith('.js') || (filePath.endsWith('.ts') && !filePath.endsWith('.d.ts'))) {
-                            const fileName = path_1.default.basename(filePath, path_1.default.extname(filePath));
-                            if (fileName.toLowerCase() == param.testId.toLowerCase()) {
-                                let actionClazz = require(filePath).default;
-                                if (actionClazz) {
-                                    let action = new actionClazz();
-                                    let result = await action.test();
-                                    console.log(JSON.stringify(result, null, 4));
-                                }
-                            }
-                        }
-                    });
-                }
-            }
         }
         else {
             new HttpServer_1.default().start(param);

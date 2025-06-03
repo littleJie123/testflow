@@ -13,6 +13,37 @@ class BaseTest {
     constructor() {
         this.status = S_Init;
     }
+    setClazz(clazz) {
+        this.clazz = clazz;
+    }
+    clone() {
+        let clazz = this.clazz;
+        return new clazz();
+    }
+    init() {
+        this.variable = null;
+        this.testLogger = null;
+    }
+    async run(env, opt) {
+        this.init();
+        this.setEnv(env);
+        if (opt) {
+            this.setVariable(opt.variable);
+        }
+        await this.test();
+    }
+    setTestId(testId) {
+        this.testId = testId;
+    }
+    getTestId() {
+        return this.testId;
+    }
+    getInfo() {
+        return this.info;
+    }
+    setInfo(info) {
+        this.info = info;
+    }
     getStatus() {
         return this.status;
     }
@@ -21,22 +52,6 @@ class BaseTest {
     }
     setEnv(env) {
         this.env = env;
-    }
-    getDatas() {
-        return {
-            param: this.getParam(),
-            result: this.result,
-            variable: this.getVariable()
-        };
-    }
-    setResult(result) {
-        this.result = result;
-    }
-    setParam(param) {
-        this.param = param;
-    }
-    getParam() {
-        return this.param;
     }
     setVariable(variable) {
         this.variable = variable;
@@ -63,6 +78,10 @@ class BaseTest {
             this.testLogger = new TestLogger_1.default();
         }
         return this.testLogger;
+    }
+    isStop() {
+        var _a, _b;
+        return (_b = (_a = this.info) === null || _a === void 0 ? void 0 : _a.config) === null || _b === void 0 ? void 0 : _b.stop;
     }
     async test() {
         let logger = this.getTestLogger();
@@ -114,8 +133,15 @@ class BaseTest {
     toJson() {
         return {
             name: this.getName(),
-            status: this.status
+            status: this.status,
+            id: this.testId
         };
+    }
+    getParamMeta() {
+        return null;
+    }
+    buildDefParam() {
+        return {};
     }
 }
 BaseTest.S_Init = S_Init;

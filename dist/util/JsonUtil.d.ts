@@ -1,4 +1,21 @@
 declare class JsonUtil {
+    /**
+     * 从已有参数中取参数
+     * @param json
+     * @param jsonOpt
+     * @returns
+     */
+    static deParseJson(json: any, jsonOpt: IParseJsonOpt): any;
+    private static doDeParseJson;
+    private static doDeParseJsonByValue;
+    private static addToResult;
+    /**
+     * 转化json中的变量
+     * @param json
+     * @param opt
+     * @param jsonOpt
+     * @returns
+     */
     static parseJson(json: any, opt: any, jsonOpt: IParseJsonOpt): any;
     private static changeVal;
     private static parseValue;

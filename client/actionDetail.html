@@ -1,4 +1,4 @@
- 
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -12,64 +12,72 @@
 <body>
   <div class="header">
     <h1 id="pageTitle">测试用例详情</h1>
+    
   </div>
 
+  <div id="statusDiv">状态：</div>
+
   <div class="toolbar">
-    <button class="btn" onclick="runTestCase()">运行测试</button>
+    <button class="btn" onclick="runAction()">运行测试</button>
   </div>
 
   <div class="detail">
-    
+    <div class="detailItem2Span">
+      <h2>默认参数</h2>
+      <textarea id="defParam" cols="200" rows="10"></textarea>
+    </div>
     <div class="actions-panel">
-      <h2>测试步骤</h2>
-      <div id="actionsList"></div>
+      <h2>参数元数据</h2> 
+      <pre id="actionsList"></pre>
     </div>
     <div class="logs-panel">
       <h2>测试日志</h2>
       <div id="logsList"></div>
     </div>
   </div>
-
+  <script src="js/http.js"></script>
+  <script src="js/util.js"></script>
   <script>
-    let testCaseId = '';
+    let actionId = '';
 
     // 页面加载时获取URL参数并初始化
     window.onload = function () {
       const urlParams = new URLSearchParams(window.location.search);
-      testCaseId = urlParams.get('id');
-      if (!testCaseId) {
+      actionId = urlParams.get('id');
+      if (!actionId) {
         alert('未指定测试用例ID');
         return;
       }
-      document.getElementById('pageTitle').textContent = `测试用例：${testCaseId}`;
-      fetchTestCaseData();
+      document.getElementById('pageTitle').textContent = `接口：${actionId}`;
+      fetchAction();
     }
 
     // 获取测试用例数据
-    async function fetchTestCaseData() {
+    async function fetchAction() {
       try {
-        if(testCaseId == null){
+        if(actionId == null){
           return;
         }
-        const response = await fetch(`/getTestCase?id=${testCaseId}`);
+        const response = await fetch(`/getAction?id=${actionId}`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        renderActions(data.actions || []);
+        renderParamMeta(data.paramMeta);
+        renderDefParam(data.defParam);
         renderLogs(data.logs || []);
+        Util.renderStatus(data.status);
       } catch (error) {
         console.error('获取测试用例数据失败:', error);
       }
     }
 
     // 渲染测试步骤
-    function renderActions(actions) {
+    function renderParamMeta(paramMeta) {
       const actionsList = document.getElementById('actionsList');
-      actionsList.innerHTML = actions.map(action => `
-                <div class="action-item ${action.status}">
-                    <h3>${action.name}</h3>
-                    <div>状态: ${getStatusText(action.status)}</div>
-                </div>
-            `).join('');
+      actionsList.innerText = JSON.stringify(paramMeta, null, 2);
+    }
+    function renderDefParam(defParam){
+      const defParamList = document.getElementById('defParam');
+      defParamList.value = JSON.stringify(defParam, null, 2);
     }
 
     // 渲染日志
@@ -104,25 +112,29 @@
     }
 
     // 运行测试用例
-    async function runTestCase() {
+    async function runAction() {
+      Util.initStatus();
       try {
-        const response = await fetch('/runTestCase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id: [testCaseId] })
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
-        // 运行后立即刷新数据
-        await fetchTestCaseData();
+        let param = document.getElementById('defParam').value;
+        
+        if(param == null || param.trim() == ''){
+          param = null;
+        }else{
+          param = JSON.parse(param);
+        }
+        const data = await Http.post('/runAction',{ 
+            id: actionId ,
+            param
+          }
+        );
+        renderLogs(data.logs || []);
+        Util.renderStatus(data.status);
+         
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }
     }
-    setInterval(() => {
-      fetchTestCaseData();
-    }, 3000);
+
   </script>
 </body>
 

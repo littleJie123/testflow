@@ -9,7 +9,7 @@ class default_1 {
             try {
                 let testCase = testRunner.getTestById(id);
                 if (testCase) {
-                    testCase.run({});
+                    testCase.run();
                 }
             }
             catch (e) {

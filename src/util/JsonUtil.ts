@@ -48,7 +48,16 @@ function setKey(obj, key, param) {
 class JsonUtil {
 
 
+  /**
+   * 从已有参数中取参数
+   * @param json 
+   * @param jsonOpt 
+   * @returns 
+   */
   static deParseJson(json:any,jsonOpt:IParseJsonOpt):any{
+    if(jsonOpt==null || jsonOpt.keyMap == null){
+      return {};
+    }
     let opt:DeparseResult = {};
     this.doDeParseJson(json,jsonOpt,opt);
     let ret = {}; 
@@ -98,6 +107,8 @@ class JsonUtil {
         }
         str = str.trim();
         if(str.startsWith('${') && str.endsWith('}')){
+          let strKey = str.substring(2,str.length - 1).trim();
+          this.addToResult(strKey,strKey,'',ret);
           return;
         }
       }
@@ -118,7 +129,7 @@ class JsonUtil {
     }
     
   }
-  static addToResult(key: string | number, keyString: string | string[], val: any, ret: DeparseResult) {
+  private static addToResult(key: string | number, keyString: string | string[], val: any, ret: DeparseResult) {
     if(ret.resultMap == null){
       ret.resultMap = {};
     }
@@ -144,7 +155,13 @@ class JsonUtil {
   }
 
 
-
+  /**
+   * 转化json中的变量
+   * @param json 
+   * @param opt 
+   * @param jsonOpt 
+   * @returns 
+   */
   static parseJson(json:any,opt:any,jsonOpt:IParseJsonOpt){
     if(json == null || opt == null){
       return json;

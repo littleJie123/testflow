@@ -21,20 +21,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TestLow - 编排你的测试流程</title>
   <link rel="stylesheet" href="index.css">
-  <script src="http.js"></script>
+  <script src="js/http.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/util.js"></script>
 </head>
 
 <body>
-  <div class="header">
-    <h1>TestLow - 编排你的测试流程</h1>
+  <div class="layout">
+    <div class="menu-container" id="menuContainer"></div>
+    <div class="main-content">
+      <div class="header">
+        <h1>TestLow - 编排你的测试流程</h1>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="searchInput" class="search-input" placeholder="输入名称或ID搜索..." oninput="handleSearch()">
+        <button class="btn" onclick="runAll()">运行所有</button>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
   </div>
-  <div class="toolbar">
-    <input type="text" id="searchInput" class="search-input" placeholder="输入名称或ID搜索..." oninput="handleSearch()">
-    <button class="btn" onclick="runAll()">运行所有</button> 
-  </div>
-
-  <div class="content" id="content"></div>
-
   <script>
     let testCases = [];
     let filteredTestCases = [];
@@ -55,9 +60,9 @@
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       if (searchTerm === '') {
         filteredTestCases = testCases;
-         
-      }else{
-        filteredTestCases = testCases.filter(testCase => 
+
+      } else {
+        filteredTestCases = testCases.filter(testCase =>
           testCase.name.toLowerCase().includes(searchTerm) ||
           testCase.id.toLowerCase().includes(searchTerm)
         );
@@ -67,8 +72,8 @@
 
     function renderTestCases() {
       const content = document.getElementById('content');
-      const casesToRender = filteredTestCases.length > 0 || document.getElementById('searchInput').value ? 
-                           filteredTestCases : testCases;
+      const casesToRender = filteredTestCases.length > 0 || document.getElementById('searchInput').value ?
+        filteredTestCases : testCases;
       content.innerHTML = casesToRender.map(testCase => renderTestCase(testCase)).join('');
     }
 
@@ -77,8 +82,8 @@
                 <div class="test-case ${testCase.status}">
                     <div class="test-case-content" >
                         <h3>${testCase.name}</h3>
-                        <div>ID: ${testCase.id}</div>
-                        <div>状态: ${getStatusText(testCase.status)}</div>
+                        <div>ID: ${Util.getId(testCase.id)}</div>
+                        <div>状态: ${Util.getStatusText(testCase.status)}</div>
                         
                     </div>
                     <div>
@@ -92,22 +97,14 @@
       window.open(`/detail.html?id=${id}`, '_test');
     }
 
-    function getStatusText(status) {
-      const statusMap = {
-        init: '初始化',
-        running: '运行中',
-        processed: '成功',
-        error: '失败'
-      };
-      return statusMap[status] || status;
-    }
+    
 
     function toggleActions(element) {
       const testCase = element.closest('.test-case');
       testCase.classList.toggle('expanded');
     }
 
-     
+
 
     function closeModal() {
       document.getElementById('logModal').style.display = 'none';
@@ -135,9 +132,9 @@
       }
     }
 
-     
 
-    
+
+
 
     async function runAll() {
       const allIds = filteredTestCases.map(testCase => testCase.id);
@@ -163,4 +160,5 @@
     setInterval(fetchData, 5000);
   </script>
 </body>
+
 </html>

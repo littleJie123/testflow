@@ -4,7 +4,10 @@ import ITestParam from '../inf/ITestParam';
 import HttpServer from '../webServer/HttpServer';
 import TestCase from '../testCase/TestCase';
 import FileUtil from '../util/FileUtil';
+import { BaseTest } from '../testflow';
 export default class TestRunner {
+  
+  
   
   private variable: any;
   private beanMap:any = {};
@@ -15,10 +18,26 @@ export default class TestRunner {
 
   private testMap:{[key:string]:TestCase} = {};
 
+  private actionMap:{[key:string]:BaseTest} = {};
   private constructor(){
 
   }
 
+  getActionById(id: string):BaseTest {
+    let ret = this.actionMap[id];
+    if(ret == null){
+      return null;
+    }
+    return ret.clone();
+  }
+
+  findAllAction():BaseTest[] {
+    let ret:BaseTest[] = [];
+    for(let key in this.actionMap){
+      ret.push(this.actionMap[key]);
+    }
+    return ret;
+  }
   getTestById(id: string): TestCase {
     return this.testMap[id];
   }
@@ -38,13 +57,19 @@ export default class TestRunner {
    * testMap的key为文件名，value为实例化出来的对象
    * @param testPath 
    */
-  async scan(testPath: string) {
-    
+
+  
+  async scan(testPath: string,map:any,rootTestPath?:string[]) {
     if(testPath == null || testPath == ''){
       return ;
     }
+  
+    // 第一次调用时保存根路径
+    if(!rootTestPath) {
+      rootTestPath = [];
+    }
+    
     try {
-      // 读取目录内容
       const files = fs.readdirSync(testPath);
 
       for (const file of files) {
@@ -52,26 +77,24 @@ export default class TestRunner {
         const stat = fs.statSync(fullPath);
 
         if (stat.isDirectory()) {
-          // 如果是目录，递归扫描
-          await this.scan(fullPath);
+          await this.scan(fullPath,map,[... rootTestPath,file]);
         } else {
-          // 检查文件是否符合条件：
-          // 1. 文件名以Test开头
-          // 2. 扩展名为.js或.ts（排除.d.ts）
-          if (
-             
-            (file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))
-          ) {
+          if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
             try {
-              // 动态导入测试文件
               const TestClass = require(fullPath).default;
               if (TestClass) {
-                // 实例化测试类并存储到testMap中
                 const testInstance = new TestClass();
+                testInstance.setClazz(TestClass);
                 const fileName = path.basename(file, path.extname(file));
+                
+                // 计算相对路径
+                //let relativePath = path.relative(rootTestPath, path.dirname(fullPath));
+                // 如果有相对路径，则组合路径和文件名
+                let testId = `${rootTestPath.join('_')}_${fileName}`;
+                
                 if(testInstance.setTestId){
-                  testInstance.setTestId(fileName);
-                  this.testMap[fileName] = testInstance;
+                  testInstance.setTestId(testId);
+                  map[testId] = testInstance;
                 }
               }
             } catch (error) {
@@ -150,30 +173,11 @@ export default class TestRunner {
 
   async start(param?:ITestParam){
     console.log('--------- scan ----------------');
-    this.scan(param?.testPath);
+    this.scan(param?.testPath,this.testMap);
+    this.scan(param?.actionPath,this.actionMap);
     if(param?.testId ){
-      let testCase = this.testMap[param.testId];
-      if(testCase){
-        let result = await testCase.run({});
-        console.log(JSON.stringify(result,null,4));
-      }else{
-        if(param.actionPath){
-          FileUtil.each(param.actionPath,async (filePath?:string)=>{
-            
-            if (filePath.endsWith('.js') || (filePath.endsWith('.ts') && !filePath.endsWith('.d.ts')) ){
-              const fileName = path.basename(filePath, path.extname(filePath));
-              if(fileName.toLowerCase() == param.testId.toLowerCase()){
-                let actionClazz = require(filePath).default;
-                if(actionClazz){
-                  let action = new actionClazz();
-                  let result =await action.test();
-                  console.log(JSON.stringify(result,null,4));
-                }
-              }
-            }
-          })
-        }
-      }
+      
+      
     }else{
       new HttpServer().start(param);
     }

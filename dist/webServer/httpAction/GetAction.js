@@ -4,16 +4,16 @@ const testflow_1 = require("../../testflow");
 class GetTestCase {
     process(param) {
         let testRunner = testflow_1.TestRunner.get();
-        let test = testRunner.getTestById(param.id);
-        if (test == null) {
+        let action = testRunner.getActionById(param.id);
+        if (action == null) {
             return {};
         }
-        let logger = test.getTestLogger();
+        let logger = action.getTestLogger();
         return {
-            actions: test.getActions().map((item) => {
-                return item.toJson();
-            }),
-            logs: logger.getLogs()
+            paramMeta: action.getParamMeta(),
+            logs: logger.getLogs(),
+            defParam: action.buildDefParam(),
+            status: action.getStatus()
         };
     }
 }

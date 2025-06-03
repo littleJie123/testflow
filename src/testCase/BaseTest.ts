@@ -1,3 +1,4 @@
+import IRunOpt from "../inf/IRunOpt";
 import ITest from "../inf/ITest";
 import ITestCaseInfo from "../inf/ITestCaseInfo";
 import TestLogger from "../testLog/TestLogger";
@@ -13,10 +14,14 @@ export default abstract class BaseTest implements ITest {
   static readonly S_Runing = S_Runing;
   static readonly S_Processed = S_Processed;
   static readonly S_Error = S_Error;
+
+
+  protected clazz:any
+
   protected testLogger:TestLogger;
   protected variable:any;
-  protected param:any;
-  protected result:any;
+ 
+
 
   protected env:string;
 
@@ -24,6 +29,42 @@ export default abstract class BaseTest implements ITest {
 
   protected info:ITestCaseInfo ;
 
+  protected testId:string;
+  
+
+  protected setClazz(clazz){
+    this.clazz = clazz;
+  }
+
+  clone(){
+    let clazz = this.clazz;
+    return new clazz();
+  }
+
+  protected init(){
+    this.variable = null;
+    this.testLogger = null;
+    
+  }
+
+  async run(env?:string,opt?:IRunOpt): Promise<void> {
+    
+    this.init()
+    this.setEnv(env)  
+    if(opt){
+      this.setVariable(opt.variable);
+    }
+    await this.test();
+  }
+
+  setTestId(testId:string){
+    this.testId = testId;
+  }
+
+
+  getTestId():string{
+    return this.testId;
+  }
   getInfo():ITestCaseInfo {
     return this.info;
   }
@@ -41,25 +82,7 @@ export default abstract class BaseTest implements ITest {
   setEnv(env:string){
     this.env = env;
   }
-  protected getDatas():any{
-    return {
-      param:this.getParam(),
-      result:this.result,
-      variable:this.getVariable()
-    }
-  }
-  setResult(result:any){
-    this.result = result;
-  }
-
-   
-
-  setParam(param:any){
-    this.param = param;
-  }
-  protected getParam():any{
-    return this.param;
-  }
+  
   setVariable(variable:any){
     this.variable = variable;
   }
@@ -152,7 +175,16 @@ export default abstract class BaseTest implements ITest {
   toJson(){
     return {
       name:this.getName(),
-      status:this.status
+      status:this.status,
+      id:this.testId
     }
+  }
+
+  getParamMeta():any{
+    return null;
+  }
+
+  buildDefParam(){
+    return {};
   }
 }

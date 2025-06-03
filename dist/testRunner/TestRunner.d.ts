@@ -1,12 +1,16 @@
 import ITestParam from '../inf/ITestParam';
 import TestCase from '../testCase/TestCase';
+import { BaseTest } from '../testflow';
 export default class TestRunner {
     private variable;
     private beanMap;
     private envConfig;
     private defEnv;
     private testMap;
+    private actionMap;
     private constructor();
+    getActionById(id: string): BaseTest;
+    findAllAction(): BaseTest[];
     getTestById(id: string): TestCase;
     findAllTest(): TestCase[];
     /**
@@ -17,7 +21,7 @@ export default class TestRunner {
      * testMap的key为文件名，value为实例化出来的对象
      * @param testPath
      */
-    scan(testPath: string): Promise<void>;
+    scan(testPath: string, map: any, rootTestPath?: string[]): Promise<void>;
     /**
      * 注册环境变量
      * @param env

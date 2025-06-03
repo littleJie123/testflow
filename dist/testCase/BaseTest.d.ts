@@ -1,28 +1,36 @@
+import IRunOpt from "../inf/IRunOpt";
 import ITest from "../inf/ITest";
+import ITestCaseInfo from "../inf/ITestCaseInfo";
 import TestLogger from "../testLog/TestLogger";
 export default abstract class BaseTest implements ITest {
     static readonly S_Init = "init";
     static readonly S_Runing = "runing";
     static readonly S_Processed = "processed";
     static readonly S_Error = "error";
+    protected clazz: any;
     protected testLogger: TestLogger;
     protected variable: any;
-    protected param: any;
-    protected result: any;
     protected env: string;
     protected status: string;
+    protected info: ITestCaseInfo;
+    protected testId: string;
+    protected setClazz(clazz: any): void;
+    clone(): any;
+    protected init(): void;
+    run(env?: string, opt?: IRunOpt): Promise<void>;
+    setTestId(testId: string): void;
+    getTestId(): string;
+    getInfo(): ITestCaseInfo;
+    setInfo(info: ITestCaseInfo): void;
     getStatus(): string;
     beforeRun(): void;
     setEnv(env: string): void;
-    protected getDatas(): any;
-    setResult(result: any): void;
-    setParam(param: any): void;
-    protected getParam(): any;
     setVariable(variable: any): void;
     protected getVariable(): any;
     protected addVariable(variable: any): void;
     setTestLogger(logger: TestLogger): void;
     getTestLogger(): TestLogger;
+    isStop(): boolean;
     test(): Promise<any>;
     protected processError(e: Error): void;
     /**
@@ -42,5 +50,8 @@ export default abstract class BaseTest implements ITest {
     toJson(): {
         name: string;
         status: string;
+        id: string;
     };
+    getParamMeta(): any;
+    buildDefParam(): {};
 }

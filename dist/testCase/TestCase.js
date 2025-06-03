@@ -9,24 +9,9 @@ const BaseTest_1 = __importDefault(require("./BaseTest"));
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例
  */
 class TestCase extends BaseTest_1.default {
-    setTestId(testId) {
-        this.testId = testId;
-    }
-    getTestId() {
-        return this.testId;
-    }
     processError(e) {
         let logger = this.getTestLogger();
         logger.error(`${this.getName()} 运行出错`);
-    }
-    async run(param, env) {
-        if (param == null) {
-            param = {};
-        }
-        this.setParam(param);
-        this.init();
-        this.setEnv(env);
-        await this.test();
     }
     init() {
         this.variable = null;
@@ -47,12 +32,6 @@ class TestCase extends BaseTest_1.default {
             }
             if (objAction.setVariable) {
                 objAction.setVariable(this.getVariable());
-            }
-            if (objAction.setParam) {
-                objAction.setParam(this.getParam());
-            }
-            if (objAction.setResult) {
-                objAction.setResult(result);
             }
             if (objAction.setEnv) {
                 objAction.setEnv(this.env);
