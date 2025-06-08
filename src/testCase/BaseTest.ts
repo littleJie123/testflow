@@ -54,7 +54,12 @@ export default abstract class BaseTest implements ITest {
     if(opt){
       this.setVariable(opt.variable);
     }
-    await this.test();
+    try{
+      await this.test();
+    }catch(e){
+      this.getTestLogger().error(e);
+      this.status = S_Error;
+    }
   }
 
   setTestId(testId:string){
