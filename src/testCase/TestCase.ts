@@ -16,6 +16,9 @@ export default abstract class TestCase extends BaseTest  {
     logger.error(`${this.getName()} 运行出错`) 
   }
   
+  needInScreen(){
+    return true;
+  }
 
   protected init(){
     this.variable = null;

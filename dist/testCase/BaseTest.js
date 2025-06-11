@@ -13,6 +13,13 @@ class BaseTest {
     constructor() {
         this.status = S_Init;
     }
+    /**
+     * 是否要出现在web界面的屏幕上
+     * @returns
+     */
+    needInScreen() {
+        return false;
+    }
     setClazz(clazz) {
         this.clazz = clazz;
     }
@@ -72,9 +79,14 @@ class BaseTest {
         if (this.variable == null) {
             this.variable = TestRunner_1.default.get().getVariable();
         }
+        let logger = this.getTestLogger();
+        let cnt = 0;
         for (let key in variable) {
+            logger.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`);
             this.variable[key] = variable[key];
+            cnt++;
         }
+        logger.log(`添加变量 共 ${cnt} 个`);
     }
     setTestLogger(logger) {
         this.testLogger = logger;

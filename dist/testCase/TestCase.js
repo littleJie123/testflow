@@ -13,6 +13,9 @@ class TestCase extends BaseTest_1.default {
         let logger = this.getTestLogger();
         logger.error(`${this.getName()} 运行出错`);
     }
+    needInScreen() {
+        return true;
+    }
     init() {
         this.variable = null;
         this.testLogger = null;

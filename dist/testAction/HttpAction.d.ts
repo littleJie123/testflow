@@ -2,6 +2,7 @@ import IHttpActionParam from "../inf/IHttpActionParam";
 import UrlAction from "./UrlAction";
 export default class extends UrlAction {
     private opt;
+    needInScreen(): boolean;
     constructor(param?: IHttpActionParam);
     protected getDefHttpParam(): IHttpActionParam;
     protected getMethod(): string;

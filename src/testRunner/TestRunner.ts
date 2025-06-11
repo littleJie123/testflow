@@ -84,17 +84,19 @@ export default class TestRunner {
               const TestClass = require(fullPath).default;
               if (TestClass) {
                 const testInstance = new TestClass();
-                testInstance.setClazz(TestClass);
-                const fileName = path.basename(file, path.extname(file));
-                
-                // 计算相对路径
-                //let relativePath = path.relative(rootTestPath, path.dirname(fullPath));
-                // 如果有相对路径，则组合路径和文件名
-                let testId = `${rootTestPath.join('_')}_${fileName}`;
-                
-                if(testInstance.setTestId){
-                  testInstance.setTestId(testId);
-                  map[testId] = testInstance;
+                if(testInstance.needInScreen()){
+                  testInstance.setClazz(TestClass);
+                  const fileName = path.basename(file, path.extname(file));
+                  
+                  // 计算相对路径
+                  //let relativePath = path.relative(rootTestPath, path.dirname(fullPath));
+                  // 如果有相对路径，则组合路径和文件名
+                  let testId = `${rootTestPath.join('_')}_${fileName}`;
+                  
+                  if(testInstance.setTestId){
+                    testInstance.setTestId(testId);
+                    map[testId] = testInstance;
+                  }
                 }
               }
             } catch (error) {

@@ -32,6 +32,15 @@ export default abstract class BaseTest implements ITest {
   protected testId:string;
   
 
+
+  /**
+   * 是否要出现在web界面的屏幕上
+   * @returns 
+   */
+  needInScreen(){
+    return false;
+  }
+
   protected setClazz(clazz){
     this.clazz = clazz;
   }
@@ -102,9 +111,14 @@ export default abstract class BaseTest implements ITest {
     if(this.variable == null){
       this.variable = TestRunner.get().getVariable();
     }
+    let logger = this.getTestLogger();
+    let cnt = 0
     for(let key in variable){
+      logger.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`)
       this.variable[key] = variable[key];
+      cnt++;
     }
+    logger.log(`添加变量 共 ${cnt} 个`)
        
   }
   setTestLogger(logger:TestLogger){

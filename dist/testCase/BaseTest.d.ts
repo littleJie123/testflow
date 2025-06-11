@@ -14,6 +14,11 @@ export default abstract class BaseTest implements ITest {
     protected status: string;
     protected info: ITestCaseInfo;
     protected testId: string;
+    /**
+     * 是否要出现在web界面的屏幕上
+     * @returns
+     */
+    needInScreen(): boolean;
     protected setClazz(clazz: any): void;
     clone(): any;
     protected init(): void;

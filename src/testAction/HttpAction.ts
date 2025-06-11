@@ -4,6 +4,10 @@ import UrlAction from "./UrlAction";
 
 export default class extends UrlAction{
   private opt:IHttpActionParam;
+
+  needInScreen(){
+    return true;
+  }
   constructor(param?:IHttpActionParam){
     super();
     if(param == null){

@@ -5,6 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const UrlAction_1 = __importDefault(require("./UrlAction"));
 class default_1 extends UrlAction_1.default {
+    needInScreen() {
+        return true;
+    }
     constructor(param) {
         super();
         if (param == null) {
