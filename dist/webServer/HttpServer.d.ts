@@ -22,6 +22,7 @@ export default class HttpServer {
      * @param param
      */
     start(param?: ITestParam): void;
+    private processWebSocketMessage;
     process(req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage>): Promise<void>;
     /**
      * 处理请求

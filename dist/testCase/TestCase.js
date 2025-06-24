@@ -16,19 +16,17 @@ class TestCase extends BaseTest_1.default {
     needInScreen() {
         return true;
     }
-    init() {
-        this.variable = null;
-        this.testLogger = null;
-    }
     async doTest() {
         let result = null;
-        for (let action of this.getActions()) {
+        let actions = this.getActions();
+        for (let action of actions) {
+            action.setWebSocket(this.webSocket);
             let objAction = action;
             if (objAction.beforeRun) {
                 objAction.beforeRun();
             }
         }
-        for (let action of this.getActions()) {
+        for (let action of actions) {
             let objAction = action;
             if (objAction.setTestLogger) {
                 objAction.setTestLogger(this.getTestLogger());
@@ -44,14 +42,19 @@ class TestCase extends BaseTest_1.default {
         return result;
     }
     getActions() {
-        return this.buildActions();
+        let list = this.buildActions();
+        let id = 0;
+        for (let row of list) {
+            row.setTestId(`${this.testId}-${id++}`);
+        }
+        return list;
     }
     ;
     toJson() {
         let json = {
             id: this.testId,
             name: this.getName(),
-            status: this.getStatus(),
+            status: this.getRunStatus(),
         };
         return json;
     }

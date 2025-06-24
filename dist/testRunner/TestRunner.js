@@ -29,7 +29,12 @@ class TestRunner {
         return ret;
     }
     getTestById(id) {
-        return this.testMap[id];
+        let ret = this.testMap[id];
+        if (ret) {
+            let clone = ret.clone();
+            return clone;
+        }
+        return null;
     }
     findAllTest() {
         let result = [];

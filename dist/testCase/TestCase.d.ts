@@ -6,7 +6,6 @@ import BaseTest from "./BaseTest";
 export default abstract class TestCase extends BaseTest {
     protected processError(e: Error): void;
     needInScreen(): boolean;
-    protected init(): void;
     doTest(): Promise<any>;
     getActions(): BaseTest[];
     protected abstract buildActions(): BaseTest[];

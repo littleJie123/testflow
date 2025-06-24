@@ -1,15 +1,19 @@
 import { TestRunner } from "../../testflow";
 import IControl from "../../inf/IControl";
+import BaseAction from "../BaseAction";
 
-export default class RunTest implements IControl {
+export default class RunTest extends BaseAction {
   async process(param?: any) {
     let testRunner = TestRunner.get();
     let baseTest = testRunner.getActionById(param.id);
     if(baseTest){
-      await baseTest.run(param.env,{variable:param.param});
+ 
+      
+      baseTest.setWebSocket(this.getWebSocket());
+      baseTest.run(param.env,{variable:param.param});
       return {
         logs:baseTest.getTestLogger().getLogs(),
-        status:baseTest.getStatus()
+        status:baseTest.getRunStatus()
         
       }
     }

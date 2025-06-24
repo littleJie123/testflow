@@ -4,8 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const TestRunner_1 = __importDefault(require("../../testRunner/TestRunner"));
-class ListTestCase {
-    process(param) {
+const BaseAction_1 = __importDefault(require("../BaseAction"));
+class ListTestCase extends BaseAction_1.default {
+    async process(param) {
         let testRunner = TestRunner_1.default.get();
         let testCaseList = testRunner.findAllTest();
         return {

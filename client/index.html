@@ -20,7 +20,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TestLow - 编排你的测试流程</title>
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="css/index.css">
   <script src="js/http.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/util.js"></script>
@@ -41,14 +41,16 @@
     </div>
   </div>
   <script>
+
     let testCases = [];
     let filteredTestCases = [];
-
+    let http = Http.get()
+    
     async function fetchData() {
       try {
-        const response = await fetch('/listTestCase');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const data = await http.post('/listTestCase');
+        console.log('获取数据成功:', data);
+     
         testCases = data.list || [];
         handleSearch();
       } catch (error) {
@@ -79,7 +81,7 @@
 
     function renderTestCase(testCase) {
       return `
-                <div class="test-case ${testCase.status}">
+                <div class="test-case ${testCase.status}" id="${testCase.id}">
                     <div class="test-case-content" >
                         <h3>${testCase.name}</h3>
                         <div>ID: ${Util.getId(testCase.id)}</div>
@@ -94,6 +96,7 @@
             `;
     }
     function show(id) {
+      
       window.open(`/detail.html?id=${id}`, '_test');
     }
 
@@ -118,15 +121,11 @@
 
     async function runTestCase(id) {
       try {
-        const response = await fetch('/runTestCase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id: [id] })
+        const response = await http.post('/runTestCase', {
+           id: [id] 
         });
-        if (!response.ok) throw new Error('Network response was not ok');
-        await fetchData(); // 刷新数据
+       
+       
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }
@@ -139,15 +138,10 @@
     async function runAll() {
       const allIds = filteredTestCases.map(testCase => testCase.id);
       try {
-        const response = await fetch('/RunAllTestCase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ids: allIds })
+        const response = await http.post('/RunAllTestCase', {
+          ids: allIds 
         });
-        if (!response.ok) throw new Error('Network response was not ok');
-        await fetchData(); // 刷新数据
+        
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }
@@ -156,8 +150,7 @@
     // 初始加载
     fetchData();
 
-    // 定期刷新数据
-    setInterval(fetchData, 5000);
+    
   </script>
 </body>
 

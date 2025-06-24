@@ -39,7 +39,13 @@ export default class TestRunner {
     return ret;
   }
   getTestById(id: string): TestCase {
-    return this.testMap[id];
+    let ret:TestCase = this.testMap[id];
+    if(ret){
+      
+      let clone = ret.clone();
+      return clone;
+    }
+    return null;
   }
 
   findAllTest():TestCase[]{

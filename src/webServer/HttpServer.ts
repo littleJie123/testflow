@@ -1,15 +1,22 @@
 import ITestParam from "../inf/ITestParam";
 import * as http from 'http';
+import WebSocket from 'ws';
 import fs from 'fs';
 import path from "path";
 import IControl from "../inf/IControl";
+import BaseAction from "./BaseAction";
+interface WebSocketParam<Param = any>{
+  url:string;
+  param: Param;
+  id:string;
+}
 export default class HttpServer {
 
-  private actionMap: Map<string, IControl> = new Map();
+  private actionMap: Map<string, any> = new Map();
 
 
-  constructor(){
-    this.scanAtion(path.join(__dirname,'./httpAction'));
+  constructor() {
+    this.scanAtion(path.join(__dirname, './httpAction'));
   }
 
   /**
@@ -45,11 +52,11 @@ export default class HttpServer {
                 // 构建URL（相对路径 + 文件名，不包括扩展名）
                 const relativePath = path.relative(path.join(__dirname, './httpAction'), fullPath);
                 const urlPath = '/' + relativePath.slice(0, -ext.length).replace(/\\/g, '/');
-                
+
                 // 实例化并注册action
-                const actionInstance = new ActionClass();
-                this.regAction(urlPath, actionInstance);
-                
+
+                this.regAction(urlPath, ActionClass);
+
                 console.log(`已注册action: ${urlPath}`);
               }
             } catch (error) {
@@ -64,12 +71,16 @@ export default class HttpServer {
   }
 
 
-  private regAction(url:string,action:IControl){
-    this.actionMap.set(url.toLowerCase(),action);
+  private regAction(url: string, action: any) {
+    this.actionMap.set(url.toLowerCase(), action);
   }
 
-  private getActionByUrl(url:string):IControl{
-    return this.actionMap.get(url.toLowerCase());
+  private getActionByUrl(url: string): BaseAction {
+    let clazz =  this.actionMap.get(url.toLowerCase());
+    if(clazz == null){
+      return null;
+    }
+    return new clazz();
   }
   /**
    * 以param中端口启动一个http服务
@@ -78,11 +89,29 @@ export default class HttpServer {
    */
   start(param?: ITestParam): void {
     const server = http.createServer((req, res) => this.process(req, res))
-
+    const wss = new WebSocket.Server({ server });
     const port = param?.port ?? 3000;
 
     server.listen(port, () => {
       console.log(`HTTP服务器已启动，监听端口: ${port}`);
+    });
+    let self = this;
+    wss.on('connection', function connection(ws) {
+      ws.on('message', function incoming(message) {
+        //console.log('收到WebSocket客户端消息: %s', message);
+        //ws.send('WebSocket服务器已收到你的消息: ' + message);
+        try{
+          let param:WebSocketParam = JSON.parse(message.toString());
+          self.processWebSocketMessage(ws, param);
+        }catch (e) {
+          console.error('处理WebSocket消息出错:', e); 
+          ws.send(JSON.stringify({ error: '处理消息出错' }));
+        }
+      });
+
+      ws.on('close', function close() {
+        console.log('WebSocket客户端连接已关闭');
+      });
     });
 
     // 错误处理
@@ -94,10 +123,34 @@ export default class HttpServer {
       }
     });
   }
+  private async processWebSocketMessage(ws: WebSocket, param: WebSocketParam) {
+    
+    let action  = this.getActionByUrl(param.url);
+    if (!action) {
+      ws.send(JSON.stringify({ error: '未找到对应的action' }));
+      return;
+    }else{
+      action.setWebSocket(ws);
+      let result =await action.process(param.param);
+      if(result == null){
+        result = {};
+      }
+      
+      ws.send(
+        JSON.stringify({
+          result,
+          id:param.id,
+          action:'httpAction'
+        })
+      )
+    }
+  }
+
+  
   async process(req: http.IncomingMessage,
     res: http.ServerResponse<http.IncomingMessage>): Promise<void> {
     // 处理健康检查请求
-    let url:string = req.url || '';
+    let url: string = req.url || '';
     url = url.split('?')[0];
     if (req.url === '/debug/health') {
       const responseData = JSON.stringify({ health: true });
@@ -113,11 +166,11 @@ export default class HttpServer {
 
 
     // 处理HTML和JS文件请求
-    if(url.endsWith('.html') || url.endsWith('.js') || url.endsWith('.css')){
+    if (url.endsWith('.html') || url.endsWith('.js') || url.endsWith('.css')) {
       this.processHtmlAndJsAndCss(req, res);
       return;
     }
-    await this.processAction(req,res);
+    await this.processAction(req, res);
 
     // 如果不是HTML或JS文件，processHtmlAndJs不会处理，会继续执行到这里
     if (!res.writableEnded) {
@@ -142,7 +195,7 @@ export default class HttpServer {
       const url = (req.url || '').split('?')[0].toLowerCase();
       // 获取对应的action
       const action = this.getActionByUrl(url);
-      
+
       if (!action) {
         res.writeHead(404);
         res.end();
@@ -151,7 +204,7 @@ export default class HttpServer {
 
       // 构建参数对象
       let param: any = {};
-      
+
       // 处理GET请求参数
       if (req.method === 'GET') {
         const queryString = (req.url || '').split('?')[1];
@@ -161,16 +214,16 @@ export default class HttpServer {
           );
         }
       }
-      
+
       // 处理POST请求数据
       if (req.method === 'POST') {
         const buffers: Buffer[] = [];
-        
+
         // 读取请求体数据
         for await (const chunk of req) {
           buffers.push(Buffer.from(chunk));
         }
-        
+
         const bodyStr = Buffer.concat(buffers).toString();
         if (bodyStr) {
           try {
@@ -185,7 +238,7 @@ export default class HttpServer {
 
       // 调用action处理请求
       let result = await action.process(param);
-      if(result == null){
+      if (result == null) {
         result = {};
       }
       // 返回JSON响应
@@ -194,7 +247,7 @@ export default class HttpServer {
         'Content-Length': Buffer.byteLength(JSON.stringify(result))
       });
       res.end(JSON.stringify(result));
-      
+
     } catch (error) {
       console.error('处理请求出错:', error);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -210,13 +263,13 @@ export default class HttpServer {
    * @param res 
    */
   private processHtmlAndJsAndCss(req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage>): void {
-     
-    
+
+
     // 获取请求的文件路径
     const url = req.url || '/';
     // 移除查询参数
     const filePath = url.split('?')[0];
-    
+
     // 检查文件扩展名
     const ext = path.extname(filePath).toLowerCase();
     if (ext !== '.html' && ext !== '.js' && ext !== '.css') {
@@ -224,7 +277,7 @@ export default class HttpServer {
     }
 
     // 构建完整的文件路径（从项目根目录开始）
-    const fullPath = path.join(__dirname,'../../client', filePath);
+    const fullPath = path.join(__dirname, '../../client', filePath);
     // 检查文件是否存在
     fs.access(fullPath, fs.constants.F_OK, (err) => {
       if (err) {
@@ -255,12 +308,12 @@ export default class HttpServer {
             contentType = 'text/css';
             break;
         }
-        
+
         res.writeHead(200, {
           'Content-Type': `${contentType}; charset=utf-8`,
           'Content-Length': Buffer.byteLength(data)
         });
-        
+
         res.end(data);
       });
     });

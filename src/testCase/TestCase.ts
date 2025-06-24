@@ -10,6 +10,7 @@ import BaseTest from "./BaseTest";
 export default abstract class TestCase extends BaseTest  {
   
   
+  
 
   protected processError(e:Error){
     let logger = this.getTestLogger();
@@ -20,24 +21,22 @@ export default abstract class TestCase extends BaseTest  {
     return true;
   }
 
-  protected init(){
-    this.variable = null;
-    this.testLogger = null;
-    
-  }
+  
 
   
 
   async doTest(): Promise<any> {
     
     let result = null;
-    for(let action of this.getActions()){
+    let actions = this.getActions();
+    for(let action of actions){
+      action.setWebSocket(this.webSocket);
       let objAction:any = action as any;
       if(objAction.beforeRun){
         objAction.beforeRun();
       }
     }
-    for(let action of this.getActions()){
+    for(let action of actions){
       let objAction:any = action as any;
       if(objAction.setTestLogger){
         objAction.setTestLogger(this.getTestLogger());
@@ -59,7 +58,12 @@ export default abstract class TestCase extends BaseTest  {
 
   getActions():BaseTest[]{
     
-    return this.buildActions();
+    let list = this.buildActions();
+    let id = 0;
+    for(let row of list){
+      row.setTestId(`${this.testId}-${id++}`);
+    }
+    return list;
   };
 
   protected abstract buildActions():BaseTest[];
@@ -72,7 +76,7 @@ export default abstract class TestCase extends BaseTest  {
     let json = {
       id:this.testId,
       name:this.getName(),
-      status:this.getStatus(),
+      status:this.getRunStatus(),
       
     }
     return json;

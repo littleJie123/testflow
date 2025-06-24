@@ -1,4 +1,10 @@
-import IControl from "../../inf/IControl";
-export default class ListTestCase implements IControl {
-    process(param: any): any;
+import BaseAction from "../BaseAction";
+export default class ListTestCase extends BaseAction {
+    process(param: any): Promise<{
+        list: {
+            name: string;
+            status: string;
+            id: string;
+        }[];
+    }>;
 }

@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>测试用例详情</title>
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
@@ -15,9 +15,9 @@
     
   </div>
 
-  <div id="statusDiv">状态：</div>
+  <div id="statusDiv">状态</div>
 
-  <div class="toolbar">
+  <div class="toolbar" id="toolbar">
     <button class="btn" onclick="runAction()">运行测试</button>
   </div>
 
@@ -38,6 +38,7 @@
   <script src="js/http.js"></script>
   <script src="js/util.js"></script>
   <script>
+    let http = Http.get();
     let actionId = '';
 
     // 页面加载时获取URL参数并初始化
@@ -58,12 +59,11 @@
         if(actionId == null){
           return;
         }
-        const response = await fetch(`/getAction?id=${actionId}`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const data = await http.post(`/getAction`,{id: actionId});
+        document.getElementById('pageTitle').textContent = data.name
         renderParamMeta(data.paramMeta);
         renderDefParam(data.defParam);
-        renderLogs(data.logs || []);
+        
         Util.renderStatus(data.status);
       } catch (error) {
         console.error('获取测试用例数据失败:', error);
@@ -80,18 +80,7 @@
       defParamList.value = JSON.stringify(defParam, null, 2);
     }
 
-    // 渲染日志
-    function renderLogs(logs) {
-      const logsList = document.getElementById('logsList');
-      logsList.innerHTML = logs.map(log => `
-                <div class="log-item ${log.type}" 
-                     style="padding-left: ${log.level * 20}px"
-                     onclick="toggleStack(this)">
-                    <div class="log-message">${log.message}</div>
-                    ${log.stack ? `<pre class="log-stack">${log.stack}</pre>` : ''}
-                </div>
-            `).join('');
-    }
+    
 
     // 切换堆栈信息显示
     function toggleStack(element) {
@@ -100,16 +89,7 @@
       }
     }
 
-    // 获取状态文本
-    function getStatusText(status) {
-      const statusMap = {
-        init: '初始化',
-        running: '运行中',
-        processed: '成功',
-        error: '失败'
-      };
-      return statusMap[status] || status;
-    }
+    
 
     // 运行测试用例
     async function runAction() {
@@ -122,13 +102,15 @@
         }else{
           param = JSON.parse(param);
         }
-        const data = await Http.post('/runAction',{ 
+        const logsList = document.getElementById('logsList');
+        logsList.innerHTML = ''; // 清空日志列表
+        const data = await http.post('/runAction',{ 
             id: actionId ,
             param
           }
         );
-        renderLogs(data.logs || []);
-        Util.renderStatus(data.status);
+        
+        
          
       } catch (error) {
         console.error('运行测试用例失败:', error);

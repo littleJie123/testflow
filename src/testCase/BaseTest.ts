@@ -3,6 +3,7 @@ import ITest from "../inf/ITest";
 import ITestCaseInfo from "../inf/ITestCaseInfo";
 import TestLogger from "../testLog/TestLogger";
 import TestRunner from "../testRunner/TestRunner";
+import WsUtil from "../util/WsUtil";
 
 const S_Init = 'init';
 const S_Runing = 'runing';
@@ -25,12 +26,28 @@ export default abstract class BaseTest implements ITest {
 
   protected env:string;
 
-  protected status:string = S_Init;
+  protected runStatus:string = S_Init;
 
   protected info:ITestCaseInfo ;
 
   protected testId:string;
   
+  protected webSocket:WebSocket;
+
+
+  protected setRunStatus(status:string){
+    this.runStatus = status;   
+    WsUtil.send(this.webSocket, {
+      id:this.testId,
+      status: this.runStatus
+    },'runStatus');
+  }
+
+  setWebSocket(webSocket: WebSocket) {
+    this.webSocket = webSocket;
+    let logger = this.getTestLogger();
+    logger.setWebSocket(webSocket);
+  }
 
 
   /**
@@ -47,12 +64,14 @@ export default abstract class BaseTest implements ITest {
 
   clone(){
     let clazz = this.clazz;
-    return new clazz();
+    
+    let ret = new clazz();
+    ret.setTestId(this.getTestId());
+    return ret;
   }
 
   protected init(){
     this.variable = null;
-    this.testLogger = null;
     
   }
 
@@ -67,7 +86,7 @@ export default abstract class BaseTest implements ITest {
       await this.test();
     }catch(e){
       this.getTestLogger().error(e);
-      this.status = S_Error;
+      this.setRunStatus(S_Error);
     }
   }
 
@@ -87,11 +106,11 @@ export default abstract class BaseTest implements ITest {
     this.info = info;
   }
 
-  getStatus():string{
-    return this.status;
+  getRunStatus():string{
+    return this.runStatus;
   }
   beforeRun(){
-    this.status = S_Init; 
+    this.runStatus = S_Init; 
   }
   setEnv(env:string){
     this.env = env;
@@ -137,7 +156,7 @@ export default abstract class BaseTest implements ITest {
 
   async test():Promise<any>{
     let logger = this.getTestLogger();
-    this.status = S_Runing;
+    this.setRunStatus( S_Runing);
     logger.log(`${this.getName()} 开始运行`)
     logger.addLevel();
     let result = null;
@@ -147,10 +166,10 @@ export default abstract class BaseTest implements ITest {
       await this.processResult(result);
     }catch(e){
       this.processError(e);
-      this.status = S_Error;
+      this.setRunStatus(S_Error);
       throw e;
     }
-    this.status = S_Processed;
+    this.setRunStatus(S_Processed);
     logger.subLevel();
     logger.log(`${this.getName()} 运行结束`)
     return result;
@@ -194,7 +213,7 @@ export default abstract class BaseTest implements ITest {
   toJson(){
     return {
       name:this.getName(),
-      status:this.status,
+      status:this.runStatus,
       id:this.testId
     }
   }

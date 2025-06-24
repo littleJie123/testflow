@@ -11,9 +11,12 @@ export default abstract class BaseTest implements ITest {
     protected testLogger: TestLogger;
     protected variable: any;
     protected env: string;
-    protected status: string;
+    protected runStatus: string;
     protected info: ITestCaseInfo;
     protected testId: string;
+    protected webSocket: WebSocket;
+    protected setRunStatus(status: string): void;
+    setWebSocket(webSocket: WebSocket): void;
     /**
      * 是否要出现在web界面的屏幕上
      * @returns
@@ -27,7 +30,7 @@ export default abstract class BaseTest implements ITest {
     getTestId(): string;
     getInfo(): ITestCaseInfo;
     setInfo(info: ITestCaseInfo): void;
-    getStatus(): string;
+    getRunStatus(): string;
     beforeRun(): void;
     setEnv(env: string): void;
     setVariable(variable: any): void;

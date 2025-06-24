@@ -37,6 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const http = __importStar(require("http"));
+const ws_1 = __importDefault(require("ws"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 class HttpServer {
@@ -77,8 +78,7 @@ class HttpServer {
                                 const relativePath = path_1.default.relative(path_1.default.join(__dirname, './httpAction'), fullPath);
                                 const urlPath = '/' + relativePath.slice(0, -ext.length).replace(/\\/g, '/');
                                 // 实例化并注册action
-                                const actionInstance = new ActionClass();
-                                this.regAction(urlPath, actionInstance);
+                                this.regAction(urlPath, ActionClass);
                                 console.log(`已注册action: ${urlPath}`);
                             }
                         }
@@ -97,7 +97,11 @@ class HttpServer {
         this.actionMap.set(url.toLowerCase(), action);
     }
     getActionByUrl(url) {
-        return this.actionMap.get(url.toLowerCase());
+        let clazz = this.actionMap.get(url.toLowerCase());
+        if (clazz == null) {
+            return null;
+        }
+        return new clazz();
     }
     /**
      * 以param中端口启动一个http服务
@@ -107,9 +111,28 @@ class HttpServer {
     start(param) {
         var _a;
         const server = http.createServer((req, res) => this.process(req, res));
+        const wss = new ws_1.default.Server({ server });
         const port = (_a = param === null || param === void 0 ? void 0 : param.port) !== null && _a !== void 0 ? _a : 3000;
         server.listen(port, () => {
             console.log(`HTTP服务器已启动，监听端口: ${port}`);
+        });
+        let self = this;
+        wss.on('connection', function connection(ws) {
+            ws.on('message', function incoming(message) {
+                //console.log('收到WebSocket客户端消息: %s', message);
+                //ws.send('WebSocket服务器已收到你的消息: ' + message);
+                try {
+                    let param = JSON.parse(message.toString());
+                    self.processWebSocketMessage(ws, param);
+                }
+                catch (e) {
+                    console.error('处理WebSocket消息出错:', e);
+                    ws.send(JSON.stringify({ error: '处理消息出错' }));
+                }
+            });
+            ws.on('close', function close() {
+                console.log('WebSocket客户端连接已关闭');
+            });
         });
         // 错误处理
         server.on('error', (error) => {
@@ -120,6 +143,25 @@ class HttpServer {
                 console.error('服务器启动错误:', error);
             }
         });
+    }
+    async processWebSocketMessage(ws, param) {
+        let action = this.getActionByUrl(param.url);
+        if (!action) {
+            ws.send(JSON.stringify({ error: '未找到对应的action' }));
+            return;
+        }
+        else {
+            action.setWebSocket(ws);
+            let result = await action.process(param.param);
+            if (result == null) {
+                result = {};
+            }
+            ws.send(JSON.stringify({
+                result,
+                id: param.id,
+                action: 'httpAction'
+            }));
+        }
     }
     async process(req, res) {
         // 处理健康检查请求

@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TestLow - 接口列表</title>
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="css/index.css">
   <script src="js/http.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/util.js"></script>
@@ -28,12 +28,11 @@
   <script>
     let actions = [];
     let filteredActions = [];
-
+    let http = Http.get();
     async function fetchData() {
       try {
-        const response = await fetch('/listAction');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const data = await http.post('/listAction');
+
         actions = data.list || [];
         handleSearch();
       } catch (error) {
@@ -63,7 +62,7 @@
 
     function renderAction(action) {
       return `
-        <div class="test-case ${action.status}">
+        <div class="test-case ${action.status}" id="${action.id}">
           <div class="test-case-content">
             <h3>${action.name}</h3>
             <div>ID: ${Util.getId(action.id)}</div>
@@ -93,9 +92,8 @@
 
     async function runAction(id) {
       try {
-        const response = await fetch(`/runAction?id=${id}`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        await fetchData(); // 重新加载数据以更新状态
+        const response = await http.post(`/runAction`, { id: id });
+
       } catch (error) {
         console.error('运行失败:', error);
       }
@@ -103,9 +101,8 @@
 
     async function runAll() {
       try {
-        const response = await fetch('/runAction');
-        if (!response.ok) throw new Error('Network response was not ok');
-        await fetchData(); // 重新加载数据以更新状态
+        const response = await http.post('/runAction');
+
       } catch (error) {
         console.error('运行所有失败:', error);
       }

@@ -5,13 +5,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const TestLogger_1 = __importDefault(require("../testLog/TestLogger"));
 const TestRunner_1 = __importDefault(require("../testRunner/TestRunner"));
+const WsUtil_1 = __importDefault(require("../util/WsUtil"));
 const S_Init = 'init';
 const S_Runing = 'runing';
 const S_Processed = 'processed';
 const S_Error = 'error';
 class BaseTest {
     constructor() {
-        this.status = S_Init;
+        this.runStatus = S_Init;
+    }
+    setRunStatus(status) {
+        this.runStatus = status;
+        WsUtil_1.default.send(this.webSocket, {
+            id: this.testId,
+            status: this.runStatus
+        }, 'runStatus');
+    }
+    setWebSocket(webSocket) {
+        this.webSocket = webSocket;
+        let logger = this.getTestLogger();
+        logger.setWebSocket(webSocket);
     }
     /**
      * 是否要出现在web界面的屏幕上
@@ -25,11 +38,12 @@ class BaseTest {
     }
     clone() {
         let clazz = this.clazz;
-        return new clazz();
+        let ret = new clazz();
+        ret.setTestId(this.getTestId());
+        return ret;
     }
     init() {
         this.variable = null;
-        this.testLogger = null;
     }
     async run(env, opt) {
         this.init();
@@ -42,7 +56,7 @@ class BaseTest {
         }
         catch (e) {
             this.getTestLogger().error(e);
-            this.status = S_Error;
+            this.setRunStatus(S_Error);
         }
     }
     setTestId(testId) {
@@ -57,11 +71,11 @@ class BaseTest {
     setInfo(info) {
         this.info = info;
     }
-    getStatus() {
-        return this.status;
+    getRunStatus() {
+        return this.runStatus;
     }
     beforeRun() {
-        this.status = S_Init;
+        this.runStatus = S_Init;
     }
     setEnv(env) {
         this.env = env;
@@ -103,7 +117,7 @@ class BaseTest {
     }
     async test() {
         let logger = this.getTestLogger();
-        this.status = S_Runing;
+        this.setRunStatus(S_Runing);
         logger.log(`${this.getName()} 开始运行`);
         logger.addLevel();
         let result = null;
@@ -114,10 +128,10 @@ class BaseTest {
         }
         catch (e) {
             this.processError(e);
-            this.status = S_Error;
+            this.setRunStatus(S_Error);
             throw e;
         }
-        this.status = S_Processed;
+        this.setRunStatus(S_Processed);
         logger.subLevel();
         logger.log(`${this.getName()} 运行结束`);
         return result;
@@ -151,7 +165,7 @@ class BaseTest {
     toJson() {
         return {
             name: this.getName(),
-            status: this.status,
+            status: this.runStatus,
             id: this.testId
         };
     }

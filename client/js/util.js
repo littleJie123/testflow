@@ -22,7 +22,7 @@ class Util{
 
   static initStatus(){
     let div = document.getElementById("statusDiv");
-    div.innerText ="状态：开始运行" ;
+    div.innerText ="开始运行" ;
     div.className = 'test-case ';
   }
 }

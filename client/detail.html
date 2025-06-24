@@ -6,15 +6,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>测试用例详情</title>
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="css/index.css">
 </head>
-
+<script src="js/http.js"></script>
+<script src="js/util.js"></script>
 <body>
   <div class="header">
     <h1 id="pageTitle">测试用例详情</h1>
   </div>
-
-  <div class="toolbar">
+  <div id="statusDiv">状态</div>
+  <div class="toolbar" id="toolbar">
     <button class="btn" onclick="runTestCase()">运行测试</button>
   </div>
 
@@ -31,16 +32,13 @@
   </div>
 
   <script>
+    let http = Http.get();
     let testCaseId = '';
-
+    const urlParams = new URLSearchParams(window.location.search);
+    testCaseId = urlParams.get('id');
     // 页面加载时获取URL参数并初始化
     window.onload = function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      testCaseId = urlParams.get('id');
-      if (!testCaseId) {
-        alert('未指定测试用例ID');
-        return;
-      }
+      
       document.getElementById('pageTitle').textContent = `测试用例：${testCaseId}`;
       fetchTestCaseData();
     }
@@ -51,9 +49,8 @@
         if(testCaseId == null){
           return;
         }
-        const response = await fetch(`/getTestCase?id=${testCaseId}`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const data = await http.post(`/getTestCase`,{id:testCaseId});
+        document.getElementById('pageTitle').textContent = data.name;
         renderActions(data.actions || []);
         renderLogs(data.logs || []);
       } catch (error) {
@@ -65,9 +62,9 @@
     function renderActions(actions) {
       const actionsList = document.getElementById('actionsList');
       actionsList.innerHTML = actions.map(action => `
-                <div class="action-item ${action.status}">
+                <div class="${action.status}" id="${action.id}">
                     <h3>${action.name}</h3>
-                    <div>状态: ${getStatusText(action.status)}</div>
+                    <div id='statusTxt'>状态: ${getStatusText(action.status)}</div>
                 </div>
             `).join('');
     }
@@ -75,14 +72,7 @@
     // 渲染日志
     function renderLogs(logs) {
       const logsList = document.getElementById('logsList');
-      logsList.innerHTML = logs.map(log => `
-                <div class="log-item ${log.type}" 
-                     style="padding-left: ${log.level * 20}px"
-                     onclick="toggleStack(this)">
-                    <div class="log-message">${log.message}</div>
-                    ${log.stack ? `<pre class="log-stack">${log.stack}</pre>` : ''}
-                </div>
-            `).join('');
+      logsList.innerHTML = '';
     }
 
     // 切换堆栈信息显示
@@ -106,23 +96,18 @@
     // 运行测试用例
     async function runTestCase() {
       try {
-        const response = await fetch('/runTestCase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ id: [testCaseId] })
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
-        // 运行后立即刷新数据
-        await fetchTestCaseData();
+        Util.initStatus();
+        const logsList = document.getElementById('logsList');
+        if(logsList ){
+          logsList.innerHTML = ''; // 清空日志列表
+        }
+        await http.post('/runTestCase', { id: [testCaseId] });
+        
+        
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }
     }
-    setInterval(() => {
-      fetchTestCaseData();
-    }, 3000);
   </script>
 </body>
 

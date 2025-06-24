@@ -1,14 +1,16 @@
 import { TestRunner } from "../../testflow";
-import IControl from "../../inf/IControl";
+import WsUtil from "../../util/WsUtil";
+import BaseAction from "../BaseAction";
 
-export default class RunTest implements IControl {
-  process(param?: any) {
+export default class RunTest extends BaseAction {
+  async process(param?: any) {
     let testRunner = TestRunner.get();
     let testCase = testRunner.getTestById(param.id);
-    if(testCase){
+    if (testCase) {
+      
+      
+      testCase.setWebSocket(this.getWebSocket());
       testCase.run(param.env,param.param);
     }
-     
   }
-
 }
