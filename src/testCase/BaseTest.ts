@@ -75,19 +75,20 @@ export default abstract class BaseTest implements ITest {
     
   }
 
-  async run(env?:string,opt?:IRunOpt): Promise<void> {
-    
+  async run(env?:string,opt?:IRunOpt): Promise<any> {
+    let ret:any = null;
     this.init()
     this.setEnv(env)  
     if(opt){
       this.setVariable(opt.variable);
     }
     try{
-      await this.test();
+      ret = await this.test();
     }catch(e){
       this.getTestLogger().error(e);
       this.setRunStatus(S_Error);
     }
+    return ret;
   }
 
   setTestId(testId:string){

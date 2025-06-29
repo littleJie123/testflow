@@ -46,18 +46,20 @@ class BaseTest {
         this.variable = null;
     }
     async run(env, opt) {
+        let ret = null;
         this.init();
         this.setEnv(env);
         if (opt) {
             this.setVariable(opt.variable);
         }
         try {
-            await this.test();
+            ret = await this.test();
         }
         catch (e) {
             this.getTestLogger().error(e);
             this.setRunStatus(S_Error);
         }
+        return ret;
     }
     setTestId(testId) {
         this.testId = testId;

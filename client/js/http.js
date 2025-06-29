@@ -133,6 +133,13 @@ Http.get().on(
   }
 
 )
+
+Http.get().on(
+  'runResult',
+  function(result){
+    console.log(result);
+  }
+)
 // 获取状态文本
 function getStatusText(status) {
   const statusMap = {
