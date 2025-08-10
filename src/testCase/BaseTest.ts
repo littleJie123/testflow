@@ -3,6 +3,8 @@ import ITest from "../inf/ITest";
 import ITestCaseInfo from "../inf/ITestCaseInfo";
 import TestLogger from "../testLog/TestLogger";
 import TestRunner from "../testRunner/TestRunner";
+import JsonUtil from "../util/JsonUtil";
+import { StrUtil } from "../util/StrUtil";
 import WsUtil from "../util/WsUtil";
 
 const S_Init = 'init';
@@ -33,6 +35,15 @@ export default abstract class BaseTest implements ITest {
   protected testId:string;
   
   protected webSocket:WebSocket;
+
+
+  protected needThrowError(){
+    return true;
+  }
+
+  protected sendMsg(eventId:string,param:any){
+    WsUtil.send(this.webSocket,param,eventId)
+  }
 
 
   protected setRunStatus(status:string){
@@ -85,7 +96,7 @@ export default abstract class BaseTest implements ITest {
     try{
       ret = await this.test();
     }catch(e){
-      this.getTestLogger().error(e);
+      this.error(e.message);
       this.setRunStatus(S_Error);
     }
     return ret;
@@ -131,14 +142,23 @@ export default abstract class BaseTest implements ITest {
     if(this.variable == null){
       this.variable = TestRunner.get().getVariable();
     }
-    let logger = this.getTestLogger();
+   
     let cnt = 0
     for(let key in variable){
-      logger.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`)
+      if(!StrUtil.isStr(variable[key])){
+        this.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`)
+      }else{
+        let str = variable[key];
+        if(str.length > 50){
+          str = str.substring(0,50) + '...'
+        }
+        this.log(`添加变量 ${key} = ${str}`)
+        
+      }
       this.variable[key] = variable[key];
       cnt++;
     }
-    logger.log(`添加变量 共 ${cnt} 个`)
+    this.log(`添加变量 共 ${cnt} 个`)
        
   }
   setTestLogger(logger:TestLogger){
@@ -158,30 +178,50 @@ export default abstract class BaseTest implements ITest {
   async test():Promise<any>{
     let logger = this.getTestLogger();
     this.setRunStatus( S_Runing);
-    logger.log(`${this.getName()} 开始运行`)
+    this.log(`${this.getName()} 开始运行`)
     logger.addLevel();
     let result = null;
     try{
       result = await this.doTest();
       await this.checkResult(result);
       await this.processResult(result);
+      this.setRunStatus(S_Processed);
     }catch(e){
       this.processError(e);
       this.setRunStatus(S_Error);
-      throw e;
+      if(this.needThrowError()){
+        throw e;
+      }
     }
-    this.setRunStatus(S_Processed);
+    
     logger.subLevel();
-    logger.log(`${this.getName()} 运行结束`)
+    this.log(`${this.getName()} 运行结束`)
     return result;
   };
 
   protected processError(e:Error){
-    let logger = this.getTestLogger();
-    logger.error(`${this.getName()} 运行出错`)
-    logger.errorOnException(e);
+    this.error(`${this.getName()} 运行出错`)
+    this.error(e.message);
   }
 
+  protected error(message:string){
+    let logger = this.getTestLogger();
+    logger.error(message,this.getTestId());
+  }
+  protected log(message:string){
+    let logger = this.getTestLogger();
+    logger.log(message,this.getTestId());
+  }
+
+  expectEqualObj(obj1:any,obj2:any,msg?:string){
+    if(msg == null){
+      msg =`检查:期望是${JSON.stringify(obj2)},实际是${JSON.stringify(JsonUtil.inKey(obj1,obj2))}`
+    }
+    console.log('JsonUtil.isEqualObj(obj1,obj2)',JsonUtil.isEqualObj(obj1,obj2))
+    if(!JsonUtil.isEqualObj(obj1,obj2)){
+      throw new Error(msg);
+    }
+  }
   /**
    * 检查结果是否正确
    * @param result 
@@ -215,9 +255,16 @@ export default abstract class BaseTest implements ITest {
     return {
       name:this.getName(),
       status:this.runStatus,
-      id:this.testId
+      id:this.testId,
+      couldLookDetail:this.couldLookDetail()
     }
   }
+
+  protected couldLookDetail(){
+    return true;
+  }
+
+
 
   getParamMeta():any{
     return null;
@@ -225,5 +272,14 @@ export default abstract class BaseTest implements ITest {
 
   buildDefParam(){
     return {};
+  }
+
+  protected expectEqual(value1,value2,msg?:string){
+    if(msg == null){
+      msg = `检查出错：期望是${value2}，实际是${value1}`
+    }
+    if(value1 != value2){
+      throw new Error(msg);
+    }
   }
 }

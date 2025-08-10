@@ -78,6 +78,7 @@ body {
 .modal {
   display: none;
   position: fixed;
+  z-index: 1000;
   top: 0;
   left: 0;
   width: 100%;
@@ -91,17 +92,25 @@ body {
   margin: 10% auto;
   padding: 20px;
   width: 80%;
+  max-width: 700px;
   max-height: 70vh;
   overflow-y: auto;
   border-radius: 4px;
 }
 
+.modal-header {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
 .close {
   position: absolute;
-  right: 10px;
+  right: 15px;
   top: 10px;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .log-item {
@@ -145,17 +154,45 @@ body {
   grid-column: span 2;
 }
 
-.actions-panel, .logs-panel {
+.actions-panel {
     flex: 1;
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 15px;
 }
 
-.action-item {
+.logs-panel {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    height: calc(90vh - 100px);
+}
+
+#logsList {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.actions-panel .action-item {
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.action-info {
+    flex-grow: 1;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .action-item.init {
@@ -240,4 +277,50 @@ body {
 .menu-item.active {
   background: #1890ff;
   color: white;
+}
+
+/* -- 新增和修改的样式 -- */
+
+/* 步骤项样式 */
+.actions-panel .step-item {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.actions-panel .step-item:hover {
+    background-color: #f0f0f0;
+}
+
+.actions-panel .step-info {
+    flex: 1;
+}
+
+.actions-panel .step-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* 已执行步骤的浅绿色高亮 */
+.step-item.executed {
+    background-color: #d4edda; 
+}
+
+.highlighted-log {
+    color: blue;
+}
+
+/* 弹窗内容中的代码/参数显示样式 */
+.modal-content-body pre {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    white-space: pre-wrap;      /* 自动换行 */
+    word-wrap: break-word;      /* 超长单词换行 */
 }

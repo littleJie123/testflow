@@ -31,11 +31,126 @@
     </div>
   </div>
 
+  <div id="stepModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="modal-content-body"></div>
+    </div>
+  </div>
+
   <script>
     let http = Http.get();
     let testCaseId = '';
     const urlParams = new URLSearchParams(window.location.search);
     testCaseId = urlParams.get('id');
+    const stepModal = document.getElementById("stepModal");
+    const modalContent = stepModal.querySelector(".modal-content-body");
+    const closeBtn = document.querySelector(".close");
+    const stepData = {};
+
+    // WebSocket connection
+
+    http.on('httpParam', function (msg) {
+      stepData[msg.id] = msg;
+    });
+
+    
+
+    function showStepDetails(stepId) {
+        const data = stepData[stepId];
+        if (data) {
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <button class="btn" onclick="rerunAction('${stepId}')">重新运行</button>
+                </div>
+                <p><strong>URL:</strong> <span id="modal-url">${data.url}</span></p>
+                <p><strong>Method:</strong> <span id="modal-method">${data.method}</span></p>
+                <p><strong>Headers:</strong></p>
+                <textarea id="modal-headers" rows="10" cols="80">${JSON.stringify(data.headers, null, 2)}</textarea>
+                <p><strong>Params:</strong></p>
+                <textarea id="modal-params" rows="10"  cols="80">${JSON.stringify(data.param, null, 2)}</textarea>
+                <p>
+                    <strong>Result:</strong>
+                    <button class="btn" onclick="copyResult()">copy result</button>
+                </p>
+                <pre id="modal-result">${JSON.stringify(data.result, null, 2)}</pre>
+            `;
+            stepModal.style.display = "block";
+        } else {
+            modalContent.innerHTML = `<p>No data available for this step.</p>`;
+            stepModal.style.display = "block";
+        }
+    }
+
+    function copyResult() {
+        const resultText = document.getElementById('modal-result').innerText;
+        navigator.clipboard.writeText(resultText).then(() => {
+            alert('Result copied to clipboard!');
+        }, () => {
+            alert('Failed to copy result to clipboard.');
+        });
+    }
+
+    async function rerunAction(actionId) {
+        const headersText = document.getElementById('modal-headers').value;
+        const paramsText = document.getElementById('modal-params').value;
+        const url = document.getElementById('modal-url').innerText;
+        const method = document.getElementById('modal-method').innerText;
+        const resultPre = document.getElementById('modal-result');
+
+        try {
+            const headers = JSON.parse(headersText);
+            const param = JSON.parse(paramsText);
+
+            const result = await http.post('/runHttp', {
+                url: url,
+                method: method,
+                headers: headers,
+                param: param
+            });
+
+            resultPre.textContent = JSON.stringify(result, null, 2);
+
+            // Blink effect
+            let count = 0;
+            const interval = setInterval(() => {
+                resultPre.style.backgroundColor = count % 2 === 0 ? '#fff3cd' : '#fff';
+                count++;
+                if (count > 5) {
+                    clearInterval(interval);
+                    resultPre.style.backgroundColor = '#fff';
+                }
+            }, 200);
+
+        } catch (error) {
+            alert('Headers 或 Params 不是有效的 JSON 格式，请检查后重试。\n' + error);
+        }
+    }
+
+    function scrollToLog(stepId) {
+        const logEntries = document.querySelectorAll(`.log-item[data-step-id="${stepId}"]`);
+        if (logEntries.length > 0) {
+            // Remove highlight from previously highlighted logs
+            document.querySelectorAll('.highlighted-log').forEach(el => el.classList.remove('highlighted-log'));
+
+            logEntries.forEach(entry => entry.classList.add('highlighted-log'));
+            logEntries[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    
+
+    closeBtn.onclick = function () {
+        stepModal.style.display = "none";
+    }
+    window.onclick = function (event) {
+        if (event.target == stepModal) {
+            stepModal.style.display = "none";
+        }
+    }
+
+   
+
     // 页面加载时获取URL参数并初始化
     window.onload = function () {
       
@@ -50,7 +165,8 @@
           return;
         }
         const data = await http.post(`/getTestCase`,{id:testCaseId});
-        document.getElementById('pageTitle').textContent = data.name;
+        document.getElementById('pageTitle').textContent = data.name+`[ ${testCaseId} ]`;
+        document.title = data.name;
         renderActions(data.actions || []);
         renderLogs(data.logs || []);
       } catch (error) {
@@ -58,13 +174,26 @@
       }
     }
 
+    function buildLookDetailBtn(action){
+      if(action.couldLookDetail){
+        return `<button class="btn" onclick="showStepDetails('${action.id}')">查看</button>`
+      }else{
+        return ''
+      }
+    }
     // 渲染测试步骤
     function renderActions(actions) {
       const actionsList = document.getElementById('actionsList');
       actionsList.innerHTML = actions.map(action => `
-                <div class="${action.status}" id="${action.id}">
-                    <h3>${action.name}</h3>
-                    <div id='statusTxt'>状态: ${getStatusText(action.status)}</div>
+                <div class="action-item ${action.status}" id="${action.id}">
+                    <div class="action-info">
+                        <h3>${action.name}</h3>
+                        <div id='statusTxt'>状态: ${getStatusText(action.status)}</div>
+                    </div>
+                    <div class="action-buttons">
+                        ${buildLookDetailBtn(action)}
+                        <button class="btn" onclick="scrollToLog('${action.id}')">日志</button>
+                    </div>
                 </div>
             `).join('');
     }

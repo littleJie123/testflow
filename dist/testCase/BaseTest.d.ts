@@ -15,6 +15,8 @@ export default abstract class BaseTest implements ITest {
     protected info: ITestCaseInfo;
     protected testId: string;
     protected webSocket: WebSocket;
+    protected needThrowError(): boolean;
+    protected sendMsg(eventId: string, param: any): void;
     protected setRunStatus(status: string): void;
     setWebSocket(webSocket: WebSocket): void;
     /**
@@ -41,6 +43,9 @@ export default abstract class BaseTest implements ITest {
     isStop(): boolean;
     test(): Promise<any>;
     protected processError(e: Error): void;
+    protected error(message: string): void;
+    protected log(message: string): void;
+    expectEqualObj(obj1: any, obj2: any, msg?: string): void;
     /**
      * 检查结果是否正确
      * @param result
@@ -59,7 +64,10 @@ export default abstract class BaseTest implements ITest {
         name: string;
         status: string;
         id: string;
+        couldLookDetail: boolean;
     };
+    protected couldLookDetail(): boolean;
     getParamMeta(): any;
     buildDefParam(): {};
+    protected expectEqual(value1: any, value2: any, msg?: string): void;
 }

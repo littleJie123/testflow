@@ -5,6 +5,7 @@ export default class ListTestCase extends BaseAction {
             name: string;
             status: string;
             id: string;
+            couldLookDetail: boolean;
         }[];
     }>;
 }

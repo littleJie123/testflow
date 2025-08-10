@@ -46,6 +46,68 @@ function setKey(obj, key, param) {
   return param
 }
 class JsonUtil {
+  /**
+   * 判断两个类型相等。
+   * @param obj1 
+   * @param obj2 
+   * @returns 
+   */
+  static isEqualObj(obj1: any, obj2: any):boolean {
+    if(obj1 == null && obj2 == null){
+      return true;
+    }
+    if((obj1 != null && obj2 == null) || (obj1 == null && obj2 != null)){
+      return false;
+    }
+
+    if(this.isSimpleVal(obj1) && this.isSimpleVal(obj2)){
+      return obj1 == obj2
+    }
+    if(this.isDate(obj1) && this.isDate(obj2)){
+      return this.eqByDate(obj1,obj2)
+    }  
+    if(this.isObj(obj1) && this.isObj(obj2)){
+      for(let e in obj2){
+        if(!this.isEqualObj(obj1[e],obj2[e])){
+          return false;
+        }
+        
+      }
+      return true
+    }
+    return false;
+  }
+  static isObj(obj: any):boolean {
+    return !this.isDate(obj) && !this.isSimpleVal(obj);
+  }
+  static eqByDate(obj1: Date, obj2: Date): boolean {
+    return obj1.getTime() == obj2.getTime()
+  }
+
+  
+
+  static isDate(date: any) :boolean{
+    return date instanceof Date;
+  }
+  static isSimpleVal(obj: any):boolean {
+    return BoolUtil.isBoolean(obj) || NumUtil.isNum(obj) || StrUtil.isStr(obj);
+  }
+
+  
+
+
+  static inKey(obj1: any, obj2: any): any {
+    if(obj2 == null || obj1 == null){
+      return obj1;
+    }
+    let ret:any = {};
+    for(let e in obj2){
+      ret[e] = obj1[e]
+    }
+    return ret;
+  }
+
+
 
 
   /**
@@ -99,7 +161,7 @@ class JsonUtil {
     }
     let keyString = keyMap[key];
     
-    if(StrUtil.isStr(val) || NumUtil.isNum(val) || val instanceof Date){
+    if(StrUtil.isStr(val) || NumUtil.isNum(val) || val instanceof Date || BoolUtil.isBoolean(val)){
       if(StrUtil.isStr(val)){
         let str:string = val;
         if(str == null){
@@ -162,9 +224,12 @@ class JsonUtil {
    * @param jsonOpt 
    * @returns 
    */
-  static parseJson(json:any,opt:any,jsonOpt:IParseJsonOpt){
+  static parseJson(json:any,opt:any,jsonOpt?:IParseJsonOpt){
     if(json == null || opt == null){
       return json;
+    }
+    if(jsonOpt == null){
+      jsonOpt = {}
     }
     if(json instanceof Array){
       let array:any[] = [];
@@ -196,6 +261,9 @@ class JsonUtil {
     }
     if(val instanceof Date){
       return this.parseValue(key,val,opt,jsonOpt);
+    }
+    if(BoolUtil.isBoolean(val)){
+      return this.parseValue(key,val,opt,jsonOpt)
     }
     if(StrUtil.isStr(val)){
       return this.parseStr(key,val,opt,jsonOpt);
@@ -442,4 +510,5 @@ import { ArrayUtil } from "./ArrayUtil";
 import { StrUtil } from "./StrUtil";
 import NumUtil from "./NumUtil";
 import IParseJsonOpt from "../inf/IParseJsonOpt";
+import BoolUtil from "./BoolUtil";
 

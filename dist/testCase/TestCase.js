@@ -10,11 +10,16 @@ const BaseTest_1 = __importDefault(require("./BaseTest"));
  */
 class TestCase extends BaseTest_1.default {
     processError(e) {
-        let logger = this.getTestLogger();
-        logger.error(`${this.getName()} 运行出错`);
+        this.error(`${this.getName()} 运行出错!!`);
     }
     needInScreen() {
         return true;
+    }
+    needThrowError() {
+        return false;
+    }
+    couldLookDetail() {
+        return false;
     }
     async doTest() {
         let result = null;

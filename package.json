@@ -7,7 +7,8 @@
     "build": "tsc",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint --fix src --ext .ts",
-    "start": "tsc && node dist/main.js"
+    "start": "tsc && node dist/main.js",
+    "test": "jest"
   },
   "keywords": [
     "orm"
@@ -15,7 +16,7 @@
   "author": "gmj",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^24.9.0",
+    "@types/jest": "^24.9.1",
     "@types/node": "^22.15.19",
     "jest": "^24.9.0",
     "nodemon": "^2.0.2",

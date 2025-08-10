@@ -37,6 +37,57 @@ function setKey(obj, key, param) {
 }
 class JsonUtil {
     /**
+     * 判断两个类型相等。
+     * @param obj1
+     * @param obj2
+     * @returns
+     */
+    static isEqualObj(obj1, obj2) {
+        if (obj1 == null && obj2 == null) {
+            return true;
+        }
+        if ((obj1 != null && obj2 == null) || (obj1 == null && obj2 != null)) {
+            return false;
+        }
+        if (this.isSimpleVal(obj1) && this.isSimpleVal(obj2)) {
+            return obj1 == obj2;
+        }
+        if (this.isDate(obj1) && this.isDate(obj2)) {
+            return this.eqByDate(obj1, obj2);
+        }
+        if (this.isObj(obj1) && this.isObj(obj2)) {
+            for (let e in obj2) {
+                if (!this.isEqualObj(obj1[e], obj2[e])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    static isObj(obj) {
+        return !this.isDate(obj) && !this.isSimpleVal(obj);
+    }
+    static eqByDate(obj1, obj2) {
+        return obj1.getTime() == obj2.getTime();
+    }
+    static isDate(date) {
+        return date instanceof Date;
+    }
+    static isSimpleVal(obj) {
+        return BoolUtil_1.default.isBoolean(obj) || NumUtil_1.default.isNum(obj) || StrUtil_1.StrUtil.isStr(obj);
+    }
+    static inKey(obj1, obj2) {
+        if (obj2 == null || obj1 == null) {
+            return obj1;
+        }
+        let ret = {};
+        for (let e in obj2) {
+            ret[e] = obj1[e];
+        }
+        return ret;
+    }
+    /**
      * 从已有参数中取参数
      * @param json
      * @param jsonOpt
@@ -87,7 +138,7 @@ class JsonUtil {
             return;
         }
         let keyString = keyMap[key];
-        if (StrUtil_1.StrUtil.isStr(val) || NumUtil_1.default.isNum(val) || val instanceof Date) {
+        if (StrUtil_1.StrUtil.isStr(val) || NumUtil_1.default.isNum(val) || val instanceof Date || BoolUtil_1.default.isBoolean(val)) {
             if (StrUtil_1.StrUtil.isStr(val)) {
                 let str = val;
                 if (str == null) {
@@ -154,6 +205,9 @@ class JsonUtil {
         if (json == null || opt == null) {
             return json;
         }
+        if (jsonOpt == null) {
+            jsonOpt = {};
+        }
         if (json instanceof Array) {
             let array = [];
             for (let i = 0; i < json.length; i++) {
@@ -183,6 +237,9 @@ class JsonUtil {
             return this.parseValue(key, val, opt, jsonOpt);
         }
         if (val instanceof Date) {
+            return this.parseValue(key, val, opt, jsonOpt);
+        }
+        if (BoolUtil_1.default.isBoolean(val)) {
             return this.parseValue(key, val, opt, jsonOpt);
         }
         if (StrUtil_1.StrUtil.isStr(val)) {
@@ -425,3 +482,4 @@ exports.default = JsonUtil;
 const ArrayUtil_1 = require("./ArrayUtil");
 const StrUtil_1 = require("./StrUtil");
 const NumUtil_1 = __importDefault(require("./NumUtil"));
+const BoolUtil_1 = __importDefault(require("./BoolUtil"));

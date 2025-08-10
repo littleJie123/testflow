@@ -10,3 +10,5 @@ export { default as ITest} from "./inf/ITest";
 export { default as SetVariable } from "./testAction/SetVariable";
 export { default as ISetVariableParam } from "./inf/ISetVarableParam";
 
+export {  ArrayUtil } from "./util/ArrayUtil";
+export { default as JsonUtil} from "./util/JsonUtil";

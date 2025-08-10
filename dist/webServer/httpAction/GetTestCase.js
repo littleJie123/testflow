@@ -12,13 +12,11 @@ class GetTestCase extends BaseAction_1.default {
         if (test == null) {
             return {};
         }
-        let logger = test.getTestLogger();
         return {
             name: test.getName(),
             actions: test.getActions().map((item) => {
                 return item.toJson();
-            }),
-            logs: logger.getLogs()
+            })
         };
     }
 }

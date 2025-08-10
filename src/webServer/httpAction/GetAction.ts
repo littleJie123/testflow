@@ -9,11 +9,9 @@ export default class GetTestCase extends BaseAction {
     if(action == null){
       return {};
     }
-    let logger = action.getTestLogger()
     return {
       name: action.getName(),
       paramMeta:action.getParamMeta(),
-      logs:logger.getLogs(),
       defParam:action.buildDefParam(),
       status:action.getRunStatus()
     }

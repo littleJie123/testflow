@@ -16,28 +16,18 @@ class TestLogger {
         let logs = [...this.logs];
         return logs;
     }
-    errorOnException(e) {
-        this.addLogObj({
-            level: this.level,
-            message: e.message,
-            type: 'error',
-            stack: e.stack
-        });
+    log(message, id) {
+        this.addLog('log', message, id);
     }
-    addLogObj(log) {
-        this.logs.push(log);
+    error(message, id) {
+        this.addLog('error', message, id);
     }
-    log(message) {
-        this.addLog('log', message);
-    }
-    error(message) {
-        this.addLog('error', message);
-    }
-    addLog(type, message) {
+    addLog(type, message, id) {
         const log = {
             level: this.level,
             message,
-            type
+            type,
+            id
         };
         this.logs.push(log);
         console.log(log);

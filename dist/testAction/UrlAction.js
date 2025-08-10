@@ -55,6 +55,14 @@ class UrlAction extends BaseTest_1.default {
         let httpParam = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
         let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() });
         let result = await httpUtil.requestStatusAndResult(url, this.getMethod(), httpParam, headers);
+        this.sendMsg('httpParam', {
+            id: this.getTestId(),
+            url,
+            param: httpParam,
+            headers,
+            result,
+            method: this.getMethod()
+        });
         this.httpStatus = result.status;
         return result.result;
     }

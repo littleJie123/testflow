@@ -1,5 +1,17 @@
 declare class JsonUtil {
     /**
+     * 判断两个类型相等。
+     * @param obj1
+     * @param obj2
+     * @returns
+     */
+    static isEqualObj(obj1: any, obj2: any): boolean;
+    static isObj(obj: any): boolean;
+    static eqByDate(obj1: Date, obj2: Date): boolean;
+    static isDate(date: any): boolean;
+    static isSimpleVal(obj: any): boolean;
+    static inKey(obj1: any, obj2: any): any;
+    /**
      * 从已有参数中取参数
      * @param json
      * @param jsonOpt
@@ -16,7 +28,7 @@ declare class JsonUtil {
      * @param jsonOpt
      * @returns
      */
-    static parseJson(json: any, opt: any, jsonOpt: IParseJsonOpt): any;
+    static parseJson(json: any, opt: any, jsonOpt?: IParseJsonOpt): any;
     private static changeVal;
     private static parseValue;
     private static getKeyStringFromJsonOpt;

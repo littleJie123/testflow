@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const TestLogger_1 = __importDefault(require("../testLog/TestLogger"));
 const TestRunner_1 = __importDefault(require("../testRunner/TestRunner"));
+const JsonUtil_1 = __importDefault(require("../util/JsonUtil"));
+const StrUtil_1 = require("../util/StrUtil");
 const WsUtil_1 = __importDefault(require("../util/WsUtil"));
 const S_Init = 'init';
 const S_Runing = 'runing';
@@ -13,6 +15,12 @@ const S_Error = 'error';
 class BaseTest {
     constructor() {
         this.runStatus = S_Init;
+    }
+    needThrowError() {
+        return true;
+    }
+    sendMsg(eventId, param) {
+        WsUtil_1.default.send(this.webSocket, param, eventId);
     }
     setRunStatus(status) {
         this.runStatus = status;
@@ -56,7 +64,7 @@ class BaseTest {
             ret = await this.test();
         }
         catch (e) {
-            this.getTestLogger().error(e);
+            this.error(e.message);
             this.setRunStatus(S_Error);
         }
         return ret;
@@ -95,14 +103,22 @@ class BaseTest {
         if (this.variable == null) {
             this.variable = TestRunner_1.default.get().getVariable();
         }
-        let logger = this.getTestLogger();
         let cnt = 0;
         for (let key in variable) {
-            logger.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`);
+            if (!StrUtil_1.StrUtil.isStr(variable[key])) {
+                this.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`);
+            }
+            else {
+                let str = variable[key];
+                if (str.length > 50) {
+                    str = str.substring(0, 50) + '...';
+                }
+                this.log(`添加变量 ${key} = ${str}`);
+            }
             this.variable[key] = variable[key];
             cnt++;
         }
-        logger.log(`添加变量 共 ${cnt} 个`);
+        this.log(`添加变量 共 ${cnt} 个`);
     }
     setTestLogger(logger) {
         this.testLogger = logger;
@@ -120,29 +136,47 @@ class BaseTest {
     async test() {
         let logger = this.getTestLogger();
         this.setRunStatus(S_Runing);
-        logger.log(`${this.getName()} 开始运行`);
+        this.log(`${this.getName()} 开始运行`);
         logger.addLevel();
         let result = null;
         try {
             result = await this.doTest();
             await this.checkResult(result);
             await this.processResult(result);
+            this.setRunStatus(S_Processed);
         }
         catch (e) {
             this.processError(e);
             this.setRunStatus(S_Error);
-            throw e;
+            if (this.needThrowError()) {
+                throw e;
+            }
         }
-        this.setRunStatus(S_Processed);
         logger.subLevel();
-        logger.log(`${this.getName()} 运行结束`);
+        this.log(`${this.getName()} 运行结束`);
         return result;
     }
     ;
     processError(e) {
+        this.error(`${this.getName()} 运行出错`);
+        this.error(e.message);
+    }
+    error(message) {
         let logger = this.getTestLogger();
-        logger.error(`${this.getName()} 运行出错`);
-        logger.errorOnException(e);
+        logger.error(message, this.getTestId());
+    }
+    log(message) {
+        let logger = this.getTestLogger();
+        logger.log(message, this.getTestId());
+    }
+    expectEqualObj(obj1, obj2, msg) {
+        if (msg == null) {
+            msg = `检查:期望是${JSON.stringify(obj2)},实际是${JSON.stringify(JsonUtil_1.default.inKey(obj1, obj2))}`;
+        }
+        console.log('JsonUtil.isEqualObj(obj1,obj2)', JsonUtil_1.default.isEqualObj(obj1, obj2));
+        if (!JsonUtil_1.default.isEqualObj(obj1, obj2)) {
+            throw new Error(msg);
+        }
     }
     /**
      * 检查结果是否正确
@@ -168,14 +202,26 @@ class BaseTest {
         return {
             name: this.getName(),
             status: this.runStatus,
-            id: this.testId
+            id: this.testId,
+            couldLookDetail: this.couldLookDetail()
         };
+    }
+    couldLookDetail() {
+        return true;
     }
     getParamMeta() {
         return null;
     }
     buildDefParam() {
         return {};
+    }
+    expectEqual(value1, value2, msg) {
+        if (msg == null) {
+            msg = `检查出错：期望是${value2}，实际是${value1}`;
+        }
+        if (value1 != value2) {
+            throw new Error(msg);
+        }
     }
 }
 BaseTest.S_Init = S_Init;

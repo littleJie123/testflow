@@ -13,15 +13,20 @@ export default abstract class TestCase extends BaseTest  {
   
 
   protected processError(e:Error){
-    let logger = this.getTestLogger();
-    logger.error(`${this.getName()} 运行出错`) 
+    this.error(`${this.getName()} 运行出错!!`) 
   }
   
   needInScreen(){
     return true;
   }
 
-  
+  protected needThrowError(): boolean {
+    return false;
+  }
+
+  protected couldLookDetail(){
+    return false;
+  }
 
   
 

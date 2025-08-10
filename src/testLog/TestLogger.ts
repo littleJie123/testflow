@@ -14,32 +14,24 @@ export default class TestLogger{
     let logs = [... this.logs]
     return logs;
   }
-  errorOnException(e: Error) {
-    this.addLogObj({
-      level:this.level,
-      message:e.message,
-      type:'error',
-      stack:e.stack
-    })
-  }
+ 
 
-  private addLogObj(log: ILog) {
-    this.logs.push(log);
-  }
+ 
   
   
   
-  log(message: string) {
-    this.addLog('log',message);
+  log(message: string,id?:string) {
+    this.addLog('log',message,id);
   }
-  error(message: string) {
-    this.addLog('error',message);
+  error(message: string,id?:string) {
+    this.addLog('error',message,id);
   }
-  private addLog(type:LogType,message:string){
+  private addLog(type:LogType,message:string,id?:string){
     const log = {
       level:this.level,
       message,
-      type
+      type,
+      id
     }
     this.logs.push(log)
     console.log(log)

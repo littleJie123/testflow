@@ -5,10 +5,8 @@ export default class TestLogger {
     private ws;
     setWebSocket(ws: WebSocket): void;
     getLogs(): ILog[];
-    errorOnException(e: Error): void;
-    private addLogObj;
-    log(message: string): void;
-    error(message: string): void;
+    log(message: string, id?: string): void;
+    error(message: string, id?: string): void;
     private addLog;
     addLevel(): void;
     subLevel(): void;

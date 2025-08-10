@@ -99,7 +99,7 @@ Http.get().on(
   function (data) {
     let div = document.getElementById(data.id);
     if (div) {
-      div.className = 'test-case ' + data.status;
+      div.className = 'action-item ' + data.status;
     }else{
       let toolbar = document.getElementById('statusDiv');
       if (toolbar) {
@@ -124,6 +124,7 @@ Http.get().on(
     }
     logsList.innerHTML += `
     <div class="log-item ${log.type}" 
+          data-step-id="${log.id}"
           style="padding-left: ${log.level * 20}px"
           onclick="toggleStack(this)">
         <div class="log-message">${log.message}</div>
