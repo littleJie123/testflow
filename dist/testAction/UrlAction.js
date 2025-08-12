@@ -26,7 +26,7 @@ class UrlAction extends BaseTest_1.default {
         return {};
     }
     getMethod() {
-        return 'GET';
+        return 'POST';
     }
     getHeader() {
         return {};
@@ -48,12 +48,20 @@ class UrlAction extends BaseTest_1.default {
         }
         return url;
     }
+    parseHttpParam() {
+        let datas = this.getVariable();
+        return JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
+    }
+    parseHttpHeaders() {
+        let datas = this.getVariable();
+        return JsonUtil_1.default.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() });
+    }
     async doTest() {
         let httpUtil = HttpUtil_1.default.get();
         let datas = this.getVariable();
         let url = StrUtil_1.StrUtil.format(this.parseHttpUrl(), datas);
-        let httpParam = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
-        let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() });
+        let httpParam = this.parseHttpParam();
+        let headers = this.parseHttpHeaders();
         let result = await httpUtil.requestStatusAndResult(url, this.getMethod(), httpParam, headers);
         this.sendMsg('httpParam', {
             id: this.getTestId(),

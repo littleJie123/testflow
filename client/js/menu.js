@@ -1,7 +1,6 @@
 // 菜单配置
 const menus = [
-  { name: '测试用例', url: 'index.html' },
-  { name: '接口列表', url: 'action.html' }
+  { name: '测试用例', url: 'index.html' }
 ];
 
 // 初始化菜单

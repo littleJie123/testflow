@@ -27,7 +27,7 @@ export default abstract class UrlAction extends BaseTest{
   protected abstract getHttpUrl():string;
  
   protected getMethod():string{
-    return 'GET';
+    return 'POST';
   }
 
   protected getHeader():any{
@@ -51,12 +51,22 @@ export default abstract class UrlAction extends BaseTest{
     }
     return url;
   }
+
+  protected parseHttpParam(){
+    let datas = this.getVariable();
+    return JsonUtil.parseJson(this.getHttpParam(),datas,{keyMap:this.getParamMeta()})
+  }
+
+  protected parseHttpHeaders(){
+    let datas = this.getVariable();
+    return JsonUtil.parseJson(this.getHeader(),datas,{keyMap:this.getHeaderMeta()})
+  }
   protected async doTest(): Promise<void> {
     let httpUtil = HttpUtil.get()
     let datas = this.getVariable();
     let url = StrUtil.format(this.parseHttpUrl(),datas);
-    let httpParam = JsonUtil.parseJson(this.getHttpParam(),datas,{keyMap:this.getParamMeta()})
-    let headers = JsonUtil.parseJson(this.getHeader(),datas,{keyMap:this.getHeaderMeta()})
+    let httpParam = this.parseHttpParam();
+    let headers = this.parseHttpHeaders()
     let result = await httpUtil.requestStatusAndResult(
       url,
       this.getMethod(),

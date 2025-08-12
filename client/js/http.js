@@ -126,7 +126,7 @@ Http.get().on(
     <div class="log-item ${log.type}" 
           data-step-id="${log.id}"
           style="padding-left: ${log.level * 20}px"
-          onclick="toggleStack(this)">
+          onclick="scrollToStep('${log.id}')">
         <div class="log-message">${log.message}</div>
         ${log.stack ? `<pre class="log-stack">${log.stack}</pre>` : ''}
     </div>

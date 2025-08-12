@@ -32,7 +32,7 @@ class default_1 extends UrlAction_1.default {
     getMethod() {
         let method = this.opt.method;
         if (method == undefined) {
-            method = 'GET';
+            method = 'POST';
         }
         return method;
     }

@@ -70,4 +70,7 @@ export default abstract class BaseTest implements ITest {
     getParamMeta(): any;
     buildDefParam(): {};
     protected expectEqual(value1: any, value2: any, msg?: string): void;
+    protected expectFind(array: any[], findObj: any, msg?: string): void;
+    protected expectFindByArray(array: any[], findObjs: any[], msg?: string): void;
+    protected expectNotFind(array: any[], findObj: any, msg?: string): void;
 }

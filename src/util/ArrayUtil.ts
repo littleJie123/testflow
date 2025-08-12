@@ -95,6 +95,9 @@ function get(obj: object, key:IGeter) {
 }
 
 export class ArrayUtil {
+
+
+	
 	/**
 	 * 类似字符串的indexOf
 	 * @param array1 

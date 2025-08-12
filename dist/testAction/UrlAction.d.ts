@@ -8,6 +8,8 @@ export default abstract class UrlAction extends BaseTest {
     protected getMethod(): string;
     protected getHeader(): any;
     protected parseHttpUrl(): string;
+    protected parseHttpParam(): any;
+    protected parseHttpHeaders(): any;
     protected doTest(): Promise<void>;
     buildDefParam(): any;
     getHeaderMeta(): any;

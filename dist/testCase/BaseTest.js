@@ -158,6 +158,7 @@ class BaseTest {
     }
     ;
     processError(e) {
+        console.error(e);
         this.error(`${this.getName()} 运行出错`);
         this.error(e.message);
     }
@@ -185,9 +186,14 @@ class BaseTest {
     async checkResult(result) {
     }
     async processResult(result) {
-        let variable = this.buildVariable(result);
-        if (variable != null) {
-            this.addVariable(variable);
+        try {
+            let variable = this.buildVariable(result);
+            if (variable != null) {
+                this.addVariable(variable);
+            }
+        }
+        catch (e) {
+            throw new Error('添加变量出错:' + e.message);
         }
     }
     /**
@@ -220,6 +226,45 @@ class BaseTest {
             msg = `检查出错：期望是${value2}，实际是${value1}`;
         }
         if (value1 != value2) {
+            throw new Error(msg);
+        }
+    }
+    expectFind(array, findObj, msg) {
+        if (msg == null) {
+            msg = `没找到${JSON.stringify(findObj)}的数据`;
+        }
+        let row = array.find(function (obj) {
+            for (let e in findObj) {
+                let val = JsonUtil_1.default.getByKeys(obj, e);
+                if (val != findObj[e]) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        if (row == null) {
+            throw new Error(msg);
+        }
+    }
+    expectFindByArray(array, findObjs, msg) {
+        for (let findObj of findObjs) {
+            this.expectFind(array, findObj);
+        }
+    }
+    expectNotFind(array, findObj, msg) {
+        if (msg == null) {
+            msg = `找到了${JSON.stringify(findObj)}的数据，本来觉得应该找不到`;
+        }
+        let row = array.find(function (obj) {
+            for (let e in findObj) {
+                let val = JsonUtil_1.default.getByKeys(obj, e);
+                if (val != findObj[e]) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        if (row != null) {
             throw new Error(msg);
         }
     }

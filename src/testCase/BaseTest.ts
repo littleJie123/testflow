@@ -200,6 +200,7 @@ export default abstract class BaseTest implements ITest {
   };
 
   protected processError(e:Error){
+    console.error(e);
     this.error(`${this.getName()} 运行出错`)
     this.error(e.message);
   }
@@ -231,9 +232,13 @@ export default abstract class BaseTest implements ITest {
   }
 
   protected async processResult(result:any):Promise<void>{
-    let variable = this.buildVariable(result);
-    if(variable!= null){
-      this.addVariable(variable);
+    try{
+      let variable = this.buildVariable(result);
+      if(variable!= null){
+        this.addVariable(variable);
+      }
+    }catch(e){
+      throw new Error('添加变量出错:'+e.message);
     }
   }
 
@@ -279,6 +284,49 @@ export default abstract class BaseTest implements ITest {
       msg = `检查出错：期望是${value2}，实际是${value1}`
     }
     if(value1 != value2){
+      throw new Error(msg);
+    }
+  }
+
+  protected expectFind(array:any[],findObj:any,msg?:string){
+    if(msg == null){
+      msg =`没找到${JSON.stringify(findObj)}的数据`
+    }
+    let row = array.find(function(obj){
+      for(let e in findObj){
+        let val = JsonUtil.getByKeys(obj,e);
+        if(val != findObj[e]){
+          return false;
+        }
+      }
+      return true;
+    })
+    if( row == null){
+      throw new Error(msg);
+    }
+  }
+  protected expectFindByArray(array:any[],findObjs:any[],msg?:string){
+    for(let findObj of findObjs){
+      this.expectFind(array,findObj)
+    }
+  }
+  
+
+
+  protected expectNotFind(array:any[],findObj:any,msg?:string){
+    if(msg == null){
+      msg =`找到了${JSON.stringify(findObj)}的数据，本来觉得应该找不到`
+    }
+    let row = array.find(function(obj){
+      for(let e in findObj){
+        let val = JsonUtil.getByKeys(obj,e);
+        if(val != findObj[e]){
+          return false;
+        }
+      }
+      return true;
+    })
+    if( row != null){
       throw new Error(msg);
     }
   }

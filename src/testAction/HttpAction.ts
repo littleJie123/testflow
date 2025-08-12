@@ -32,7 +32,7 @@ export default class extends UrlAction{
   protected getMethod(): string {
     let method = this.opt.method;
     if(method == undefined){
-      method = 'GET';
+      method = 'POST';
     }
     return method;
   }

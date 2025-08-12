@@ -1,3 +1,7 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -30,7 +34,7 @@ body {
 .detail{
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 49% 49%;
 }
 
 .btn:hover {
@@ -168,7 +172,8 @@ body {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    height: calc(90vh - 100px);
+    height: calc(100vh - 20px);
+    word-wrap: break-word;
 }
 
 #logsList {
@@ -176,17 +181,38 @@ body {
     flex-grow: 1;
 }
 
+#actionsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
 .actions-panel .action-item {
+    flex: 1 1 calc(25% - 0.75rem); /* Corrected width for 4 items with 1rem gap */
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     padding: 10px;
-    margin-bottom: 10px;
     border-radius: 4px;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    min-width: 180px;
+}
+
+.actions-panel .action-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .action-info {
     flex-grow: 1;
+}
+
+.action-info h3 {
+    margin-top: 0;
+    font-size: 1em; /* Adjust font size if needed */
+    overflow-wrap: break-word;
+    word-break: break-all;
 }
 
 .action-buttons {
@@ -315,6 +341,12 @@ body {
 .highlighted-log {
     color: blue;
 }
+
+.action-item.step-highlight {
+    background-color: #fff3cd !important; /* A light yellow color */
+    transition: background-color 0.5s ease;
+}
+
 
 /* 弹窗内容中的代码/参数显示样式 */
 .modal-content-body pre {
