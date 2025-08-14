@@ -7,5 +7,7 @@ export { default as IHttpActionParam } from "./inf/IHttpActionParam";
 export { default as ITest } from "./inf/ITest";
 export { default as SetVariable } from "./testAction/SetVariable";
 export { default as ISetVariableParam } from "./inf/ISetVarableParam";
+export { default as IAfterProcess } from "./inf/IAfterProcess";
 export { ArrayUtil } from "./util/ArrayUtil";
 export { default as JsonUtil } from "./util/JsonUtil";
+export { default as CheckUtil } from "./util/CheckUtil";

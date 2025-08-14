@@ -5,16 +5,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const TestLogger_1 = __importDefault(require("../testLog/TestLogger"));
 const TestRunner_1 = __importDefault(require("../testRunner/TestRunner"));
-const JsonUtil_1 = __importDefault(require("../util/JsonUtil"));
 const StrUtil_1 = require("../util/StrUtil");
 const WsUtil_1 = __importDefault(require("../util/WsUtil"));
+const CheckUtil_1 = __importDefault(require("../util/CheckUtil"));
 const S_Init = 'init';
 const S_Runing = 'runing';
 const S_Processed = 'processed';
 const S_Error = 'error';
 class BaseTest {
-    constructor() {
+    constructor(afterProcess) {
         this.runStatus = S_Init;
+        this.afterProcess = afterProcess;
     }
     needThrowError() {
         return true;
@@ -170,20 +171,15 @@ class BaseTest {
         let logger = this.getTestLogger();
         logger.log(message, this.getTestId());
     }
-    expectEqualObj(obj1, obj2, msg) {
-        if (msg == null) {
-            msg = `检查:期望是${JSON.stringify(obj2)},实际是${JSON.stringify(JsonUtil_1.default.inKey(obj1, obj2))}`;
-        }
-        console.log('JsonUtil.isEqualObj(obj1,obj2)', JsonUtil_1.default.isEqualObj(obj1, obj2));
-        if (!JsonUtil_1.default.isEqualObj(obj1, obj2)) {
-            throw new Error(msg);
-        }
-    }
     /**
      * 检查结果是否正确
      * @param result
      */
     async checkResult(result) {
+        let afterProcess = this.afterProcess;
+        if ((afterProcess === null || afterProcess === void 0 ? void 0 : afterProcess.check) != null) {
+            await (afterProcess === null || afterProcess === void 0 ? void 0 : afterProcess.check(result));
+        }
     }
     async processResult(result) {
         try {
@@ -202,6 +198,10 @@ class BaseTest {
      * @returns
      */
     buildVariable(result) {
+        let afterProcess = this.afterProcess;
+        if (afterProcess === null || afterProcess === void 0 ? void 0 : afterProcess.buildVariable) {
+            return afterProcess.buildVariable(result);
+        }
         return null;
     }
     toJson() {
@@ -222,51 +222,19 @@ class BaseTest {
         return {};
     }
     expectEqual(value1, value2, msg) {
-        if (msg == null) {
-            msg = `检查出错：期望是${value2}，实际是${value1}`;
-        }
-        if (value1 != value2) {
-            throw new Error(msg);
-        }
+        CheckUtil_1.default.expectEqual(value1, value2, msg);
     }
     expectFind(array, findObj, msg) {
-        if (msg == null) {
-            msg = `没找到${JSON.stringify(findObj)}的数据`;
-        }
-        let row = array.find(function (obj) {
-            for (let e in findObj) {
-                let val = JsonUtil_1.default.getByKeys(obj, e);
-                if (val != findObj[e]) {
-                    return false;
-                }
-            }
-            return true;
-        });
-        if (row == null) {
-            throw new Error(msg);
-        }
+        CheckUtil_1.default.expectFind(array, findObj, msg);
     }
     expectFindByArray(array, findObjs, msg) {
-        for (let findObj of findObjs) {
-            this.expectFind(array, findObj);
-        }
+        CheckUtil_1.default.expectFindByArray(array, findObjs, msg);
     }
     expectNotFind(array, findObj, msg) {
-        if (msg == null) {
-            msg = `找到了${JSON.stringify(findObj)}的数据，本来觉得应该找不到`;
-        }
-        let row = array.find(function (obj) {
-            for (let e in findObj) {
-                let val = JsonUtil_1.default.getByKeys(obj, e);
-                if (val != findObj[e]) {
-                    return false;
-                }
-            }
-            return true;
-        });
-        if (row != null) {
-            throw new Error(msg);
-        }
+        CheckUtil_1.default.expectNotFind(array, findObj, msg);
+    }
+    expectEqualObj(obj1, obj2, msg) {
+        CheckUtil_1.default.expectEqualObj(obj1, obj2, msg);
     }
 }
 BaseTest.S_Init = S_Init;

@@ -1,3 +1,5 @@
+import { after } from "node:test";
+import IAfterProcess from "../inf/IAfterProcess";
 import IRunOpt from "../inf/IRunOpt";
 import ITest from "../inf/ITest";
 import ITestCaseInfo from "../inf/ITestCaseInfo";
@@ -6,6 +8,7 @@ import TestRunner from "../testRunner/TestRunner";
 import JsonUtil from "../util/JsonUtil";
 import { StrUtil } from "../util/StrUtil";
 import WsUtil from "../util/WsUtil";
+import CheckUtil from "../util/CheckUtil";
 
 const S_Init = 'init';
 const S_Runing = 'runing';
@@ -18,40 +21,46 @@ export default abstract class BaseTest implements ITest {
   static readonly S_Processed = S_Processed;
   static readonly S_Error = S_Error;
 
+  protected afterProcess: IAfterProcess;
 
-  protected clazz:any
+  protected clazz: any
 
-  protected testLogger:TestLogger;
-  protected variable:any;
- 
-
-
-  protected env:string;
-
-  protected runStatus:string = S_Init;
-
-  protected info:ITestCaseInfo ;
-
-  protected testId:string;
-  
-  protected webSocket:WebSocket;
+  protected testLogger: TestLogger;
+  protected variable: any;
 
 
-  protected needThrowError(){
+
+  protected env: string;
+
+  protected runStatus: string = S_Init;
+
+  protected info: ITestCaseInfo;
+
+  protected testId: string;
+
+  protected webSocket: WebSocket;
+
+
+
+  constructor(afterProcess?: IAfterProcess) {
+    this.afterProcess = afterProcess;
+  }
+
+  protected needThrowError() {
     return true;
   }
 
-  protected sendMsg(eventId:string,param:any){
-    WsUtil.send(this.webSocket,param,eventId)
+  protected sendMsg(eventId: string, param: any) {
+    WsUtil.send(this.webSocket, param, eventId)
   }
 
 
-  protected setRunStatus(status:string){
-    this.runStatus = status;   
+  protected setRunStatus(status: string) {
+    this.runStatus = status;
     WsUtil.send(this.webSocket, {
-      id:this.testId,
+      id: this.testId,
       status: this.runStatus
-    },'runStatus');
+    }, 'runStatus');
   }
 
   setWebSocket(webSocket: WebSocket) {
@@ -65,180 +74,175 @@ export default abstract class BaseTest implements ITest {
    * 是否要出现在web界面的屏幕上
    * @returns 
    */
-  needInScreen(){
+  needInScreen() {
     return false;
   }
 
-  protected setClazz(clazz){
+  protected setClazz(clazz) {
     this.clazz = clazz;
   }
 
-  clone(){
+  clone() {
     let clazz = this.clazz;
-    
+
     let ret = new clazz();
     ret.setTestId(this.getTestId());
     return ret;
   }
 
-  protected init(){
+  protected init() {
     this.variable = null;
-    
+
   }
 
-  async run(env?:string,opt?:IRunOpt): Promise<any> {
-    let ret:any = null;
+  async run(env?: string, opt?: IRunOpt): Promise<any> {
+    let ret: any = null;
     this.init()
-    this.setEnv(env)  
-    if(opt){
+    this.setEnv(env)
+    if (opt) {
       this.setVariable(opt.variable);
     }
-    try{
+    try {
       ret = await this.test();
-    }catch(e){
+    } catch (e) {
       this.error(e.message);
       this.setRunStatus(S_Error);
     }
     return ret;
   }
 
-  setTestId(testId:string){
+  setTestId(testId: string) {
     this.testId = testId;
   }
 
 
-  getTestId():string{
+  getTestId(): string {
     return this.testId;
   }
-  getInfo():ITestCaseInfo {
+  getInfo(): ITestCaseInfo {
     return this.info;
   }
 
-  setInfo(info:ITestCaseInfo){
+  setInfo(info: ITestCaseInfo) {
     this.info = info;
   }
 
-  getRunStatus():string{
+  getRunStatus(): string {
     return this.runStatus;
   }
-  beforeRun(){
-    this.runStatus = S_Init; 
+  beforeRun() {
+    this.runStatus = S_Init;
   }
-  setEnv(env:string){
+  setEnv(env: string) {
     this.env = env;
   }
-  
-  setVariable(variable:any){
+
+  setVariable(variable: any) {
     this.variable = variable;
   }
-  protected getVariable():any{
-    if(this.variable == null){
+  protected getVariable(): any {
+    if (this.variable == null) {
       this.variable = TestRunner.get().getVariable();
     }
     return this.variable;
   }
 
-  protected addVariable(variable:any){
-    if(this.variable == null){
+  protected addVariable(variable: any) {
+    if (this.variable == null) {
       this.variable = TestRunner.get().getVariable();
     }
-   
+
     let cnt = 0
-    for(let key in variable){
-      if(!StrUtil.isStr(variable[key])){
+    for (let key in variable) {
+      if (!StrUtil.isStr(variable[key])) {
         this.log(`添加变量 ${key} = ${JSON.stringify(variable[key])}`)
-      }else{
+      } else {
         let str = variable[key];
-        if(str.length > 50){
-          str = str.substring(0,50) + '...'
+        if (str.length > 50) {
+          str = str.substring(0, 50) + '...'
         }
         this.log(`添加变量 ${key} = ${str}`)
-        
+
       }
       this.variable[key] = variable[key];
       cnt++;
     }
     this.log(`添加变量 共 ${cnt} 个`)
-       
+
   }
-  setTestLogger(logger:TestLogger){
+  setTestLogger(logger: TestLogger) {
     this.testLogger = logger;
   }
-  getTestLogger():TestLogger {
-    if(this.testLogger == null){
+  getTestLogger(): TestLogger {
+    if (this.testLogger == null) {
       this.testLogger = new TestLogger();
     }
     return this.testLogger;
   }
 
-  isStop():boolean{
+  isStop(): boolean {
     return this.info?.config?.stop;
   }
 
-  async test():Promise<any>{
+  async test(): Promise<any> {
     let logger = this.getTestLogger();
-    this.setRunStatus( S_Runing);
+    this.setRunStatus(S_Runing);
     this.log(`${this.getName()} 开始运行`)
     logger.addLevel();
     let result = null;
-    try{
+    try {
       result = await this.doTest();
       await this.checkResult(result);
       await this.processResult(result);
       this.setRunStatus(S_Processed);
-    }catch(e){
+    } catch (e) {
       this.processError(e);
       this.setRunStatus(S_Error);
-      if(this.needThrowError()){
+      if (this.needThrowError()) {
         throw e;
       }
     }
-    
+
     logger.subLevel();
     this.log(`${this.getName()} 运行结束`)
     return result;
   };
 
-  protected processError(e:Error){
+  protected processError(e: Error) {
     console.error(e);
     this.error(`${this.getName()} 运行出错`)
     this.error(e.message);
   }
 
-  protected error(message:string){
+  protected error(message: string) {
     let logger = this.getTestLogger();
-    logger.error(message,this.getTestId());
+    logger.error(message, this.getTestId());
   }
-  protected log(message:string){
+  protected log(message: string) {
     let logger = this.getTestLogger();
-    logger.log(message,this.getTestId());
+    logger.log(message, this.getTestId());
   }
 
-  expectEqualObj(obj1:any,obj2:any,msg?:string){
-    if(msg == null){
-      msg =`检查:期望是${JSON.stringify(obj2)},实际是${JSON.stringify(JsonUtil.inKey(obj1,obj2))}`
-    }
-    console.log('JsonUtil.isEqualObj(obj1,obj2)',JsonUtil.isEqualObj(obj1,obj2))
-    if(!JsonUtil.isEqualObj(obj1,obj2)){
-      throw new Error(msg);
-    }
-  }
+
   /**
    * 检查结果是否正确
    * @param result 
    */
-  protected async checkResult(result:any):Promise<void>{
-    
+  protected async checkResult(result: any): Promise<void> {
+    let afterProcess = this.afterProcess
+    if (afterProcess?.check != null) {
+      await afterProcess?.check(result);
+    }
   }
 
-  protected async processResult(result:any):Promise<void>{
-    try{
+  protected async processResult(result: any): Promise<void> {
+    try {
       let variable = this.buildVariable(result);
-      if(variable!= null){
+      if (variable != null) {
         this.addVariable(variable);
       }
-    }catch(e){
-      throw new Error('添加变量出错:'+e.message);
+    } catch (e) {
+      throw new Error('添加变量出错:' + e.message);
     }
   }
 
@@ -247,87 +251,60 @@ export default abstract class BaseTest implements ITest {
    * @param result 
    * @returns 
    */
-  protected buildVariable(result:any):any{
+  protected buildVariable(result: any): any {
+    let afterProcess = this.afterProcess;
+    if (afterProcess?.buildVariable) {
+      return afterProcess.buildVariable(result);
+    }
     return null;
   }
 
-  abstract getName():string;
+  abstract getName(): string;
 
-  protected abstract doTest():Promise<any>;
+  protected abstract doTest(): Promise<any>;
 
 
-  toJson(){
+  toJson() {
     return {
-      name:this.getName(),
-      status:this.runStatus,
-      id:this.testId,
-      couldLookDetail:this.couldLookDetail()
+      name: this.getName(),
+      status: this.runStatus,
+      id: this.testId,
+      couldLookDetail: this.couldLookDetail()
     }
   }
 
-  protected couldLookDetail(){
+  protected couldLookDetail() {
     return true;
   }
 
 
 
-  getParamMeta():any{
+  getParamMeta(): any {
     return null;
   }
 
-  buildDefParam(){
+  buildDefParam() {
     return {};
   }
 
-  protected expectEqual(value1,value2,msg?:string){
-    if(msg == null){
-      msg = `检查出错：期望是${value2}，实际是${value1}`
-    }
-    if(value1 != value2){
-      throw new Error(msg);
-    }
+  protected expectEqual(value1, value2, msg?: string) {
+    CheckUtil.expectEqual(value1, value2, msg)
   }
 
-  protected expectFind(array:any[],findObj:any,msg?:string){
-    if(msg == null){
-      msg =`没找到${JSON.stringify(findObj)}的数据`
-    }
-    let row = array.find(function(obj){
-      for(let e in findObj){
-        let val = JsonUtil.getByKeys(obj,e);
-        if(val != findObj[e]){
-          return false;
-        }
-      }
-      return true;
-    })
-    if( row == null){
-      throw new Error(msg);
-    }
+  protected expectFind(array: any[], findObj: any, msg?: string) {
+    CheckUtil.expectFind(array, findObj, msg)
   }
-  protected expectFindByArray(array:any[],findObjs:any[],msg?:string){
-    for(let findObj of findObjs){
-      this.expectFind(array,findObj)
-    }
+  protected expectFindByArray(array: any[], findObjs: any[], msg?: string) {
+    CheckUtil.expectFindByArray(array, findObjs, msg)
   }
-  
 
 
-  protected expectNotFind(array:any[],findObj:any,msg?:string){
-    if(msg == null){
-      msg =`找到了${JSON.stringify(findObj)}的数据，本来觉得应该找不到`
-    }
-    let row = array.find(function(obj){
-      for(let e in findObj){
-        let val = JsonUtil.getByKeys(obj,e);
-        if(val != findObj[e]){
-          return false;
-        }
-      }
-      return true;
-    })
-    if( row != null){
-      throw new Error(msg);
-    }
+
+  protected expectNotFind(array: any[], findObj: any, msg?: string) {
+    CheckUtil.expectNotFind(array, findObj, msg)
+  }
+
+  protected expectEqualObj(obj1: any, obj2: any, msg?: string) {
+    CheckUtil.expectEqualObj(obj1,obj2,msg);
   }
 }

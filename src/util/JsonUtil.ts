@@ -248,6 +248,9 @@ class JsonUtil {
   }
 
   private static changeVal(key:string|number,val:any,opt:any,jsonOpt:IParseJsonOpt){
+    if(val == null){
+      return null;
+    }
     if(val instanceof Array){
       let array:any[] = [];
       for(let i= 0;i<val.length;i++){
@@ -268,6 +271,7 @@ class JsonUtil {
     if(StrUtil.isStr(val)){
       return this.parseStr(key,val,opt,jsonOpt);
     }
+    
     let ret = {};
     for(let e in val){
       ret[e] = this.changeVal(e,val[e],opt,jsonOpt)

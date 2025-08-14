@@ -225,6 +225,9 @@ class JsonUtil {
         }
     }
     static changeVal(key, val, opt, jsonOpt) {
+        if (val == null) {
+            return null;
+        }
         if (val instanceof Array) {
             let array = [];
             for (let i = 0; i < val.length; i++) {

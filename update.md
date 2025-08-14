@@ -1,3 +1,74 @@
+# 代码修改记录 (2025-08-14)
+
+本次更新在`detail.html`页面增加了“跳到出错”功能，并且当步骤大于16个时，在页面底部也显示操作按钮。
+
+---
+
+### `client/detail.html`
+
+#### 1. 新增“跳到出错”按钮
+
+在“运行测试”按钮旁边，增加了一个“跳到出错”按钮。
+
+```diff
+-   <div class="toolbar" id="toolbar">
+-     <button class="btn" onclick="runTestCase()">运行测试</button>
+-   </div>
++   <div class="toolbar" id="toolbar">
++     <button class="btn" onclick="runTestCase()">运行测试</button>
++     <button class="btn" onclick="jumpToError()">跳到出错</button>
++   </div>
+```
+
+#### 2. 实现“跳到出错”功能
+
+新增 `jumpToError()` JavaScript 函数。点击按钮后，该函数会查找页面上第一个状态为“失败”的测试步骤，并自动将页面滚动到该步骤的位置，方便用户快速定位问题。如果没有找到失败的步骤，会弹窗提示。
+
+```javascript
+function jumpToError() {
+  const errorStep = document.querySelector('.action-item.error');
+  if (errorStep) {
+    errorStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    alert('没有发现错误的步骤');
+  }
+}
+```
+
+#### 3. 新增底部工具栏
+
+在页面底部新增一个与顶部功能相同的工具栏，包含“运行测试”和“跳到出错”按钮。该工具栏默认隐藏。
+
+```diff
+-   <div id="stepModal" class="modal">
++   <div class="toolbar" id="bottomToolbar" style="display: none; margin-top: 1rem;">
++     <button class="btn" onclick="runTestCase()">运行测试</button>
++     <button class="btn" onclick="jumpToError()">跳到出错</button>
++   </div>
++ 
++   <div id="stepModal" class="modal">
+```
+
+#### 4. 动态显示底部工具栏
+
+修改 `renderActions()` 函数，在渲染完测试步骤后，会检查步骤总数。如果步骤数量大于16，则显示底部的工具栏，否则保持隐藏。
+
+```diff
+-     `).join('');
+-     }
++     `).join('');
++       
++       const bottomToolbar = document.getElementById('bottomToolbar');
++       if (actions.length > 16) {
++         bottomToolbar.style.display = 'flex';
++       } else {
++         bottomToolbar.style.display = 'none';
++       }
++     }
+```
+
+---
+
 # 代码修改记录 (2025-08-11)
 
 本次更新优化了`detail.html`页面的布局，解决了右侧日志内容过长时挤压左侧步骤列表的问题。

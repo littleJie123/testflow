@@ -9,6 +9,7 @@ export default abstract class UrlAction extends BaseTest{
   protected httpStatus?:number;
 
   protected async checkResult(result: any): Promise<void> {
+    await super.checkResult(result);
     this.checkHttpStatus(result);
   }
 
@@ -37,6 +38,9 @@ export default abstract class UrlAction extends BaseTest{
   protected parseHttpUrl():string{
     let testRunner = TestRunner.get()
     let url = this.getHttpUrl();
+    if(url == null){
+      throw new Error('请设置url');
+    }
     if(!url.startsWith('http')){
       let host:string = testRunner.getEnvConfig(TestConfig.S_Host,this.env);
       if(host){
@@ -54,12 +58,20 @@ export default abstract class UrlAction extends BaseTest{
 
   protected parseHttpParam(){
     let datas = this.getVariable();
-    return JsonUtil.parseJson(this.getHttpParam(),datas,{keyMap:this.getParamMeta()})
+    let ret =  JsonUtil.parseJson(this.getHttpParam(),datas,{keyMap:this.getParamMeta()})
+    if(this.afterProcess?.parseHttpParam){
+      ret = this.afterProcess.parseHttpParam(ret)
+    }
+    return ret;
   }
 
   protected parseHttpHeaders(){
     let datas = this.getVariable();
-    return JsonUtil.parseJson(this.getHeader(),datas,{keyMap:this.getHeaderMeta()})
+    let headers = JsonUtil.parseJson(this.getHeader(),datas,{keyMap:this.getHeaderMeta()})
+    if(this.afterProcess?.parseHttpHeader){
+      headers = this.afterProcess.parseHttpHeader
+    }
+    return headers;
   }
   protected async doTest(): Promise<void> {
     let httpUtil = HttpUtil.get()

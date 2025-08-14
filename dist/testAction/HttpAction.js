@@ -8,8 +8,8 @@ class default_1 extends UrlAction_1.default {
     needInScreen() {
         return true;
     }
-    constructor(param) {
-        super();
+    constructor(param, afterProcess) {
+        super(afterProcess);
         if (param == null) {
             param = {};
         }
@@ -48,6 +48,14 @@ class default_1 extends UrlAction_1.default {
             param = {};
         }
         return param;
+    }
+    getHeader() {
+        var _a;
+        let headers = (_a = this.opt) === null || _a === void 0 ? void 0 : _a.headers;
+        if (headers == null) {
+            headers = {};
+        }
+        return headers;
     }
 }
 exports.default = default_1;

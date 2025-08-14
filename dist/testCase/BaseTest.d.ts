@@ -1,3 +1,4 @@
+import IAfterProcess from "../inf/IAfterProcess";
 import IRunOpt from "../inf/IRunOpt";
 import ITest from "../inf/ITest";
 import ITestCaseInfo from "../inf/ITestCaseInfo";
@@ -7,6 +8,7 @@ export default abstract class BaseTest implements ITest {
     static readonly S_Runing = "runing";
     static readonly S_Processed = "processed";
     static readonly S_Error = "error";
+    protected afterProcess: IAfterProcess;
     protected clazz: any;
     protected testLogger: TestLogger;
     protected variable: any;
@@ -15,6 +17,7 @@ export default abstract class BaseTest implements ITest {
     protected info: ITestCaseInfo;
     protected testId: string;
     protected webSocket: WebSocket;
+    constructor(afterProcess?: IAfterProcess);
     protected needThrowError(): boolean;
     protected sendMsg(eventId: string, param: any): void;
     protected setRunStatus(status: string): void;
@@ -45,7 +48,6 @@ export default abstract class BaseTest implements ITest {
     protected processError(e: Error): void;
     protected error(message: string): void;
     protected log(message: string): void;
-    expectEqualObj(obj1: any, obj2: any, msg?: string): void;
     /**
      * 检查结果是否正确
      * @param result
@@ -73,4 +75,5 @@ export default abstract class BaseTest implements ITest {
     protected expectFind(array: any[], findObj: any, msg?: string): void;
     protected expectFindByArray(array: any[], findObjs: any[], msg?: string): void;
     protected expectNotFind(array: any[], findObj: any, msg?: string): void;
+    protected expectEqualObj(obj1: any, obj2: any, msg?: string): void;
 }

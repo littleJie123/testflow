@@ -17,6 +17,7 @@
   <div id="statusDiv">状态</div>
   <div class="toolbar" id="toolbar">
     <button class="btn" onclick="runTestCase()">运行测试</button>
+    <button class="btn" onclick="jumpToError()">跳到出错</button>
   </div>
 
   <div class="detail">
@@ -29,6 +30,11 @@
       <h2>测试日志</h2>
       <div id="logsList"></div>
     </div>
+  </div>
+
+  <div class="toolbar" id="bottomToolbar" style="display: none; margin-top: 1rem;">
+    <button class="btn" onclick="runTestCase()">运行测试</button>
+    <button class="btn" onclick="jumpToError()">跳到出错</button>
   </div>
 
   <div id="stepModal" class="modal">
@@ -196,6 +202,13 @@
                     </div>
                 </div>
             `).join('');
+      
+      const bottomToolbar = document.getElementById('bottomToolbar');
+      if (actions.length > 16) {
+        bottomToolbar.style.display = 'flex';
+      } else {
+        bottomToolbar.style.display = 'none';
+      }
     }
 
     
@@ -235,6 +248,15 @@
         error: '失败'
       };
       return statusMap[status] || status;
+    }
+
+    function jumpToError() {
+      const errorStep = document.querySelector('.action-item.error');
+      if (errorStep) {
+        errorStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        alert('没有发现错误的步骤');
+      }
     }
 
     // 运行测试用例

@@ -11,6 +11,7 @@ const JsonUtil_1 = __importDefault(require("../util/JsonUtil"));
 const StrUtil_1 = require("../util/StrUtil");
 class UrlAction extends BaseTest_1.default {
     async checkResult(result) {
+        await super.checkResult(result);
         this.checkHttpStatus(result);
     }
     checkHttpStatus(result) {
@@ -34,6 +35,9 @@ class UrlAction extends BaseTest_1.default {
     parseHttpUrl() {
         let testRunner = TestRunner_1.default.get();
         let url = this.getHttpUrl();
+        if (url == null) {
+            throw new Error('请设置url');
+        }
         if (!url.startsWith('http')) {
             let host = testRunner.getEnvConfig(TestConfig_1.default.S_Host, this.env);
             if (host) {
@@ -49,12 +53,22 @@ class UrlAction extends BaseTest_1.default {
         return url;
     }
     parseHttpParam() {
+        var _a;
         let datas = this.getVariable();
-        return JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
+        let ret = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
+        if ((_a = this.afterProcess) === null || _a === void 0 ? void 0 : _a.parseHttpParam) {
+            ret = this.afterProcess.parseHttpParam(ret);
+        }
+        return ret;
     }
     parseHttpHeaders() {
+        var _a;
         let datas = this.getVariable();
-        return JsonUtil_1.default.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() });
+        let headers = JsonUtil_1.default.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() });
+        if ((_a = this.afterProcess) === null || _a === void 0 ? void 0 : _a.parseHttpHeader) {
+            headers = this.afterProcess.parseHttpHeader;
+        }
+        return headers;
     }
     async doTest() {
         let httpUtil = HttpUtil_1.default.get();

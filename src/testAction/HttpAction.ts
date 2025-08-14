@@ -1,15 +1,16 @@
+import IAfterProcess from "../inf/IAfterProcess";
 import IHttpActionParam from "../inf/IHttpActionParam";
 import UrlAction from "./UrlAction";
 
 
 export default class extends UrlAction{
-  private opt:IHttpActionParam;
+  protected opt:IHttpActionParam;
 
   needInScreen(){
     return true;
   }
-  constructor(param?:IHttpActionParam){
-    super();
+  constructor(param?:IHttpActionParam,afterProcess?:IAfterProcess){
+    super(afterProcess);
     if(param == null){
       param = {};
     }else{
@@ -51,4 +52,12 @@ export default class extends UrlAction{
     return param;
   }
 
+
+  protected getHeader() {
+    let headers = this.opt?.headers;
+    if(headers == null){
+      headers = {}
+    }
+    return headers;
+  }
 }
