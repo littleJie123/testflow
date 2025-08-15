@@ -1,14 +1,122 @@
 # 代码修改记录 (2025-08-14)
 
-本次更新在`detail.html`页面增加了“跳到出错”功能，并且当步骤大于16个时，在页面底部也显示操作按钮。
+本次更新在`detail.html`页面增加了多个功能并修复了一个bug，优化了用户体验。
 
 ---
 
 ### `client/detail.html`
 
-#### 1. 新增“跳到出错”按钮
+#### 1. 修复步骤状态不更新的Bug
 
-在“运行测试”按钮旁边，增加了一个“跳到出错”按钮。
+修复了运行测试后，步骤状态始终显示为“初始化”的bug。
+
+-   **新增 `runStatus` 事件处理**：添加了对 WebSocket `runStatus` 事件的监听。当接收到状态变更消息时，会动态更新对应步骤的UI，包括状态样式和文本。
+-   **兼容后端状态拼写错误**：`getStatusText` 函数增加了对后端错误拼写 `runing` 的兼容处理，确保“运行中”状态能正确显示。
+
+```diff
+-     http.on('httpParam', function (msg) {
+-       stepData[msg.id] = msg;
+-     });
++     http.on('httpParam', function (msg) {
++       stepData[msg.id] = msg;
++     });
++ 
++     http.on('runStatus', function (msg) {
++       const stepElement = document.getElementById(msg.id);
++       if (stepElement) {
++         stepElement.classList.remove('processed', 'error', 'running', 'init', 'runing');
++         let status = msg.status;
++         if(status === 'runing'){
++             status = 'running';
++         }
++         stepElement.classList.add(status);
++         const statusTxt = stepElement.querySelector('.statusTxt');
++         if (statusTxt) {
++           statusTxt.textContent = '状态: ' + getStatusText(msg.status);
++         }
++       }
++     });
+```
+
+```diff
+-     function getStatusText(status) {
+-       const statusMap = {
+-         init: '初始化',
+-         running: '运行中',
+-         processed: '成功',
+-         error: '失败'
+-       };
+-       return statusMap[status] || status;
+-     }
++     function getStatusText(status) {
++       const statusMap = {
++         init: '初始化',
++         running: '运行中',
++         runing: '运行中',
++         processed: '成功',
++         error: '失败'
++       };
++       return statusMap[status] || status;
++     }
+```
+
+#### 2. 点击运行后重置步骤状态
+
+点击“运行测试”按钮后，会先将所有步骤的状态在前端重置为“初始化”，然后再向服务器发送运行请求。
+
+```diff
+-     async function runTestCase() {
+-       try {
+-         Util.initStatus();
+-         const logsList = document.getElementById('logsList');
+-         if (logsList) {
+-           logsList.innerHTML = ''; // 清空日志列表
+-         }
+-         await http.post('/runTestCase', { id: [testCaseId] });
+- 
+- 
+-       } catch (error) {
+-         console.error('运行测试用例失败:', error);
+-       }
+-     }
++     async function runTestCase() {
++       try {
++         const actionItems = document.querySelectorAll('.action-item');
++         actionItems.forEach(item => {
++           item.classList.remove('processed', 'error', 'running', 'init');
++           item.classList.add('init');
++           const statusTxt = item.querySelector('.statusTxt');
++           if (statusTxt) {
++             statusTxt.textContent = '状态: 初始化';
++           }
++         });
++ 
++         Util.initStatus();
++         const logsList = document.getElementById('logsList');
++         if (logsList) {
++           logsList.innerHTML = ''; // 清空日志列表
++         }
++         await http.post('/runTestCase', { id: [testCaseId] });
++ 
++ 
++       } catch (error) {
++         console.error('运行测试用例失败:', error);
++       }
++     }
+```
+
+#### 3. 修复状态文本`id`重复的问题
+
+在渲染步骤时，将原先重复的 `id='statusTxt'` 修改为 `class='statusTxt'`，以确保DOM元素的唯一性。
+
+```diff
+-                         <div id='statusTxt'>状态: ${getStatusText(action.status)}</div>
++                         <div class="statusTxt">状态: ${getStatusText(action.status)}</div>
+```
+
+#### 4. 新增“跳到出错”按钮
+
+在“运行测试”按钮旁边，增加了一个“跳到出错”按钮，方便快速定位到失败的步骤。
 
 ```diff
 -   <div class="toolbar" id="toolbar">
@@ -20,9 +128,9 @@
 +   </div>
 ```
 
-#### 2. 实现“跳到出错”功能
+#### 5. 实现“跳到出错”功能
 
-新增 `jumpToError()` JavaScript 函数。点击按钮后，该函数会查找页面上第一个状态为“失败”的测试步骤，并自动将页面滚动到该步骤的位置，方便用户快速定位问题。如果没有找到失败的步骤，会弹窗提示。
+新增 `jumpToError()` JavaScript 函数。点击按钮后，该函数会查找页面上第一个状态为“失败”的测试步骤，并自动将页面滚动到该步骤的位置。
 
 ```javascript
 function jumpToError() {
@@ -35,9 +143,9 @@ function jumpToError() {
 }
 ```
 
-#### 3. 新增底部工具栏
+#### 6. 新增底部工具栏
 
-在页面底部新增一个与顶部功能相同的工具栏，包含“运行测试”和“跳到出错”按钮。该工具栏默认隐藏。
+当测试步骤数量大于16个时，在页面底部额外显示一个工具栏，方便长页面下的操作。
 
 ```diff
 -   <div id="stepModal" class="modal">
@@ -49,9 +157,9 @@ function jumpToError() {
 +   <div id="stepModal" class="modal">
 ```
 
-#### 4. 动态显示底部工具栏
+#### 7. 动态显示底部工具栏
 
-修改 `renderActions()` 函数，在渲染完测试步骤后，会检查步骤总数。如果步骤数量大于16，则显示底部的工具栏，否则保持隐藏。
+修改 `renderActions()` 函数，在渲染完测试步骤后，会检查步骤总数。如果步骤数量大于16，则显示底部的工具栏。
 
 ```diff
 -     `).join('');

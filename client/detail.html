@@ -60,6 +60,22 @@
       stepData[msg.id] = msg;
     });
 
+    http.on('runStatus', function (msg) {
+      const stepElement = document.getElementById(msg.id);
+      if (stepElement) {
+        stepElement.classList.remove('processed', 'error', 'running', 'init', 'runing');
+        let status = msg.status;
+        if(status === 'runing'){
+            status = 'running';
+        }
+        stepElement.classList.add(status);
+        const statusTxt = stepElement.querySelector('.statusTxt');
+        if (statusTxt) {
+          statusTxt.textContent = '状态: ' + getStatusText(msg.status);
+        }
+      }
+    });
+
 
 
     function showStepDetails(stepId) {
@@ -194,7 +210,7 @@
                 <div class="action-item ${action.status}" id="${action.id}">
                     <div class="action-info">
                         <h3>${index}. ${action.name}</h3>
-                        <div id='statusTxt'>状态: ${getStatusText(action.status)}</div>
+                        <div class="statusTxt">状态: ${getStatusText(action.status)}</div>
                     </div>
                     <div class="action-buttons">
                         ${buildLookDetailBtn(action)}
@@ -244,6 +260,7 @@
       const statusMap = {
         init: '初始化',
         running: '运行中',
+        runing: '运行中',
         processed: '成功',
         error: '失败'
       };
@@ -262,6 +279,16 @@
     // 运行测试用例
     async function runTestCase() {
       try {
+        const actionItems = document.querySelectorAll('.action-item');
+        actionItems.forEach(item => {
+          item.classList.remove('processed', 'error', 'running', 'init');
+          item.classList.add('init');
+          const statusTxt = item.querySelector('.statusTxt');
+          if (statusTxt) {
+            statusTxt.textContent = '状态: 初始化';
+          }
+        });
+
         Util.initStatus();
         const logsList = document.getElementById('logsList');
         if (logsList) {
