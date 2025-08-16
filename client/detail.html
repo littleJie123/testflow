@@ -76,15 +76,35 @@
       }
     });
 
+    http.on('log', function (msg) {
+      const logsList = document.getElementById('logsList');
+      const logElement = document.createElement('div');
+      logElement.classList.add('log-item', msg.type);
+      logElement.dataset.stepId = msg.id;
+      logElement.textContent = msg.message;
+      logElement.onclick = () => scrollToStep(msg.id);
+      logsList.appendChild(logElement);
+    });
+
 
 
     function showStepDetails(stepId) {
       const data = stepData[stepId];
+      const stepElement = document.getElementById(stepId);
+      let status = '未知';
+      if (stepElement) {
+        const statusClass = Array.from(stepElement.classList).find(c => ['init', 'running', 'processed', 'error'].includes(c));
+        if (statusClass) {
+          status = getStatusText(statusClass);
+        }
+      }
+
       if (data) {
         modalContent.innerHTML = `
                 <div class="modal-header">
                     <button class="btn" onclick="rerunAction('${stepId}')">重新运行</button>
                 </div>
+                <p><strong>Status:</strong> ${status}</p>
                 <p><strong>URL:</strong> <span id="modal-url">${data.url}</span></p>
                 <p><strong>Method:</strong> <span id="modal-method">${data.method}</span></p>
                 <p><strong>Headers:</strong></p>
@@ -215,6 +235,7 @@
                     <div class="action-buttons">
                         ${buildLookDetailBtn(action)}
                         <button class="btn" onclick="scrollToLog('${action.id}')">日志</button>
+                        <button class="btn" onclick=runTestCase(${index})>运行</button>
                     </div>
                 </div>
             `).join('');
@@ -277,7 +298,7 @@
     }
 
     // 运行测试用例
-    async function runTestCase() {
+    async function runTestCase(index) {
       try {
         const actionItems = document.querySelectorAll('.action-item');
         actionItems.forEach(item => {
@@ -294,7 +315,11 @@
         if (logsList) {
           logsList.innerHTML = ''; // 清空日志列表
         }
-        await http.post('/runTestCase', { id: [testCaseId] });
+        let httpParam = { id: [testCaseId] };
+        if(index != null){
+          httpParam.index = index;
+        }
+        await http.post('/runTestCase', httpParam);
 
 
       } catch (error) {

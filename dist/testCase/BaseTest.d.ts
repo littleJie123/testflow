@@ -30,7 +30,7 @@ export default abstract class BaseTest implements ITest {
     protected setClazz(clazz: any): void;
     clone(): any;
     protected init(): void;
-    run(env?: string, opt?: IRunOpt): Promise<any>;
+    run(env?: string, opt?: IRunOpt, index?: number): Promise<any>;
     setTestId(testId: string): void;
     getTestId(): string;
     getInfo(): ITestCaseInfo;

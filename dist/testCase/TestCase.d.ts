@@ -4,6 +4,8 @@ import BaseTest from "./BaseTest";
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例
  */
 export default abstract class TestCase extends BaseTest {
+    protected index: number;
+    setIndex(index: any): void;
     protected processError(e: Error): void;
     needInScreen(): boolean;
     protected needThrowError(): boolean;

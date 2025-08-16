@@ -1,4 +1,5 @@
 import JsonUtil from "./JsonUtil";
+import NumUtil from "./NumUtil";
 
 export default class{
   static expectEqualObj(obj1: any, obj2: any, msg?: string) {
@@ -14,8 +15,14 @@ export default class{
     if(msg == null){
       msg = `检查出错：期望是${value2}，实际是${value1}`
     }
-    if(value1 != value2){
-      throw new Error(msg);
+    if(NumUtil.isNum(value1) && NumUtil.isNum(value2)){
+      if(!NumUtil.isEq(value1,value2)){
+        throw new Error(msg)
+      }
+    }else{
+      if(value1 != value2){
+        throw new Error(msg);
+      }
     }
   }
 

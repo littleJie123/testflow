@@ -1,3 +1,85 @@
+# 代码修改记录 (2025-08-15)
+
+本次更新优化了测试步骤的按钮布局、日志显示功能和弹窗内容。
+
+---
+
+### `client/css/index.css`
+
+#### 1. 步骤按钮自动换行
+
+为了防止步骤的按钮在某些情况下溢出，我们为 `.action-buttons` 容器增加了 `flex-wrap: wrap;` 样式。当按钮的总宽度超过容器宽度时，按钮会自动换行显示，避免了布局错乱。
+
+```diff
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
++   flex-wrap: wrap;
+}
+```
+
+### `client/detail.html`
+
+#### 1. 在弹窗中显示步骤的运行状态
+
+修改了 `showStepDetails` 函数，现在当用户点击“查看”按钮时，弹窗中会额外显示当前步骤的运行状态（如：初始化、运行中、成功、失败）。
+
+```javascript
+function showStepDetails(stepId) {
+  const data = stepData[stepId];
+  const stepElement = document.getElementById(stepId);
+  let status = '未知';
+  if (stepElement) {
+    const statusClass = Array.from(stepElement.classList).find(c => ['init', 'running', 'processed', 'error'].includes(c));
+    if (statusClass) {
+      status = getStatusText(statusClass);
+    }
+  }
+
+  if (data) {
+    modalContent.innerHTML = `
+            <div class="modal-header">
+                <button class="btn" onclick="rerunAction('${stepId}')">重新运行</button>
+            </div>
+            <p><strong>Status:</strong> ${status}</p>
+            <p><strong>URL:</strong> <span id="modal-url">${data.url}</span></p>
+            ...
+        `;
+    stepModal.style.display = "block";
+  } else {
+    modalContent.innerHTML = `<p>No data available for this step.</p>`;
+    stepModal.style.display = "block";
+  }
+}
+```
+
+#### 2. 实时显示测试日志
+
+新增了对 WebSocket `log` 事件的监听。当收到新的日志消息时，会动态地在右侧日志面板中创建并追加一个新的日志条目，实现了日志的实时显示。
+
+```javascript
+http.on('log', function (msg) {
+  const logsList = document.getElementById('logsList');
+  const logElement = document.createElement('div');
+  logElement.classList.add('log-item', msg.type);
+  logElement.dataset.stepId = msg.id;
+  logElement.textContent = msg.message;
+  logElement.onclick = () => scrollToStep(msg.id);
+  logsList.appendChild(logElement);
+});
+```
+
+#### 3. 修正按钮文本错误
+
+修复了一个UI上的文本错误，将一个错误的“日志”按钮文本更正为“运行”。
+
+```diff
+- <button class="btn" onclick=runTestCase(${index})>日志</button>
++ <button class="btn" onclick=runTestCase(${index})>运行</button>
+```
+
+
 # 代码修改记录 (2025-08-14)
 
 本次更新在`detail.html`页面增加了多个功能并修复了一个bug，优化了用户体验。

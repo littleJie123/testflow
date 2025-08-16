@@ -54,7 +54,7 @@ class BaseTest {
     init() {
         this.variable = null;
     }
-    async run(env, opt) {
+    async run(env, opt, index) {
         let ret = null;
         this.init();
         this.setEnv(env);

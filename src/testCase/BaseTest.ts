@@ -95,7 +95,7 @@ export default abstract class BaseTest implements ITest {
 
   }
 
-  async run(env?: string, opt?: IRunOpt): Promise<any> {
+  async run(env?: string, opt?: IRunOpt,index?:number): Promise<any> {
     let ret: any = null;
     this.init()
     this.setEnv(env)

@@ -8,6 +8,10 @@ import BaseTest from "./BaseTest";
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例 
  */
 export default abstract class TestCase extends BaseTest  {
+  protected index:number;
+  setIndex(index: any) {
+    this.index = index;
+  }
   
   
   
@@ -68,7 +72,11 @@ export default abstract class TestCase extends BaseTest  {
     for(let row of list){
       row.setTestId(`${this.testId}-${id++}`);
     }
-    return list;
+    if(this.index == null){
+      return list;
+    }else{
+      return list.slice(0,this.index + 1);
+    }
   };
 
   protected abstract buildActions():BaseTest[];

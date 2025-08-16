@@ -9,6 +9,9 @@ const BaseTest_1 = __importDefault(require("./BaseTest"));
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例
  */
 class TestCase extends BaseTest_1.default {
+    setIndex(index) {
+        this.index = index;
+    }
     processError(e) {
         this.error(`${this.getName()} 运行出错!!`);
     }
@@ -52,7 +55,12 @@ class TestCase extends BaseTest_1.default {
         for (let row of list) {
             row.setTestId(`${this.testId}-${id++}`);
         }
-        return list;
+        if (this.index == null) {
+            return list;
+        }
+        else {
+            return list.slice(0, this.index + 1);
+        }
     }
     ;
     toJson() {

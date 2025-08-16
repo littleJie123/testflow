@@ -7,8 +7,7 @@ export default class RunTest extends BaseAction {
     let testRunner = TestRunner.get();
     let testCase = testRunner.getTestById(param.id);
     if (testCase) {
-      
-      
+      testCase.setIndex(param.index);
       testCase.setWebSocket(this.getWebSocket());
       testCase.run(param.env,param.param);
     }

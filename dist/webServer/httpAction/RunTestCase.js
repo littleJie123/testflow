@@ -10,6 +10,7 @@ class RunTest extends BaseAction_1.default {
         let testRunner = testflow_1.TestRunner.get();
         let testCase = testRunner.getTestById(param.id);
         if (testCase) {
+            testCase.setIndex(param.index);
             testCase.setWebSocket(this.getWebSocket());
             testCase.run(param.env, param.param);
         }
