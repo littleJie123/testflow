@@ -357,3 +357,8 @@ body {
     white-space: pre-wrap;      /* 自动换行 */
     word-wrap: break-word;      /* 超长单词换行 */
 }
+
+a.btn {
+    text-decoration: none;
+    color: #000;
+}
