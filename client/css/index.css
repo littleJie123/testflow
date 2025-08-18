@@ -24,7 +24,7 @@ body {
 }
 
 .btn {
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
@@ -172,7 +172,6 @@ body {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 20px);
     word-wrap: break-word;
 }
 
@@ -356,9 +355,4 @@ body {
     border-radius: 5px;
     white-space: pre-wrap;      /* 自动换行 */
     word-wrap: break-word;      /* 超长单词换行 */
-}
-
-a.btn {
-    text-decoration: none;
-    color: #000;
 }

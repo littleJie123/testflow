@@ -1,39 +1,59 @@
 # 代码修改记录 (2025-08-16)
 
-本次更新将页面中的所有`<button>`标签替换为`<a>`标签，以链接的形式实现按钮功能。
+本次更新动态调整了日志面板的高度，以优化页面布局。
 
 ---
 
 ### `client/detail.html`
 
-#### 1. 将所有按钮替换为链接
+#### 1. 动态调整日志面板高度
 
-为了统一页面元素的风格和行为，我们将页面中所有的`<button>`标签都修改为了`<a>`标签，并添加了`href="javascript:void(0)"`以防止页面跳转。这包括：
+新增了`adjustLogPanelHeight` JavaScript函数，用于动态调整右侧日志面板的高度。该函数会确保日志面板的高度至少为一屏幕高度，或者与左侧步骤面板的高度保持一致（当步骤面板高于一屏幕时）。
 
--   顶部和底部的“运行测试”、“跳到出错”按钮。
--   每个测试步骤卡片中的“查看”、“日志”、“运行”按钮。
--   详情弹窗中的“重新运行”、“复制结果”按钮。
+```javascript
+function adjustLogPanelHeight() {
+  const actionsPanel = document.querySelector('.actions-panel');
+  const logsPanel = document.querySelector('.logs-panel');
+  const windowHeight = window.innerHeight;
+  const actionsHeight = actionsPanel.offsetHeight;
 
-**修改前:**
-```html
-<button class="btn" onclick="runTestCase()">运行测试</button>
+  if (actionsHeight > windowHeight) {
+    logsPanel.style.height = `${actionsHeight}px`;
+  } else {
+    logsPanel.style.height = `${windowHeight}px`;
+  }
+}
+
+window.addEventListener('resize', adjustLogPanelHeight);
+
+// MutationObserver to watch for changes in the actions list
+const observer = new MutationObserver(adjustLogPanelHeight);
+observer.observe(document.getElementById('actionsList'), { childList: true, subtree: true });
 ```
 
-**修改后:**
-```html
-<a href="javascript:void(0)" class="btn" onclick="runTestCase()">运行测试</a>
+在渲染测试步骤后，会调用`adjustLogPanelHeight`函数以确保日志面板的高度被正确设置。
+
+```javascript
+renderActions(data.actions || []);
+adjustLogPanelHeight();
 ```
 
 ### `client/css/index.css`
 
-#### 1. 新增 a 标签按钮样式
+#### 1. 移除日志面板固定高度
 
-为了让`<a>`标签在视觉上保持按钮的样式，我们为其增加了相应的CSS规则，确保其外观和交互与之前的按钮一致。
+移除了`.logs-panel`的固定高度样式，以便JavaScript能够动态调整其高度。
 
-```css
-a.btn {
-    text-decoration: none;
-    color: #000;
+```diff
+.logs-panel {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+-   height: calc(100vh - 20px);
+    word-wrap: break-word;
 }
 ```
 
