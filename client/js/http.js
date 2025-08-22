@@ -1,6 +1,8 @@
 class Http {
 
-
+  setClassName(className){
+    this.className = className
+  }
   constructor() {
     this.id = 1;
     this.socket = null;
@@ -99,7 +101,7 @@ Http.get().on(
   function (data) {
     let div = document.getElementById(data.id);
     if (div) {
-      div.className = 'action-item ' + data.status;
+      div.className = ( Http.get().className ?? 'action-item ') + data.status;
     }else{
       let toolbar = document.getElementById('statusDiv');
       if (toolbar) {
@@ -135,12 +137,7 @@ Http.get().on(
 
 )
 
-Http.get().on(
-  'runResult',
-  function(result){
-    console.log(result);
-  }
-)
+ 
 // 获取状态文本
 function getStatusText(status) {
   const statusMap = {

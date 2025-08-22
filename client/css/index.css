@@ -355,4 +355,17 @@ body {
     border-radius: 5px;
     white-space: pre-wrap;      /* 自动换行 */
     word-wrap: break-word;      /* 超长单词换行 */
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+.modal-content-body pre .json-key { color: #a52a2a; font-weight: bold; }
+.modal-content-body pre .json-string { color: #008000; }
+.modal-content-body pre .json-number { color: #0000ff; }
+.modal-content-body pre .json-boolean { color: #ff8c00; }
+.modal-content-body pre .json-null { color: #800080; }
+
+.modal-content-body pre[contenteditable="true"] {
+    border: 1px solid #ccc;
+    padding: 10px;
+    min-height: 100px;
 }

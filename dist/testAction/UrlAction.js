@@ -11,8 +11,8 @@ const JsonUtil_1 = __importDefault(require("../util/JsonUtil"));
 const StrUtil_1 = require("../util/StrUtil");
 class UrlAction extends BaseTest_1.default {
     async checkResult(result) {
-        await super.checkResult(result);
         this.checkHttpStatus(result);
+        await super.checkResult(result);
     }
     checkHttpStatus(result) {
         if (this.httpStatus != null) {

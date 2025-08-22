@@ -4,6 +4,11 @@ import BaseAction from "../BaseAction";
 
 export default class  extends BaseAction {
   async process(param?: any) {
+    this.run(param)
+     
+  }
+
+  async run(param?:any){
     let ids:string[] = param.ids;
     let testRunner = TestRunner.get();
     for(let id of ids){
@@ -11,13 +16,12 @@ export default class  extends BaseAction {
         let testCase = testRunner.getTestById(id);
         if(testCase){
           testCase.setWebSocket(this.getWebSocket());
-          testCase.run( );
+          await testCase.run( );
         }
       }catch(e){
         
       }
     }
-     
   }
 
 }

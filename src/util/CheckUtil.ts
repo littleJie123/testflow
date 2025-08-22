@@ -30,18 +30,16 @@ export default class{
     if(msg == null){
       msg =`没找到${JSON.stringify(findObj)}的数据`
     }
-    let row = array.find(function(obj){
-      for(let e in findObj){
-        let val = JsonUtil.getByKeys(obj,e);
-        if(val != findObj[e]){
-          return false;
-        }
+    let find = false;
+    for(let row of array){
+      if(JsonUtil.isEqualObj(row,findObj)){
+        find= true;
       }
-      return true;
-    })
-    if( row == null){
+    }
+    if(!find){
       throw new Error(msg);
     }
+    
   }
   static expectFindByArray(array:any[],findObjs:any[],msg?:string){
     for(let findObj of findObjs){

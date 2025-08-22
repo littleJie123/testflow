@@ -100,15 +100,18 @@
                 <p><strong>URL:</strong> <span id="modal-url">${data.url}</span></p>
                 <p><strong>Method:</strong> <span id="modal-method">${data.method}</span></p>
                 <p><strong>Headers:</strong></p>
-                <textarea id="modal-headers" rows="10" cols="80">${JSON.stringify(data.headers, null, 2)}</textarea>
+                <pre id="modal-headers" contenteditable="true"></pre>
                 <p><strong>Params:</strong></p>
-                <textarea id="modal-params" rows="10"  cols="80">${JSON.stringify(data.param, null, 2)}</textarea>
+                <pre id="modal-params" contenteditable="true"></pre>
                 <p>
                     <strong>Result:</strong>
                     <button class="btn" onclick="copyResult()">copy result</button>
                 </p>
-                <pre id="modal-result">${JSON.stringify(data.result, null, 2)}</pre>
+                <pre id="modal-result"></pre>
             `;
+        document.getElementById('modal-headers').innerHTML = Util.highlightJson(data.headers);
+        document.getElementById('modal-params').innerHTML = Util.highlightJson(data.param);
+        document.getElementById('modal-result').innerHTML = Util.highlightJson(data.result);
         stepModal.style.display = "block";
       } else {
         modalContent.innerHTML = `<p>No data available for this step.</p>`;
@@ -126,8 +129,8 @@
     }
 
     async function rerunAction(actionId) {
-      const headersText = document.getElementById('modal-headers').value;
-      const paramsText = document.getElementById('modal-params').value;
+      const headersText = document.getElementById('modal-headers').innerText;
+      const paramsText = document.getElementById('modal-params').innerText;
       const url = document.getElementById('modal-url').innerText;
       const method = document.getElementById('modal-method').innerText;
       const resultPre = document.getElementById('modal-result');
@@ -143,16 +146,16 @@
           param: param
         });
 
-        resultPre.textContent = JSON.stringify(result, null, 2);
+        resultPre.innerHTML = Util.highlightJson(result);
 
         // Blink effect
         let count = 0;
         const interval = setInterval(() => {
-          resultPre.style.backgroundColor = count % 2 === 0 ? '#fff3cd' : '#fff';
+          resultPre.style.backgroundColor = count % 2 === 0 ? '#fff3cd' : '#f8f9fa';
           count++;
           if (count > 5) {
             clearInterval(interval);
-            resultPre.style.backgroundColor = '#fff';
+            resultPre.style.backgroundColor = '#f8f9fa';
           }
         }, 200);
 

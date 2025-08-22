@@ -9,8 +9,9 @@ export default abstract class UrlAction extends BaseTest{
   protected httpStatus?:number;
 
   protected async checkResult(result: any): Promise<void> {
-    await super.checkResult(result);
+   
     this.checkHttpStatus(result);
+    await super.checkResult(result);
   }
 
   protected checkHttpStatus(result:any){ 

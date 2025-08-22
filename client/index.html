@@ -45,7 +45,7 @@
     let testCases = [];
     let filteredTestCases = [];
     let http = Http.get()
-    
+    http.setClassName('test-case ')
     async function fetchData() {
       try {
         const data = await http.post('/listTestCase');
