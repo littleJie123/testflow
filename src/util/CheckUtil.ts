@@ -33,7 +33,10 @@ export default class{
     let find = false;
     for(let row of array){
       if(JsonUtil.isEqualObj(row,findObj)){
-        find= true;
+        console.log('finded');
+        find = true;
+
+        break;
       }
     }
     if(!find){
@@ -42,7 +45,10 @@ export default class{
     
   }
   static expectFindByArray(array:any[],findObjs:any[],msg?:string){
+    console.log('array',array);
+    
     for(let findObj of findObjs){
+      console.log(findObj)
       this.expectFind(array,findObj)
     }
   }
