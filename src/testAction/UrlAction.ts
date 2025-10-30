@@ -19,7 +19,11 @@ export default abstract class UrlAction extends BaseTest{
       if(this.httpStatus >= 400){
         let loger = this.getTestLogger();
         loger.error(JSON.stringify(result));
-        throw new Error(`${this.getName()} http status: ${this.httpStatus}`)
+        let msg = '';
+        if(result?.error?.message){
+          msg = result?.error?.message
+        }
+        throw new Error(`${this.getName()} http status: ${this.httpStatus}。${msg}`)
       }
     }
   }

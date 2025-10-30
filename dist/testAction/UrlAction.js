@@ -15,11 +15,16 @@ class UrlAction extends BaseTest_1.default {
         await super.checkResult(result);
     }
     checkHttpStatus(result) {
+        var _a, _b;
         if (this.httpStatus != null) {
             if (this.httpStatus >= 400) {
                 let loger = this.getTestLogger();
                 loger.error(JSON.stringify(result));
-                throw new Error(`${this.getName()} http status: ${this.httpStatus}`);
+                let msg = '';
+                if ((_a = result === null || result === void 0 ? void 0 : result.error) === null || _a === void 0 ? void 0 : _a.message) {
+                    msg = (_b = result === null || result === void 0 ? void 0 : result.error) === null || _b === void 0 ? void 0 : _b.message;
+                }
+                throw new Error(`${this.getName()} http status: ${this.httpStatus}。${msg}`);
             }
         }
     }
