@@ -13,6 +13,7 @@ class GetTestCase extends BaseAction_1.default {
             return {};
         }
         return {
+            id: param.id,
             name: test.getName(),
             actions: test.getActions().map((item) => {
                 return item.toJson();

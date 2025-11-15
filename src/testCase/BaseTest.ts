@@ -190,8 +190,11 @@ export default abstract class BaseTest implements ITest {
     this.log(`${this.getName()} 开始运行`)
     logger.addLevel();
     let result = null;
+    let times = 0;
     try {
+      let date = new Date()
       result = await this.doTest();
+      times = new Date().getTime()-date.getTime()
       await this.checkResult(result);
       await this.processResult(result);
       this.setRunStatus(S_Processed);
@@ -204,7 +207,7 @@ export default abstract class BaseTest implements ITest {
     }
 
     logger.subLevel();
-    this.log(`${this.getName()} 运行结束`)
+    this.log(`${this.getName()} 运行结束，耗时：${times}毫秒`)
     return result;
   };
 
