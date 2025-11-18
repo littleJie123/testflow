@@ -13,3 +13,6 @@
   - 修复了 `Util` 类因缺少闭合括号 `}` 导致的 `SyntaxError`，该错误导致 `Util` 类无法被正确解析和定义。
 - **style: 将弹窗中JSON字体修改为“微软雅黑”**
   - 更新了 `index.css` 文件，为弹窗中的 `<pre>` 元素指定了新字体。
+
+## 2025-11-17
+- **optimization: 删除client/css/index.css中未使用的样式**

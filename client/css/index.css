@@ -69,16 +69,6 @@ body {
   flex-grow: 1;
 }
 
-.test-case-actions {
-  display: none;
-  margin-top: 1rem;
-  padding-left: 2rem;
-}
-
-.test-case.expanded .test-case-actions {
-  display: block;
-}
-
 .modal {
   display: none;
   position: fixed;
@@ -124,19 +114,6 @@ body {
 
 .log-item.error {
   color: red;
-}
-
-.log-stack {
-  display: none;
-  background-color: #f8f9fa;
-  padding: 1rem;
-  margin-top: 0.5rem;
-  white-space: pre-wrap;
-  font-family: monospace;
-}
-
-.log-item.expanded .log-stack {
-  display: block;
 }
 
 .header {
@@ -199,10 +176,6 @@ body {
     min-width: 180px;
 }
 
-.actions-panel .action-item:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
 .action-info {
     flex-grow: 1;
 }
@@ -243,10 +216,6 @@ body {
     margin: 4px 0;
     border-radius: 4px;
     cursor: pointer;
-}
-
-.log-item.log {
-    background-color: #e9ecef;
 }
 
 .log-item.error {
@@ -303,39 +272,6 @@ body {
 .menu-item.active {
   background: #1890ff;
   color: white;
-}
-
-/* -- 新增和修改的样式 -- */
-
-/* 步骤项样式 */
-.actions-panel .step-item {
-    border: 1px solid #ddd;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: background-color 0.3s;
-}
-
-.actions-panel .step-item:hover {
-    background-color: #f0f0f0;
-}
-
-.actions-panel .step-info {
-    flex: 1;
-}
-
-.actions-panel .step-buttons {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0; /* Prevent buttons from shrinking */
-}
-
-/* 已执行步骤的浅绿色高亮 */
-.step-item.executed {
-    background-color: #d4edda; 
 }
 
 .highlighted-log {
