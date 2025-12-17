@@ -6,42 +6,68 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const HttpServer_1 = __importDefault(require("../webServer/HttpServer"));
+const Directory_1 = __importDefault(require("../testCase/Directory"));
 class TestRunner {
     constructor() {
         this.beanMap = {};
         this.envConfig = {};
         this.defEnv = 'local';
-        this.testMap = {};
-        this.actionMap = {};
+        this.directory = new Directory_1.default('');
     }
-    getActionById(id) {
-        let ret = this.actionMap[id];
-        if (ret == null) {
-            return null;
+    /**
+     * 根据
+     * @param strPath
+     */
+    getStringArrayFromPath(strPath) {
+        let array = strPath.split('/');
+        return array;
+    }
+    getTestById(id, path) {
+        console.log('path0', path);
+        if (path == null) {
+            let index = id.lastIndexOf('/');
+            path = '';
+            if (index != -1) {
+                path = id.substring(0, index);
+                id = id.substring(index + 1);
+            }
         }
-        return ret.clone();
-    }
-    findAllAction() {
-        let ret = [];
-        for (let key in this.actionMap) {
-            ret.push(this.actionMap[key]);
-        }
-        return ret;
-    }
-    getTestById(id) {
-        let ret = this.testMap[id];
-        if (ret) {
-            let clone = ret.clone();
-            return clone;
+        console.log('path1', path);
+        console.log('id', id);
+        let directory = this.getDirectoryByPath(path);
+        if (directory != null) {
+            let testCase = directory.getChildById(id);
+            console.log('testCase', testCase === null || testCase === void 0 ? void 0 : testCase.toString());
+            if (testCase == null) {
+                return null;
+            }
+            return testCase.clone();
         }
         return null;
     }
-    findAllTest() {
-        let result = [];
-        for (let key in this.testMap) {
-            result.push(this.testMap[key]);
+    findAllTest(path) {
+        let directory = this.getDirectoryByPath(path);
+        if (directory != null) {
+            return directory.getChildren();
         }
-        return result;
+        return [];
+    }
+    getDirectoryByPath(path) {
+        if (path == null || path == '') {
+            return this.directory;
+        }
+        let directory = this.directory;
+        let array = this.getStringArrayFromPath(path);
+        for (let str of array) {
+            let child = directory.getDirectoryById(str);
+            if (child) {
+                directory = child;
+            }
+            else {
+                return directory;
+            }
+        }
+        return directory;
     }
     /**
      * 扫描指定目录下的文件，
@@ -51,13 +77,9 @@ class TestRunner {
      * testMap的key为文件名，value为实例化出来的对象
      * @param testPath
      */
-    async scan(testPath, map, rootTestPath) {
+    async scan(testPath, directory) {
         if (testPath == null || testPath == '') {
             return;
-        }
-        // 第一次调用时保存根路径
-        if (!rootTestPath) {
-            rootTestPath = [];
         }
         try {
             const files = fs_1.default.readdirSync(testPath);
@@ -65,7 +87,10 @@ class TestRunner {
                 const fullPath = path_1.default.join(testPath, file);
                 const stat = fs_1.default.statSync(fullPath);
                 if (stat.isDirectory()) {
-                    await this.scan(fullPath, map, [...rootTestPath, file]);
+                    let childDirectory = new Directory_1.default(file);
+                    childDirectory.setTestId(file);
+                    directory.addChild(childDirectory);
+                    await this.scan(fullPath, childDirectory);
                 }
                 else {
                     if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
@@ -76,13 +101,9 @@ class TestRunner {
                                 if (testInstance.needInScreen()) {
                                     testInstance.setClazz(TestClass);
                                     const fileName = path_1.default.basename(file, path_1.default.extname(file));
-                                    // 计算相对路径
-                                    //let relativePath = path.relative(rootTestPath, path.dirname(fullPath));
-                                    // 如果有相对路径，则组合路径和文件名
-                                    let testId = `${rootTestPath.join('_')}_${fileName}`;
                                     if (testInstance.setTestId) {
-                                        testInstance.setTestId(testId);
-                                        map[testId] = testInstance;
+                                        testInstance.setTestId(fileName);
+                                        directory.addChild(testInstance);
                                     }
                                 }
                             }
@@ -152,9 +173,7 @@ class TestRunner {
         };
     }
     async start(param) {
-        console.log('--------- scan ----------------');
-        this.scan(param === null || param === void 0 ? void 0 : param.testPath, this.testMap);
-        this.scan(param === null || param === void 0 ? void 0 : param.actionPath, this.actionMap);
+        this.scan(param === null || param === void 0 ? void 0 : param.testPath, this.directory);
         if (param === null || param === void 0 ? void 0 : param.testId) {
         }
         else {

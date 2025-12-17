@@ -1,18 +1,21 @@
 import ITestParam from '../inf/ITestParam';
 import TestCase from '../testCase/TestCase';
-import { BaseTest } from '../testflow';
+import Directory from '../testCase/Directory';
 export default class TestRunner {
     private variable;
     private beanMap;
     private envConfig;
     private defEnv;
-    private testMap;
-    private actionMap;
+    private directory;
     private constructor();
-    getActionById(id: string): BaseTest;
-    findAllAction(): BaseTest[];
-    getTestById(id: string): TestCase;
-    findAllTest(): TestCase[];
+    /**
+     * 根据
+     * @param strPath
+     */
+    getStringArrayFromPath(strPath: string): string[];
+    getTestById(id: string, path?: string): TestCase;
+    findAllTest(path: string): TestCase[];
+    private getDirectoryByPath;
     /**
      * 扫描指定目录下的文件，
      * 如果文件是js 或者ts（排除d.ts），
@@ -21,7 +24,7 @@ export default class TestRunner {
      * testMap的key为文件名，value为实例化出来的对象
      * @param testPath
      */
-    scan(testPath: string, map: any, rootTestPath?: string[]): Promise<void>;
+    scan(testPath: string, directory: Directory): Promise<void>;
     /**
      * 注册环境变量
      * @param env

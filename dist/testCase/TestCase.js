@@ -71,5 +71,8 @@ class TestCase extends BaseTest_1.default {
         };
         return json;
     }
+    toString() {
+        return `testcase:${this.getName()}`;
+    }
 }
 exports.default = TestCase;

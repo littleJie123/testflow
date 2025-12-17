@@ -46,11 +46,23 @@
     let filteredTestCases = [];
     let http = Http.get()
     http.setClassName('test-case ')
+    const urlParams = new URLSearchParams(window.location.search);
+    let path = urlParams.get('path') || '';
+
+    function updateUrl() {
+      const newUrl = new URL(window.location);
+      if (path) {
+        newUrl.searchParams.set('path', path);
+      } else {
+        newUrl.searchParams.delete('path');
+      }
+      window.history.pushState({}, '', newUrl);
+    }
     async function fetchData() {
       try {
-        const data = await http.post('/listTestCase');
+        const data = await http.post('/listTestCase', { path });
         console.log('获取数据成功:', data);
-     
+
         testCases = data.list || [];
         handleSearch();
       } catch (error) {
@@ -76,10 +88,52 @@
       const content = document.getElementById('content');
       const casesToRender = filteredTestCases.length > 0 || document.getElementById('searchInput').value ?
         filteredTestCases : testCases;
-      content.innerHTML = casesToRender.map(testCase => renderTestCase(testCase)).join('');
+      let up = ''
+      if (path) {
+        up = `
+          <div class="test-case">
+              <div class="test-case-content" >
+                  <h3>📂 ..</h3>
+                  <div>名称: 上一级</div>
+              </div>
+              <div>
+                  <button class="btn" onclick="goUp()">进入</button>
+              </div>
+          </div>
+      `;
+      }
+      content.innerHTML = up + casesToRender.map(testCase => renderTestCase(testCase)).join('');
     }
-
+    function goUp() {
+      const arr = path.split('/')
+      arr.pop()
+      path = arr.join('/')
+      updateUrl()
+      fetchData()
+    }
+    function enterDirectory(id) {
+      if (path) {
+        path = path + '/' + id
+      } else {
+        path = id
+      }
+      updateUrl()
+      fetchData()
+    }
     function renderTestCase(testCase) {
+      if (testCase.type === 'directory') {
+        return `
+          <div class="test-case" id="${testCase.id}">
+              <div class="test-case-content" >
+                  <h3>📂 ${testCase.name}</h3>
+                  <div>ID: ${Util.getId(testCase.id)}</div>
+              </div>
+              <div>
+                  <button class="btn" onclick="enterDirectory('${testCase.id}')">进入</button>
+              </div>
+          </div>
+      `;
+      }
       return `
                 <div class="test-case ${testCase.status}" id="${testCase.id}">
                     <div class="test-case-content" >
@@ -96,11 +150,11 @@
             `;
     }
     function show(id) {
-      
-      window.open(`/detail.html?id=${id}`, '_test');
+      let param = escape(`${path ? path + '/' : ''}${id}`)
+      window.open(`/detail.html?id=${param}`, '_test');
     }
 
-    
+
 
     function toggleActions(element) {
       const testCase = element.closest('.test-case');
@@ -122,10 +176,12 @@
     async function runTestCase(id) {
       try {
         const response = await http.post('/runTestCase', {
-           id: [id] 
+          id: id,
+          path
+
         });
-       
-       
+
+
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }
@@ -136,12 +192,14 @@
 
 
     async function runAll() {
-      const allIds = filteredTestCases.map(testCase => testCase.id);
+      let cases = filteredTestCases.filter(row => row.type != 'directory')
+      const allIds = cases.map(testCase => testCase.id);
       try {
         const response = await http.post('/RunAllTestCase', {
-          ids: allIds 
+          ids: allIds,
+          path
         });
-        
+
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }
@@ -150,7 +208,7 @@
     // 初始加载
     fetchData();
 
-    
+
   </script>
 </body>
 

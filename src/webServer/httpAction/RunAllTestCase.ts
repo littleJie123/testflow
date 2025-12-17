@@ -2,24 +2,24 @@ import { TestRunner } from "../../testflow";
 import IControl from "../../inf/IControl";
 import BaseAction from "../BaseAction";
 
-export default class  extends BaseAction {
+export default class extends BaseAction {
   async process(param?: any) {
     this.run(param)
-     
+
   }
 
-  async run(param?:any){
-    let ids:string[] = param.ids;
+  async run(param?: any) {
+    let ids: string[] = param.ids;
     let testRunner = TestRunner.get();
-    for(let id of ids){
-      try{
-        let testCase = testRunner.getTestById(id);
-        if(testCase){
+    for (let id of ids) {
+      try {
+        let testCase = testRunner.getTestById(id, param.path);
+        if (testCase) {
           testCase.setWebSocket(this.getWebSocket());
-          await testCase.run( );
+          await testCase.run();
         }
-      }catch(e){
-        
+      } catch (e) {
+
       }
     }
   }

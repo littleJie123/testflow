@@ -14,7 +14,7 @@ class default_1 extends BaseAction_1.default {
         let testRunner = testflow_1.TestRunner.get();
         for (let id of ids) {
             try {
-                let testCase = testRunner.getTestById(id);
+                let testCase = testRunner.getTestById(id, param.path);
                 if (testCase) {
                     testCase.setWebSocket(this.getWebSocket());
                     await testCase.run();

@@ -119,7 +119,7 @@ it('expectFind', () => {
     "name": "猪肉",
     "purcharse": {
       "buyUnitFee": 1,
-      "cnt": 800,
+      "cnt": 400,
       "stockUnitsId": 0
     }
   }])

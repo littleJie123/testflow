@@ -8,7 +8,7 @@ const BaseAction_1 = __importDefault(require("../BaseAction"));
 class ListTestCase extends BaseAction_1.default {
     async process(param) {
         let testRunner = TestRunner_1.default.get();
-        let testCaseList = testRunner.findAllTest();
+        let testCaseList = testRunner.findAllTest(param.path);
         return {
             list: testCaseList.map(item => {
                 return item.toJson();

@@ -5,10 +5,10 @@ import fs from 'fs';
 import path from "path";
 import IControl from "../inf/IControl";
 import BaseAction from "./BaseAction";
-interface WebSocketParam<Param = any>{
-  url:string;
+interface WebSocketParam<Param = any> {
+  url: string;
   param: Param;
-  id:string;
+  id: string;
 }
 export default class HttpServer {
 
@@ -76,8 +76,8 @@ export default class HttpServer {
   }
 
   private getActionByUrl(url: string): BaseAction {
-    let clazz =  this.actionMap.get(url.toLowerCase());
-    if(clazz == null){
+    let clazz = this.actionMap.get(url.toLowerCase());
+    if (clazz == null) {
       return null;
     }
     return new clazz();
@@ -100,11 +100,11 @@ export default class HttpServer {
       ws.on('message', function incoming(message) {
         //console.log('收到WebSocket客户端消息: %s', message);
         //ws.send('WebSocket服务器已收到你的消息: ' + message);
-        try{
-          let param:WebSocketParam = JSON.parse(message.toString());
+        try {
+          let param: WebSocketParam = JSON.parse(message.toString());
           self.processWebSocketMessage(ws, param);
-        }catch (e) {
-          console.error('处理WebSocket消息出错:', e); 
+        } catch (e) {
+          console.error('处理WebSocket消息出错:', e);
           ws.send(JSON.stringify({ error: '处理消息出错' }));
         }
       });
@@ -124,29 +124,30 @@ export default class HttpServer {
     });
   }
   private async processWebSocketMessage(ws: WebSocket, param: WebSocketParam) {
-    
-    let action  = this.getActionByUrl(param.url);
+
+    let action = this.getActionByUrl(param.url);
     if (!action) {
       ws.send(JSON.stringify({ error: '未找到对应的action' }));
       return;
-    }else{
+    } else {
       action.setWebSocket(ws);
-      let result =await action.process(param.param);
-      if(result == null){
+      let httpParam = param.param ?? {};
+      let result = await action.process(httpParam);
+      if (result == null) {
         result = {};
       }
-      
+
       ws.send(
         JSON.stringify({
           result,
-          id:param.id,
-          action:'httpAction'
+          id: param.id,
+          action: 'httpAction'
         })
       )
     }
   }
 
-  
+
   async process(req: http.IncomingMessage,
     res: http.ServerResponse<http.IncomingMessage>): Promise<void> {
     // 处理健康检查请求

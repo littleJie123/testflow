@@ -5,55 +5,89 @@ import HttpServer from '../webServer/HttpServer';
 import TestCase from '../testCase/TestCase';
 import FileUtil from '../util/FileUtil';
 import { BaseTest } from '../testflow';
+import Directory from '../testCase/Directory';
+import { dir } from 'console';
 export default class TestRunner {
-  
-  
-  
+
+
+
   private variable: any;
-  private beanMap:any = {};
+  private beanMap: any = {};
 
-  private envConfig:any = {}; 
+  private envConfig: any = {};
 
-  private defEnv:string = 'local';
+  private defEnv: string = 'local';
 
-  private testMap:{[key:string]:TestCase} = {};
+  private directory: Directory = new Directory('');
 
-  private actionMap:{[key:string]:BaseTest} = {};
-  private constructor(){
+  private constructor() {
 
   }
 
-  getActionById(id: string):BaseTest {
-    let ret = this.actionMap[id];
-    if(ret == null){
-      return null;
+  /**
+   * 根据
+   * @param strPath 
+   */
+  getStringArrayFromPath(strPath: string): string[] {
+    let array = strPath.split('/');
+    return array;
+  }
+
+
+
+
+
+  getTestById(id: string, path?: string): TestCase {
+    console.log('path0', path);
+    if (path == null) {
+      let index = id.lastIndexOf('/')
+      path = '';
+      if (index != -1) {
+        path = id.substring(0, index)
+        id = id.substring(index + 1);
+      }
+
     }
-    return ret.clone();
-  }
+    console.log('path1', path);
+    console.log('id', id);
+    let directory = this.getDirectoryByPath(path);
+    if (directory != null) {
 
-  findAllAction():BaseTest[] {
-    let ret:BaseTest[] = [];
-    for(let key in this.actionMap){
-      ret.push(this.actionMap[key]);
-    }
-    return ret;
-  }
-  getTestById(id: string): TestCase {
-    let ret:TestCase = this.testMap[id];
-    if(ret){
-      
-      let clone = ret.clone();
-      return clone;
+      let testCase = directory.getChildById(id);
+      console.log('testCase', testCase?.toString());
+      if (testCase == null) {
+        return null;
+      }
+      return testCase.clone();
     }
     return null;
   }
 
-  findAllTest():TestCase[]{
-    let result:TestCase[] = [];
-    for(let key in this.testMap){
-      result.push(this.testMap[key]);
+  findAllTest(path: string): TestCase[] {
+
+    let directory = this.getDirectoryByPath(path);
+    if (directory != null) {
+      return directory.getChildren()
     }
-    return result;
+    return []
+  }
+
+  private getDirectoryByPath(path: string): Directory {
+    if (path == null || path == '') {
+      return this.directory
+    }
+    let directory = this.directory;
+    let array = this.getStringArrayFromPath(path);
+    for (let str of array) {
+
+      let child = directory.getDirectoryById(str);
+      if (child) {
+        directory = child;
+      } else {
+        return directory;
+      }
+    }
+    return directory;
   }
   /**
    * 扫描指定目录下的文件，
@@ -64,17 +98,14 @@ export default class TestRunner {
    * @param testPath 
    */
 
-  
-  async scan(testPath: string,map:any,rootTestPath?:string[]) {
-    if(testPath == null || testPath == ''){
-      return ;
+
+  async scan(testPath: string, directory: Directory) {
+    if (testPath == null || testPath == '') {
+      return;
     }
-  
-    // 第一次调用时保存根路径
-    if(!rootTestPath) {
-      rootTestPath = [];
-    }
-    
+
+
+
     try {
       const files = fs.readdirSync(testPath);
 
@@ -83,25 +114,22 @@ export default class TestRunner {
         const stat = fs.statSync(fullPath);
 
         if (stat.isDirectory()) {
-          await this.scan(fullPath,map,[... rootTestPath,file]);
+          let childDirectory = new Directory(file);
+          childDirectory.setTestId(file);
+          directory.addChild(childDirectory);
+          await this.scan(fullPath, childDirectory);
         } else {
           if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
             try {
               const TestClass = require(fullPath).default;
               if (TestClass) {
                 const testInstance = new TestClass();
-                if(testInstance.needInScreen()){
+                if (testInstance.needInScreen()) {
                   testInstance.setClazz(TestClass);
                   const fileName = path.basename(file, path.extname(file));
-                  
-                  // 计算相对路径
-                  //let relativePath = path.relative(rootTestPath, path.dirname(fullPath));
-                  // 如果有相对路径，则组合路径和文件名
-                  let testId = `${rootTestPath.join('_')}_${fileName}`;
-                  
-                  if(testInstance.setTestId){
-                    testInstance.setTestId(testId);
-                    map[testId] = testInstance;
+                  if (testInstance.setTestId) {
+                    testInstance.setTestId(fileName);
+                    directory.addChild(testInstance);
                   }
                 }
               }
@@ -122,22 +150,22 @@ export default class TestRunner {
    * @param env 
    * @param envConfig 
    */
-  regEnvConfig(env:string,envConfig:any){
+  regEnvConfig(env: string, envConfig: any) {
     this.envConfig[env] = envConfig;
   }
 
-  getEnvConfig(key:string,env?:string):any{
-    if(env == null || env == ''){
+  getEnvConfig(key: string, env?: string): any {
+    if (env == null || env == '') {
       env = this.getDefEnv();
     }
     return this.envConfig[env][key];
   }
 
-  getDefEnv():string{
+  getDefEnv(): string {
     return this.defEnv;
   }
 
-  setDefEnv(env:string){
+  setDefEnv(env: string) {
     this.defEnv = env;
   }
 
@@ -147,7 +175,7 @@ export default class TestRunner {
    * @param key 
    * @param bean 
    */
-  regBean(key:string,bean:any){
+  regBean(key: string, bean: any) {
     this.beanMap[key] = bean;
   }
   /**
@@ -155,22 +183,22 @@ export default class TestRunner {
    * @param key 
    * @returns 
    */
-  getBean(key:string){
+  getBean(key: string) {
     return this.beanMap[key];
   }
 
 
 
   addVariable(variable: any) {
-    if(this.variable == null) {
+    if (this.variable == null) {
       this.variable = {}
     }
-    for(let key in variable){
+    for (let key in variable) {
       this.variable[key] = variable[key];
     }
   }
   getVariable(): any {
-    if(this.variable == null) {
+    if (this.variable == null) {
       return {}
     }
     return {
@@ -179,14 +207,12 @@ export default class TestRunner {
   }
 
 
-  async start(param?:ITestParam){
-    console.log('--------- scan ----------------');
-    this.scan(param?.testPath,this.testMap);
-    this.scan(param?.actionPath,this.actionMap);
-    if(param?.testId ){
-      
-      
-    }else{
+  async start(param?: ITestParam) {
+    this.scan(param?.testPath, this.directory);
+    if (param?.testId) {
+
+
+    } else {
       new HttpServer().start(param);
     }
     process.on('uncaughtException', (err) => {
@@ -194,9 +220,9 @@ export default class TestRunner {
     });
   }
 
-  private static ins:TestRunner;
-  static get(){
-    if(TestRunner.ins == null){
+  private static ins: TestRunner;
+  static get() {
+    if (TestRunner.ins == null) {
       TestRunner.ins = new TestRunner();
     }
     return TestRunner.ins;

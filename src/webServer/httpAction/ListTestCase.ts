@@ -6,9 +6,9 @@ export default class ListTestCase extends BaseAction {
 
   async process(param: any) {
     let testRunner = TestRunner.get();
-    let testCaseList = testRunner.findAllTest();
+    let testCaseList = testRunner.findAllTest(param.path);
     return {
-      list:testCaseList.map(item=>{
+      list: testCaseList.map(item => {
         return item.toJson();
       })
     }

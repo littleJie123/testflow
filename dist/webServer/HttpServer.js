@@ -145,6 +145,7 @@ class HttpServer {
         });
     }
     async processWebSocketMessage(ws, param) {
+        var _a;
         let action = this.getActionByUrl(param.url);
         if (!action) {
             ws.send(JSON.stringify({ error: '未找到对应的action' }));
@@ -152,7 +153,8 @@ class HttpServer {
         }
         else {
             action.setWebSocket(ws);
-            let result = await action.process(param.param);
+            let httpParam = (_a = param.param) !== null && _a !== void 0 ? _a : {};
+            let result = await action.process(httpParam);
             if (result == null) {
                 result = {};
             }

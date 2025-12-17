@@ -216,6 +216,7 @@ body {
     margin: 4px 0;
     border-radius: 4px;
     cursor: pointer;
+    background-color: #f0f0f0;
 }
 
 .log-item.error {

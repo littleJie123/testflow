@@ -15,4 +15,5 @@ export default abstract class TestCase extends BaseTest {
     protected abstract buildActions(): BaseTest[];
     abstract getName(): string;
     toJson(): any;
+    toString(): string;
 }

@@ -7,20 +7,20 @@ import BaseTest from "./BaseTest";
  * 测试用例
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例 
  */
-export default abstract class TestCase extends BaseTest  {
-  protected index:number;
+export default abstract class TestCase extends BaseTest {
+  protected index: number;
   setIndex(index: any) {
     this.index = index;
   }
-  
-  
-  
 
-  protected processError(e:Error){
-    this.error(`${this.getName()} 运行出错!!`) 
+
+
+
+  protected processError(e: Error) {
+    this.error(`${this.getName()} 运行出错!!`)
   }
-  
-  needInScreen(){
+
+  needInScreen() {
     return true;
   }
 
@@ -28,70 +28,74 @@ export default abstract class TestCase extends BaseTest  {
     return false;
   }
 
-  protected couldLookDetail(){
+  protected couldLookDetail() {
     return false;
   }
 
-  
+
 
   async doTest(): Promise<any> {
-    
+
     let result = null;
     let actions = this.getActions();
-    for(let action of actions){
+    for (let action of actions) {
       action.setWebSocket(this.webSocket);
-      let objAction:any = action as any;
-      if(objAction.beforeRun){
+      let objAction: any = action as any;
+      if (objAction.beforeRun) {
         objAction.beforeRun();
       }
     }
-    for(let action of actions){
-      let objAction:any = action as any;
-      if(objAction.setTestLogger){
+    for (let action of actions) {
+      let objAction: any = action as any;
+      if (objAction.setTestLogger) {
         objAction.setTestLogger(this.getTestLogger());
       }
-      if(objAction.setVariable){
+      if (objAction.setVariable) {
         objAction.setVariable(this.getVariable());
       }
-     
-      if(objAction.setEnv){
+
+      if (objAction.setEnv) {
         objAction.setEnv(this.env);
       }
       result = await action.test();
     }
     return result;
-    
-    
-  }
-  
 
-  getActions():BaseTest[]{
-    
+
+  }
+
+
+  getActions(): BaseTest[] {
+
     let list = this.buildActions();
     let id = 0;
-    for(let row of list){
+    for (let row of list) {
       row.setTestId(`${this.testId}-${id++}`);
     }
-    if(this.index == null){
+    if (this.index == null) {
       return list;
-    }else{
-      return list.slice(0,this.index + 1);
+    } else {
+      return list.slice(0, this.index + 1);
     }
   };
 
-  protected abstract buildActions():BaseTest[];
+  protected abstract buildActions(): BaseTest[];
 
- 
-  abstract getName():string;
+
+  abstract getName(): string;
 
   toJson(): any {
-    
+
     let json = {
-      id:this.testId,
-      name:this.getName(),
-      status:this.getRunStatus(),
-      
+      id: this.testId,
+      name: this.getName(),
+      status: this.getRunStatus(),
+
     }
     return json;
+  }
+
+  toString(): string {
+    return `testcase:${this.getName()}`;
   }
 }
