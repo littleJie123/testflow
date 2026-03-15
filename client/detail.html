@@ -16,6 +16,9 @@
   </div>
   <div id="statusDiv">状态</div>
   <div class="toolbar" id="toolbar">
+    <select id="envSelect" class="btn" style="margin-right: 10px;">
+      <option value="">选择环境</option>
+    </select>
     <button class="btn" onclick="runTestCase()">运行测试</button>
     <button class="btn" onclick="jumpToError()">跳到出错</button>
   </div>
@@ -28,11 +31,18 @@
     </div>
     <div class="logs-panel">
       <h2>测试日志</h2>
+      <div class="log-search-container" style="margin-bottom: 10px;">
+        <input type="text" id="logSearchInput" placeholder="输入关键字过滤日志..." oninput="filterLogs()"
+          style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+      </div>
       <div id="logsList"></div>
     </div>
   </div>
 
   <div class="toolbar" id="bottomToolbar" style="display: none; margin-top: 1rem;">
+    <select id="envSelectBottom" class="btn" style="margin-right: 10px;">
+      <option value="">选择环境</option>
+    </select>
     <button class="btn" onclick="runTestCase()">运行测试</button>
     <button class="btn" onclick="jumpToError()">跳到出错</button>
   </div>
@@ -65,8 +75,8 @@
       if (stepElement) {
         stepElement.classList.remove('processed', 'error', 'running', 'init', 'runing');
         let status = msg.status;
-        if(status === 'runing'){
-            status = 'running';
+        if (status === 'runing') {
+          status = 'running';
         }
         stepElement.classList.add(status);
         const statusTxt = stepElement.querySelector('.statusTxt');
@@ -76,7 +86,7 @@
       }
     });
 
-   
+
 
 
 
@@ -192,6 +202,7 @@
     window.onload = function () {
 
       document.getElementById('pageTitle').textContent = `测试用例：${testCaseId}`;
+      fetchEnvList();
       fetchTestCaseData();
     }
 
@@ -208,6 +219,34 @@
 
       } catch (error) {
         console.error('获取测试用例数据失败:', error);
+      }
+    }
+
+    // 获取环境列表
+    async function fetchEnvList() {
+      try {
+        const data = await http.post(`/listEnv`, {});
+        const envSelect = document.getElementById('envSelect');
+        const envSelectBottom = document.getElementById('envSelectBottom');
+
+        const fillEnvSelect = (selectElement) => {
+          selectElement.innerHTML = '<option value="">选择环境</option>';
+          if (data && data.list) {
+            data.list.forEach(env => {
+              const option = document.createElement('option');
+              option.value = env.env;
+              option.textContent = `${env.env} - ${env.host}`;
+              selectElement.appendChild(option);
+            });
+          }
+        };
+
+        fillEnvSelect(envSelect);
+        if (envSelectBottom) {
+          fillEnvSelect(envSelectBottom);
+        }
+      } catch (error) {
+        console.error('获取环境列表失败:', error);
       }
     }
 
@@ -234,7 +273,7 @@
                     </div>
                 </div>
             `).join('');
-      
+
       const bottomToolbar = document.getElementById('bottomToolbar');
       if (actions.length > 16) {
         bottomToolbar.style.display = 'flex';
@@ -244,25 +283,25 @@
       adjustLogPanelHeight();
     }
 
-    
+
 
     function scrollToStep(stepId) {
-        const stepElement = document.getElementById(stepId);
-        if (stepElement) {
-            stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const stepElement = document.getElementById(stepId);
+      if (stepElement) {
+        stepElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-            let blinkCount = 0;
-            const maxBlinks = 6; // 3 flashes (on/off is one flash, so 3*2=6)
-            const blinkInterval = setInterval(() => {
-                stepElement.classList.toggle('step-highlight');
-                blinkCount++;
-                if (blinkCount >= maxBlinks) {
-                    clearInterval(blinkInterval);
-                    // Ensure the class is removed at the end
-                    stepElement.classList.remove('step-highlight');
-                }
-            }, 300); // Blink every 300ms
-        }
+        let blinkCount = 0;
+        const maxBlinks = 6; // 3 flashes (on/off is one flash, so 3*2=6)
+        const blinkInterval = setInterval(() => {
+          stepElement.classList.toggle('step-highlight');
+          blinkCount++;
+          if (blinkCount >= maxBlinks) {
+            clearInterval(blinkInterval);
+            // Ensure the class is removed at the end
+            stepElement.classList.remove('step-highlight');
+          }
+        }, 300); // Blink every 300ms
+      }
     }
 
     // 切换堆栈信息显示
@@ -312,8 +351,13 @@
           logsList.innerHTML = ''; // 清空日志列表
         }
         let httpParam = { id: [testCaseId] };
-        if(index != null){
+        if (index != null) {
           httpParam.index = index;
+        }
+        // 添加环境参数
+        const envSelect = document.getElementById('envSelect');
+        if (envSelect && envSelect.value) {
+          httpParam.env = envSelect.value;
         }
         await http.post('/runTestCase', httpParam);
 
@@ -338,9 +382,50 @@
 
     window.addEventListener('resize', adjustLogPanelHeight);
 
+    function filterLogs() {
+      const keyword = document.getElementById('logSearchInput').value.toLowerCase();
+      const logItems = document.querySelectorAll('#logsList .log-item');
+
+      logItems.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (!keyword || text.includes(keyword)) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
     // MutationObserver to watch for changes in the actions list
     const observer = new MutationObserver(adjustLogPanelHeight);
     observer.observe(document.getElementById('actionsList'), { childList: true, subtree: true });
+
+    // MutationObserver to watch for changes in the logs list to apply filter
+    const logsObserver = new MutationObserver(() => {
+      const keyword = document.getElementById('logSearchInput').value;
+      if (keyword) {
+        filterLogs();
+      }
+    });
+    const logsListElement = document.getElementById('logsList');
+    if (logsListElement) {
+      logsObserver.observe(logsListElement, { childList: true });
+    }
+
+    // 同步环境选择
+    document.getElementById('envSelect').addEventListener('change', function () {
+      const envSelectBottom = document.getElementById('envSelectBottom');
+      if (envSelectBottom) {
+        envSelectBottom.value = this.value;
+      }
+    });
+
+    document.getElementById('envSelectBottom').addEventListener('change', function () {
+      const envSelect = document.getElementById('envSelect');
+      if (envSelect) {
+        envSelect.value = this.value;
+      }
+    });
   </script>
 </body>
 

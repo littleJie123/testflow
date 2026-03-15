@@ -14,6 +14,13 @@ class TestRunner {
         this.defEnv = 'local';
         this.directory = new Directory_1.default('');
     }
+    getEnvs() {
+        let list = [];
+        for (let e in this.envConfig) {
+            list.push(this.envConfig[e]);
+        }
+        return list;
+    }
     /**
      * 根据
      * @param strPath
@@ -23,7 +30,6 @@ class TestRunner {
         return array;
     }
     getTestById(id, path) {
-        console.log('path0', path);
         if (path == null) {
             let index = id.lastIndexOf('/');
             path = '';
@@ -32,12 +38,9 @@ class TestRunner {
                 id = id.substring(index + 1);
             }
         }
-        console.log('path1', path);
-        console.log('id', id);
         let directory = this.getDirectoryByPath(path);
         if (directory != null) {
             let testCase = directory.getChildById(id);
-            console.log('testCase', testCase === null || testCase === void 0 ? void 0 : testCase.toString());
             if (testCase == null) {
                 return null;
             }
@@ -126,7 +129,10 @@ class TestRunner {
      * @param envConfig
      */
     regEnvConfig(env, envConfig) {
-        this.envConfig[env] = envConfig;
+        if (envConfig != null) {
+            envConfig.env = env;
+            this.envConfig[env] = envConfig;
+        }
     }
     getEnvConfig(key, env) {
         if (env == null || env == '') {

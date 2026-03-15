@@ -1,6 +1,10 @@
 import ITestParam from '../inf/ITestParam';
 import TestCase from '../testCase/TestCase';
 import Directory from '../testCase/Directory';
+interface EnvConfig {
+    host: string;
+    env?: string;
+}
 export default class TestRunner {
     private variable;
     private beanMap;
@@ -8,6 +12,7 @@ export default class TestRunner {
     private defEnv;
     private directory;
     private constructor();
+    getEnvs(): EnvConfig[];
     /**
      * 根据
      * @param strPath
@@ -30,7 +35,7 @@ export default class TestRunner {
      * @param env
      * @param envConfig
      */
-    regEnvConfig(env: string, envConfig: any): void;
+    regEnvConfig(env: string, envConfig: EnvConfig): void;
     getEnvConfig(key: string, env?: string): any;
     getDefEnv(): string;
     setDefEnv(env: string): void;
@@ -52,3 +57,4 @@ export default class TestRunner {
     private static ins;
     static get(): TestRunner;
 }
+export {};

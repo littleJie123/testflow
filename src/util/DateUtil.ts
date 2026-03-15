@@ -6,7 +6,7 @@
  * @LastEditors  : kaikai.hou
  * @LastEditTime : 2020-02-11 14:17:52
  */
-function _changeMonth(date: Date, changeCnt:number) {
+function _changeMonth(date: Date, changeCnt: number) {
   let ret = new Date(date.getTime())
   ret.setMonth(date.getMonth() + changeCnt)
   return ret
@@ -65,7 +65,7 @@ export class DateUtil {
     }
   }
 
-  static formatDateList(list: any[], col){
+  static formatDateList(list: any[], col) {
     if (col == null) {
       col = 'gmt_create'
     }
@@ -165,7 +165,7 @@ export class DateUtil {
     return this.onlyDate(new Date())
   }
 
-  static todayStr():string{
+  static todayStr(): string {
     return this.format(this.today())
   }
 
@@ -188,5 +188,16 @@ export class DateUtil {
    */
   static calDate(date1: Date, date2: Date) {
     return Math.floor((date1.getTime() - date2.getTime()) / this._dayTimes);
+  }
+
+  /**
+   * 转化成excel的日期时间
+   * @param date 
+   * @returns 
+   */
+  static toExcelDateNum(date: Date): number {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const diff = date.getTime() - excelEpoch.getTime();
+    return Math.floor(diff / this._dayTimes) + 1;
   }
 }

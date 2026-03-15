@@ -5,55 +5,57 @@ import HttpUtil from "../util/HttpUtil";
 import JsonUtil from "../util/JsonUtil";
 import { StrUtil } from "../util/StrUtil";
 
-export default abstract class UrlAction extends BaseTest{
-  protected httpStatus?:number;
+
+
+export default abstract class UrlAction extends BaseTest {
+  protected httpStatus?: number;
 
   protected async checkResult(result: any): Promise<void> {
-   
+
     this.checkHttpStatus(result);
     await super.checkResult(result);
   }
 
-  protected checkHttpStatus(result:any){ 
-    if(this.httpStatus != null){ 
-      if(this.httpStatus >= 400){
+  protected checkHttpStatus(result: any) {
+    if (this.httpStatus != null) {
+      if (this.httpStatus >= 400) {
         let loger = this.getTestLogger();
         loger.error(JSON.stringify(result));
         let msg = '';
-        if(result?.error?.message){
+        if (result?.error?.message) {
           msg = result?.error?.message
         }
         throw new Error(`${this.getName()} http status: ${this.httpStatus}。${msg}`)
       }
     }
   }
-  protected getHttpParam():any{
+  protected getHttpParam(): any {
     return {};
   }
-  protected abstract getHttpUrl():string;
- 
-  protected getMethod():string{
+  protected abstract getHttpUrl(): string;
+
+  protected getMethod(): string {
     return 'POST';
   }
 
-  protected getHeader():any{
+  protected getHeader(): any {
     return {}
   }
 
-  protected parseHttpUrl():string{
+  protected parseHttpUrl(): string {
     let testRunner = TestRunner.get()
     let url = this.getHttpUrl();
-    if(url == null){
+    if (url == null) {
       throw new Error('请设置url');
     }
-    if(!url.startsWith('http')){
-      let host:string = testRunner.getEnvConfig(TestConfig.S_Host,this.env);
-      if(host){
-        if(!url.startsWith('/')){
+    if (!url.startsWith('http')) {
+      let host: string = testRunner.getEnvConfig(TestConfig.S_Host, this.env);
+      if (host) {
+        if (!url.startsWith('/')) {
           url = '/' + url;
         }
-        if(host.endsWith('/')){
-          host = host.substring(0,host.length - 1);
+        if (host.endsWith('/')) {
+          host = host.substring(0, host.length - 1);
         }
         url = host + url;
       }
@@ -61,19 +63,19 @@ export default abstract class UrlAction extends BaseTest{
     return url;
   }
 
-  protected parseHttpParam(){
+  protected parseHttpParam() {
     let datas = this.getVariable();
-    let ret =  JsonUtil.parseJson(this.getHttpParam(),datas,{keyMap:this.getParamMeta()})
-    if(this.afterProcess?.parseHttpParam){
+    let ret = JsonUtil.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() })
+    if (this.afterProcess?.parseHttpParam) {
       ret = this.afterProcess.parseHttpParam(ret)
     }
     return ret;
   }
 
-  protected parseHttpHeaders(){
+  protected parseHttpHeaders() {
     let datas = this.getVariable();
-    let headers = JsonUtil.parseJson(this.getHeader(),datas,{keyMap:this.getHeaderMeta()})
-    if(this.afterProcess?.parseHttpHeader){
+    let headers = JsonUtil.parseJson(this.getHeader(), datas, { keyMap: this.getHeaderMeta() })
+    if (this.afterProcess?.parseHttpHeader) {
       headers = this.afterProcess.parseHttpHeader
     }
     return headers;
@@ -81,7 +83,7 @@ export default abstract class UrlAction extends BaseTest{
   protected async doTest(): Promise<void> {
     let httpUtil = HttpUtil.get()
     let datas = this.getVariable();
-    let url = StrUtil.format(this.parseHttpUrl(),datas);
+    let url = StrUtil.format(this.parseHttpUrl(), datas);
     let httpParam = this.parseHttpParam();
     let headers = this.parseHttpHeaders()
     let result = await httpUtil.requestStatusAndResult(
@@ -89,13 +91,13 @@ export default abstract class UrlAction extends BaseTest{
       this.getMethod(),
       httpParam,
       headers)
-    this.sendMsg('httpParam',{
-      id:this.getTestId(),
+    this.sendMsg('httpParam', {
+      id: this.getTestId(),
       url,
-      param:httpParam,
+      param: httpParam,
       headers,
       result,
-      method:this.getMethod()
+      method: this.getMethod()
     });
     this.httpStatus = result.status;
     return result.result;
@@ -103,12 +105,12 @@ export default abstract class UrlAction extends BaseTest{
 
 
 
-  buildDefParam(){
+  buildDefParam() {
     let httpParam = this.getHttpParam();
-    return JsonUtil.deParseJson(httpParam,{keyMap:this.getParamMeta()});
+    return JsonUtil.deParseJson(httpParam, { keyMap: this.getParamMeta() });
   }
 
-  getHeaderMeta(){
+  getHeaderMeta() {
     return null;
   }
 }

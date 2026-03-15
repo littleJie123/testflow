@@ -7,6 +7,11 @@ import FileUtil from '../util/FileUtil';
 import { BaseTest } from '../testflow';
 import Directory from '../testCase/Directory';
 import { dir } from 'console';
+
+interface EnvConfig {
+  host: string;
+  env?: string;
+}
 export default class TestRunner {
 
 
@@ -14,7 +19,7 @@ export default class TestRunner {
   private variable: any;
   private beanMap: any = {};
 
-  private envConfig: any = {};
+  private envConfig: { [key: string]: EnvConfig } = {};
 
   private defEnv: string = 'local';
 
@@ -22,6 +27,13 @@ export default class TestRunner {
 
   private constructor() {
 
+  }
+  getEnvs(): EnvConfig[] {
+    let list: EnvConfig[] = [];
+    for (let e in this.envConfig) {
+      list.push(this.envConfig[e])
+    }
+    return list;
   }
 
   /**
@@ -38,7 +50,6 @@ export default class TestRunner {
 
 
   getTestById(id: string, path?: string): TestCase {
-    console.log('path0', path);
     if (path == null) {
       let index = id.lastIndexOf('/')
       path = '';
@@ -48,13 +59,10 @@ export default class TestRunner {
       }
 
     }
-    console.log('path1', path);
-    console.log('id', id);
     let directory = this.getDirectoryByPath(path);
     if (directory != null) {
 
       let testCase = directory.getChildById(id);
-      console.log('testCase', testCase?.toString());
       if (testCase == null) {
         return null;
       }
@@ -150,8 +158,11 @@ export default class TestRunner {
    * @param env 
    * @param envConfig 
    */
-  regEnvConfig(env: string, envConfig: any) {
-    this.envConfig[env] = envConfig;
+  regEnvConfig(env: string, envConfig: EnvConfig) {
+    if (envConfig != null) {
+      envConfig.env = env;
+      this.envConfig[env] = envConfig;
+    }
   }
 
   getEnvConfig(key: string, env?: string): any {
