@@ -1,7 +1,43 @@
+import { ArrayUtil } from "./ArrayUtil";
 import JsonUtil from "./JsonUtil";
 import NumUtil from "./NumUtil";
 
 export default class{
+
+  private static cloneList(array:any[],opt:{
+    notCheckCols?:string[]
+  }):any[]{
+    if(array == null){
+      return null;
+    }
+    let map = ArrayUtil.toMap(opt.notCheckCols);
+    let retList:any[] = [];
+    for(let row of array){
+      let ret:any = {};
+      for(let e in row){
+        if(!map[e] && !e.startsWith('_')){
+          ret[e] =row[e]
+        }
+      }
+      retList.push(ret)
+    }
+    return retList;
+  }
+
+  static expectEqualArray(array1:any[],array2:any[],opt?:{
+    msg?:string,
+    notCheckCols?:string[]
+  }){
+    let msg = opt?.msg;
+    if(array1.length != array2.length){
+      throw new Error(msg ?? '两个数组的长度不等');
+    }
+    let notCheckCols = opt?.notCheckCols;
+    if(notCheckCols != null){
+      array2 = this.cloneList(array2,opt)
+    }
+    this.expectFindByArray(array1,array2,msg);
+  }
   static expectEqualObj(obj1: any, obj2: any, msg?: string) {
     if (msg == null) {
       msg = `检查:期望是${JSON.stringify(obj2)},实际是${JSON.stringify(JsonUtil.inKey(obj1, obj2))}`

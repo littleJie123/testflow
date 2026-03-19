@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CheckUtil = exports.JsonUtil = exports.DateUtil = exports.ArrayUtil = exports.SetVariable = exports.HttpAction = exports.UrlAction = exports.BaseTest = exports.TestCase = exports.TestRunner = void 0;
+exports.CheckUtil = exports.JsonUtil = exports.StrDateUtil = exports.DateUtil = exports.ArrayUtil = exports.SetVariable = exports.HttpAction = exports.UrlAction = exports.BaseTest = exports.TestCase = exports.TestRunner = void 0;
 var TestRunner_1 = require("./testRunner/TestRunner");
 Object.defineProperty(exports, "TestRunner", { enumerable: true, get: function () { return __importDefault(TestRunner_1).default; } });
 var TestCase_1 = require("./testCase/TestCase");
@@ -20,6 +20,8 @@ var ArrayUtil_1 = require("./util/ArrayUtil");
 Object.defineProperty(exports, "ArrayUtil", { enumerable: true, get: function () { return ArrayUtil_1.ArrayUtil; } });
 var DateUtil_1 = require("./util/DateUtil");
 Object.defineProperty(exports, "DateUtil", { enumerable: true, get: function () { return DateUtil_1.DateUtil; } });
+var StrDateUtil_1 = require("./util/StrDateUtil");
+Object.defineProperty(exports, "StrDateUtil", { enumerable: true, get: function () { return __importDefault(StrDateUtil_1).default; } });
 var JsonUtil_1 = require("./util/JsonUtil");
 Object.defineProperty(exports, "JsonUtil", { enumerable: true, get: function () { return __importDefault(JsonUtil_1).default; } });
 var CheckUtil_1 = require("./util/CheckUtil");

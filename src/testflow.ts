@@ -14,5 +14,6 @@ export { default as  IAfterProcess} from "./inf/IAfterProcess";
 
 export {  ArrayUtil } from "./util/ArrayUtil";
 export {  DateUtil } from "./util/DateUtil";
+export { default as StrDateUtil} from "./util/StrDateUtil";
 export { default as JsonUtil} from "./util/JsonUtil";
 export { default as CheckUtil} from "./util/CheckUtil";
