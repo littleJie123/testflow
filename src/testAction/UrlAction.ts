@@ -67,7 +67,7 @@ export default abstract class UrlAction extends BaseTest {
     let datas = this.getVariable();
     let ret = JsonUtil.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() })
     if (this.afterProcess?.parseHttpParam) {
-      ret = this.afterProcess.parseHttpParam(ret)
+      ret = this.afterProcess.parseHttpParam(ret,datas)
     }
     return ret;
   }

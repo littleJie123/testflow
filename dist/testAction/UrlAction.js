@@ -62,7 +62,7 @@ class UrlAction extends BaseTest_1.default {
         let datas = this.getVariable();
         let ret = JsonUtil_1.default.parseJson(this.getHttpParam(), datas, { keyMap: this.getParamMeta() });
         if ((_a = this.afterProcess) === null || _a === void 0 ? void 0 : _a.parseHttpParam) {
-            ret = this.afterProcess.parseHttpParam(ret);
+            ret = this.afterProcess.parseHttpParam(ret, datas);
         }
         return ret;
     }

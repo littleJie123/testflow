@@ -3,7 +3,7 @@ export default interface IAfterProcess {
 
   buildVariable?(result):any;
 
-  parseHttpParam?(param):any;
+  parseHttpParam?(param,variable?:any):any;
 
   parseHttpHeader?(header):any;
 }

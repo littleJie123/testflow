@@ -198,6 +198,6 @@ export class DateUtil {
   static toExcelDateNum(date: Date): number {
     const excelEpoch = new Date(Date.UTC(1899, 11, 30));
     const diff = date.getTime() - excelEpoch.getTime();
-    return Math.floor(diff / this._dayTimes) + 1;
+    return Math.floor(diff / this._dayTimes) ;
   }
 }
