@@ -1,11 +1,11 @@
-interface IDeParseResult{
-  key:string|number;
-  val:any;
+interface IDeParseResult {
+  key: string | number;
+  val: any;
 }
-type ResultMap = {[key:string|number]:IDeParseResult|IDeParseResult[]}
+type ResultMap = { [key: string | number]: IDeParseResult | IDeParseResult[] }
 type DeparseResult = {
-  resultMap?:ResultMap;
-  cntMap?:{[key:string]:number}
+  resultMap?: ResultMap;
+  cntMap?: { [key: string]: number }
 }
 
 
@@ -46,62 +46,63 @@ function setKey(obj, key, param) {
   return param
 }
 class JsonUtil {
+
   /**
    * 判断两个类型相等。
    * @param obj1 
    * @param obj2 
    * @returns 
    */
-  static isEqualObj(obj1: any, obj2: any):boolean {
-    if(obj1 == null && obj2 == null){
+  static isEqualObj(obj1: any, obj2: any): boolean {
+    if (obj1 == null && obj2 == null) {
       return true;
     }
-    if((obj1 != null && obj2 == null) || (obj1 == null && obj2 != null)){
+    if ((obj1 != null && obj2 == null) || (obj1 == null && obj2 != null)) {
       return false;
     }
 
-    if(this.isSimpleVal(obj1) && this.isSimpleVal(obj2)){
+    if (this.isSimpleVal(obj1) && this.isSimpleVal(obj2)) {
       return obj1 == obj2
     }
-    if(this.isDate(obj1) && this.isDate(obj2)){
-      return this.eqByDate(obj1,obj2)
-    }  
-    if(this.isObj(obj1) && this.isObj(obj2)){
-      for(let e in obj2){
-        if(!this.isEqualObj(obj1[e],obj2[e])){
+    if (this.isDate(obj1) && this.isDate(obj2)) {
+      return this.eqByDate(obj1, obj2)
+    }
+    if (this.isObj(obj1) && this.isObj(obj2)) {
+      for (let e in obj2) {
+        if (!this.isEqualObj(obj1[e], obj2[e])) {
           return false;
         }
-        
+
       }
       return true
     }
     return false;
   }
-  static isObj(obj: any):boolean {
+  static isObj(obj: any): boolean {
     return !this.isDate(obj) && !this.isSimpleVal(obj);
   }
   static eqByDate(obj1: Date, obj2: Date): boolean {
     return obj1.getTime() == obj2.getTime()
   }
 
-  
 
-  static isDate(date: any) :boolean{
+
+  static isDate(date: any): boolean {
     return date instanceof Date;
   }
-  static isSimpleVal(obj: any):boolean {
+  static isSimpleVal(obj: any): boolean {
     return BoolUtil.isBoolean(obj) || NumUtil.isNum(obj) || StrUtil.isStr(obj);
   }
 
-  
+
 
 
   static inKey(obj1: any, obj2: any): any {
-    if(obj2 == null || obj1 == null){
+    if (obj2 == null || obj1 == null) {
       return obj1;
     }
-    let ret:any = {};
-    for(let e in obj2){
+    let ret: any = {};
+    for (let e in obj2) {
       ret[e] = obj1[e]
     }
     return ret;
@@ -116,104 +117,104 @@ class JsonUtil {
    * @param jsonOpt 
    * @returns 
    */
-  static deParseJson(json:any,jsonOpt:IParseJsonOpt):any{
-    if(jsonOpt==null || jsonOpt.keyMap == null){
+  static deParseJson(json: any, jsonOpt: IParseJsonOpt): any {
+    if (jsonOpt == null || jsonOpt.keyMap == null) {
       return {};
     }
-    let opt:DeparseResult = {};
-    this.doDeParseJson(json,jsonOpt,opt);
-    let ret = {}; 
-    if(opt.resultMap != null){
-      for(let e in opt.resultMap){
+    let opt: DeparseResult = {};
+    this.doDeParseJson(json, jsonOpt, opt);
+    let ret = {};
+    if (opt.resultMap != null) {
+      for (let e in opt.resultMap) {
         let vals = opt.resultMap[e];
-        if(vals instanceof Array){
-          for(let val of vals) {
+        if (vals instanceof Array) {
+          for (let val of vals) {
             let result = val as IDeParseResult;
-            this.setByKeys(ret,result.key as string,result.val);  
+            this.setByKeys(ret, result.key as string, result.val);
           }
-        }else{
+        } else {
           let result = vals as IDeParseResult;
-          this.setByKeys(ret,result.key as string,result.val);
+          this.setByKeys(ret, result.key as string, result.val);
         }
       }
     }
     return ret;
   }
 
-  private static doDeParseJson(json:any,jsonOpt:IParseJsonOpt,ret:DeparseResult){
-    if(json != null){
-      if(json instanceof Array){
-        for(let i=0;i<json.length;i++){
+  private static doDeParseJson(json: any, jsonOpt: IParseJsonOpt, ret: DeparseResult) {
+    if (json != null) {
+      if (json instanceof Array) {
+        for (let i = 0; i < json.length; i++) {
           let e = json[i];
-          this.doDeParseJson(e,jsonOpt,ret);
+          this.doDeParseJson(e, jsonOpt, ret);
         }
-      }else{
-        for(let e in json){
-          this.doDeParseJsonByValue(e,json[e],jsonOpt,ret);
+      } else {
+        for (let e in json) {
+          this.doDeParseJsonByValue(e, json[e], jsonOpt, ret);
         }
       }
     }
   }
-  private static doDeParseJsonByValue(key:string|number,val:any,jsonOpt:IParseJsonOpt,ret:DeparseResult){
+  private static doDeParseJsonByValue(key: string | number, val: any, jsonOpt: IParseJsonOpt, ret: DeparseResult) {
     let keyMap = jsonOpt.keyMap;
-    if(keyMap == null || val ==null){
+    if (keyMap == null || val == null) {
       return;
     }
     let keyString = keyMap[key];
-    
-    if(StrUtil.isStr(val) || NumUtil.isNum(val) || val instanceof Date || BoolUtil.isBoolean(val)){
-      if(StrUtil.isStr(val)){
-        let str:string = val;
-        if(str == null){
+
+    if (StrUtil.isStr(val) || NumUtil.isNum(val) || val instanceof Date || BoolUtil.isBoolean(val)) {
+      if (StrUtil.isStr(val)) {
+        let str: string = val;
+        if (str == null) {
           return;
         }
         str = str.trim();
-        if(str.startsWith('${') && str.endsWith('}')){
-          let strKey = str.substring(2,str.length - 1).trim();
-          this.addToResult(strKey,strKey,'',ret);
+        if (str.startsWith('${') && str.endsWith('}')) {
+          let strKey = str.substring(2, str.length - 1).trim();
+          this.addToResult(strKey, strKey, '', ret);
           return;
         }
       }
-      if(keyString == null){
+      if (keyString == null) {
         return;
-      }else{
-        this.addToResult(key,keyString,val,ret)
+      } else {
+        this.addToResult(key, keyString, val, ret)
         return;
       }
-    }else{
-      for(let e in val){
-        if(keyString == null){
-          this.doDeParseJsonByValue(e,val[e],jsonOpt,ret);
-        }else{
-          this.addToResult(key,keyString,val,ret)
+    } else {
+      for (let e in val) {
+        if (keyString == null) {
+          this.doDeParseJsonByValue(e, val[e], jsonOpt, ret);
+        } else {
+          this.addToResult(key, keyString, val, ret)
         }
       }
     }
-    
+
   }
   private static addToResult(key: string | number, keyString: string | string[], val: any, ret: DeparseResult) {
-    if(ret.resultMap == null){
+    if (ret.resultMap == null) {
       ret.resultMap = {};
     }
-    if(keyString instanceof Array  ){
-      if(keyString.length > 0){
-        if(ret.resultMap[key] == null){
+    if (keyString instanceof Array) {
+      if (keyString.length > 0) {
+        if (ret.resultMap[key] == null) {
           ret.resultMap[key] = [];
         }
         let array = ret.resultMap[key] as IDeParseResult[];
         let len = array.length;
         array.push({
-          key:keyString[len % keyString.length],
+          key: keyString[len % keyString.length],
           val
         })
       }
-    }else{
+    } else {
       ret.resultMap[key] = {
-        key:keyString as string,
+        key: keyString as string,
         val
       }
     }
-    
+
   }
 
 
@@ -224,121 +225,121 @@ class JsonUtil {
    * @param jsonOpt 
    * @returns 
    */
-  static parseJson(json:any,opt:any,jsonOpt?:IParseJsonOpt){
-    if(json == null || opt == null){
+  static parseJson(json: any, opt: any, jsonOpt?: IParseJsonOpt) {
+    if (json == null || opt == null) {
       return json;
     }
-    if(jsonOpt == null){
+    if (jsonOpt == null) {
       jsonOpt = {}
     }
-    if(json instanceof Array){
-      let array:any[] = [];
-      for(let i=0;i<json.length;i++){
+    if (json instanceof Array) {
+      let array: any[] = [];
+      for (let i = 0; i < json.length; i++) {
         let e = json[i];
-        array.push(this.changeVal(i,e,opt,jsonOpt))
+        array.push(this.changeVal(i, e, opt, jsonOpt))
       }
       return array;
-    }else{
+    } else {
       let ret = {};
-      for(let e in json){
-        ret[e] = this.changeVal(e,json[e],opt,jsonOpt)
+      for (let e in json) {
+        ret[e] = this.changeVal(e, json[e], opt, jsonOpt)
       }
       return ret;
     }
   }
 
-  private static changeVal(key:string|number,val:any,opt:any,jsonOpt:IParseJsonOpt){
-    if(val == null){
+  private static changeVal(key: string | number, val: any, opt: any, jsonOpt: IParseJsonOpt) {
+    if (val == null) {
       return null;
     }
-    if(val instanceof Array){
-      let array:any[] = [];
-      for(let i= 0;i<val.length;i++){
+    if (val instanceof Array) {
+      let array: any[] = [];
+      for (let i = 0; i < val.length; i++) {
         let e = val[i];
-        array.push(this.changeVal(i,e,opt,jsonOpt))
+        array.push(this.changeVal(i, e, opt, jsonOpt))
       }
       return array;
-    } 
-    if(NumUtil.isNum(val)){
-      return this.parseValue(key,val,opt,jsonOpt);
     }
-    if(val instanceof Date){
-      return this.parseValue(key,val,opt,jsonOpt);
+    if (NumUtil.isNum(val)) {
+      return this.parseValue(key, val, opt, jsonOpt);
     }
-    if(BoolUtil.isBoolean(val)){
-      return this.parseValue(key,val,opt,jsonOpt)
+    if (val instanceof Date) {
+      return this.parseValue(key, val, opt, jsonOpt);
     }
-    if(StrUtil.isStr(val)){
-      return this.parseStr(key,val,opt,jsonOpt);
+    if (BoolUtil.isBoolean(val)) {
+      return this.parseValue(key, val, opt, jsonOpt)
     }
-    
+    if (StrUtil.isStr(val)) {
+      return this.parseStr(key, val, opt, jsonOpt);
+    }
+
     let ret = {};
-    for(let e in val){
-      ret[e] = this.changeVal(e,val[e],opt,jsonOpt)
+    for (let e in val) {
+      ret[e] = this.changeVal(e, val[e], opt, jsonOpt)
     }
     return ret;
 
   }
-  private static parseValue(key:string|number,val:any,opt ,jsonOpt:IParseJsonOpt){
-    let keyString:string = this.getKeyStringFromJsonOpt(key,jsonOpt);
-    if(keyString == null){
+  private static parseValue(key: string | number, val: any, opt, jsonOpt: IParseJsonOpt) {
+    let keyString: string = this.getKeyStringFromJsonOpt(key, jsonOpt);
+    if (keyString == null) {
       return val;
     }
-    let newVal = this.getByKeys(opt,keyString);
-    if(newVal == null){
+    let newVal = this.getByKeys(opt, keyString);
+    if (newVal == null) {
       return val;
     }
     return newVal;
   }
 
-  private static getKeyStringFromJsonOpt(key:string|number,jsonOpt:IParseJsonOpt){
-    if(jsonOpt?.keyMap == null){
+  private static getKeyStringFromJsonOpt(key: string | number, jsonOpt: IParseJsonOpt) {
+    if (jsonOpt?.keyMap == null) {
       return null;
     }
     let array = jsonOpt.keyMap[key];
-    if(array instanceof Array){
-      if(array.length == 0){
+    if (array instanceof Array) {
+      if (array.length == 0) {
         return null;
       }
       let cntMap = jsonOpt.cntMap;
-      if(cntMap == null){
+      if (cntMap == null) {
         cntMap = {};
         jsonOpt.cntMap = cntMap;
       }
       let cnt = cntMap[key];
-      if(cnt == null){
+      if (cnt == null) {
         cnt = 0;
       }
-      let ret = array[ cnt % array.length];
+      let ret = array[cnt % array.length];
       cnt++;
       cntMap[key] = cnt;
       return ret;
-    }else{
+    } else {
       return array;
     }
   }
-  private static parseStr(key:string|number,val:string,opt:any,jsonOpt:IParseJsonOpt){
-    if(val.startsWith('${') && val.endsWith('}')){
-      let key = val.substring(2,val.length - 1);
+  private static parseStr(key: string | number, val: string, opt: any, jsonOpt: IParseJsonOpt) {
+    if (val.startsWith('${') && val.endsWith('}')) {
+      let key = val.substring(2, val.length - 1);
       key = key.trim();
 
-      let ret = this.getByKeys(opt,key);
-      if(ret == null){
-        throw new Error('找不到变量:'+key);
+      let ret = this.getByKeys(opt, key);
+      if (ret == null) {
+        throw new Error('找不到变量:' + key);
       }
       return ret;
-    }else{
-      return this.parseValue(key,val,opt,jsonOpt);
+    } else {
+      return this.parseValue(key, val, opt, jsonOpt);
     }
   }
   /**
    * 为Pojo写的copy方法
    */
-  static copyPojo(clazzName:string,srcPojo,targetPojo){
-    let pk = StrUtil.firstLower(clazzName)+'Id';
-    let notCols = [pk,'contextId','sysAddTime','sysModifyTime','addUser','modifyUser'];
-    for(let e in srcPojo){
-      if(!notCols.includes(e) && !e.startsWith('__')){
+  static copyPojo(clazzName: string, srcPojo, targetPojo) {
+    let pk = StrUtil.firstLower(clazzName) + 'Id';
+    let notCols = [pk, 'contextId', 'sysAddTime', 'sysModifyTime', 'addUser', 'modifyUser'];
+    for (let e in srcPojo) {
+      if (!notCols.includes(e) && !e.startsWith('__')) {
         targetPojo[e] = srcPojo[e];
       }
     }
@@ -368,15 +369,46 @@ class JsonUtil {
     return obj
   }
 
+
+  /**
+   * 根据keyStr删除对象中的某个字段，支持用aaa.bbb.cc表示多级
+   * @param ret 
+   * @param col 
+   */
+  static delByKeys(ret: any, col: string) {
+    let keys = col.split('.');
+    this.del(ret, keys);
+  }
+  /**
+   * 支持多级
+   * @param ret 
+   * @param keys 
+   */
+  private static del(ret: any, keys: string[], index?: number) {
+    if (index == null) {
+      index = 0;
+    }
+    if (keys.length <= index) {
+      return;
+    }
+    let key = keys[index];
+    let nextIndex = index + 1;
+    if (nextIndex == keys.length) {
+      delete ret[key];
+    } else {
+      this.del(ret[key], keys, nextIndex);
+    }
+
+  }
   /**
    * 和set 的区别，是支持用aaa.bbb.cc的格式表示多级 
    * @param obj 
    * @param keyStr 
    * @param value 
    */
-  static setByKeys(obj:any,keyStr:string,value){
+  static setByKeys(obj: any, keyStr: string, value) {
     let keys = keyStr.split('.');
-    this.set(obj,keys,value);
+    this.set(obj, keys, value);
   }
   /**
    * 只保留某些字段，支持多级
@@ -384,10 +416,10 @@ class JsonUtil {
    * @param keyStrArray 
    * @returns 
    */
-  static onlyKeys(obj:any,keyStrArray:string[]):any{
-    let newObj:any = {};
-    for(let keyStr of keyStrArray){
-      this.setByKeys(newObj,keyStr,this.getByKeys(obj,keyStr))
+  static onlyKeys(obj: any, keyStrArray: string[]): any {
+    let newObj: any = {};
+    for (let keyStr of keyStrArray) {
+      this.setByKeys(newObj, keyStr, this.getByKeys(obj, keyStr))
     }
     return newObj;
   }
@@ -396,13 +428,13 @@ class JsonUtil {
    * @param obj 
    * @param keyStrArray 
    */
-  static onlyKeys4List(objs:any[],keyStrArray:string[]):any[]{
-    if(keyStrArray == null){
+  static onlyKeys4List(objs: any[], keyStrArray: string[]): any[] {
+    if (keyStrArray == null) {
       return objs;
     }
-    let array:any[] = [];
-    for(let obj of objs){
-      array.push(this.onlyKeys(obj,keyStrArray))
+    let array: any[] = [];
+    for (let obj of objs) {
+      array.push(this.onlyKeys(obj, keyStrArray))
     }
     return array;
   }
@@ -503,13 +535,13 @@ class JsonUtil {
     return obj
   }
 
-  
 
-  
+
+
 }
 export default JsonUtil;
- 
- 
+
+
 import { ArrayUtil } from "./ArrayUtil";
 import { StrUtil } from "./StrUtil";
 import NumUtil from "./NumUtil";

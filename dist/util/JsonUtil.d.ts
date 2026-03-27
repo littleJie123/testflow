@@ -39,6 +39,18 @@ declare class JsonUtil {
     static copyPojo(clazzName: string, srcPojo: any, targetPojo: any): void;
     static adds(obj: any, keys: Array<string>, param: any): any;
     /**
+     * 根据keyStr删除对象中的某个字段，支持用aaa.bbb.cc表示多级
+     * @param ret
+     * @param col
+     */
+    static delByKeys(ret: any, col: string): void;
+    /**
+     * 支持多级
+     * @param ret
+     * @param keys
+     */
+    private static del;
+    /**
      * 和set 的区别，是支持用aaa.bbb.cc的格式表示多级
      * @param obj
      * @param keyStr

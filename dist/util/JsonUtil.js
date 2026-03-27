@@ -344,6 +344,36 @@ class JsonUtil {
         return obj;
     }
     /**
+     * 根据keyStr删除对象中的某个字段，支持用aaa.bbb.cc表示多级
+     * @param ret
+     * @param col
+     */
+    static delByKeys(ret, col) {
+        let keys = col.split('.');
+        this.del(ret, keys);
+    }
+    /**
+     * 支持多级
+     * @param ret
+     * @param keys
+     */
+    static del(ret, keys, index) {
+        if (index == null) {
+            index = 0;
+        }
+        if (keys.length <= index) {
+            return;
+        }
+        let key = keys[index];
+        let nextIndex = index + 1;
+        if (nextIndex == keys.length) {
+            delete ret[key];
+        }
+        else {
+            this.del(ret[key], keys, nextIndex);
+        }
+    }
+    /**
      * 和set 的区别，是支持用aaa.bbb.cc的格式表示多级
      * @param obj
      * @param keyStr
