@@ -12,6 +12,10 @@ interface EnvConfig {
   host: string;
   env?: string;
 }
+
+interface HeaderProcess {
+  processHeader(header: any): any;
+}
 export default class TestRunner {
 
 
@@ -25,6 +29,16 @@ export default class TestRunner {
 
   private directory: Directory = new Directory('');
 
+
+  private headerProcess: HeaderProcess = null;
+
+  setHeadProcess(headerProcess: HeaderProcess) {
+    this.headerProcess = headerProcess;
+  }
+
+  getHeadProcess() {
+    return this.headerProcess
+  }
   private constructor() {
 
   }

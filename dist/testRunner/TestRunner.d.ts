@@ -5,12 +5,18 @@ interface EnvConfig {
     host: string;
     env?: string;
 }
+interface HeaderProcess {
+    processHeader(header: any): any;
+}
 export default class TestRunner {
     private variable;
     private beanMap;
     private envConfig;
     private defEnv;
     private directory;
+    private headerProcess;
+    setHeadProcess(headerProcess: HeaderProcess): void;
+    getHeadProcess(): HeaderProcess;
     private constructor();
     getEnvs(): EnvConfig[];
     /**

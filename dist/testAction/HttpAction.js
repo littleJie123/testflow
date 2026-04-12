@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const testflow_1 = require("../testflow");
 const UrlAction_1 = __importDefault(require("./UrlAction"));
 class default_1 extends UrlAction_1.default {
     needInScreen() {
@@ -54,6 +55,10 @@ class default_1 extends UrlAction_1.default {
         let headers = (_a = this.opt) === null || _a === void 0 ? void 0 : _a.headers;
         if (headers == null) {
             headers = {};
+        }
+        let headerProcess = testflow_1.TestRunner.get().getHeadProcess();
+        if (headerProcess) {
+            headerProcess.processHeader(headers);
         }
         return headers;
     }

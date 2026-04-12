@@ -1,25 +1,26 @@
 import IAfterProcess from "../inf/IAfterProcess";
 import IHttpActionParam from "../inf/IHttpActionParam";
+import { TestRunner } from "../testflow";
 import UrlAction from "./UrlAction";
 
 
-export default class extends UrlAction{
-  protected opt:IHttpActionParam;
+export default class extends UrlAction {
+  protected opt: IHttpActionParam;
 
-  needInScreen(){
+  needInScreen() {
     return true;
   }
-  constructor(param?:IHttpActionParam,afterProcess?:IAfterProcess){
+  constructor(param?: IHttpActionParam, afterProcess?: IAfterProcess) {
     super(afterProcess);
-    if(param == null){
+    if (param == null) {
       param = {};
-    }else{
-      param = {... param}
+    } else {
+      param = { ...param }
     }
     let def = this.getDefHttpParam();
-    if(def != null){
-      for(let key in def){
-        if(param[key] == undefined){
+    if (def != null) {
+      for (let key in def) {
+        if (param[key] == undefined) {
           param[key] = def[key];
         }
       }
@@ -27,12 +28,12 @@ export default class extends UrlAction{
     this.opt = param;
   }
 
-  protected getDefHttpParam():IHttpActionParam{
+  protected getDefHttpParam(): IHttpActionParam {
     return null
   }
   protected getMethod(): string {
     let method = this.opt.method;
-    if(method == undefined){
+    if (method == undefined) {
       method = 'POST';
     }
     return method;
@@ -46,7 +47,7 @@ export default class extends UrlAction{
 
   protected getHttpParam() {
     let param = this.opt.param;
-    if(param == undefined){
+    if (param == undefined) {
       param = {};
     }
     return param;
@@ -55,9 +56,14 @@ export default class extends UrlAction{
 
   protected getHeader() {
     let headers = this.opt?.headers;
-    if(headers == null){
+    if (headers == null) {
       headers = {}
     }
+    let headerProcess = TestRunner.get().getHeadProcess();
+    if (headerProcess) {
+      headerProcess.processHeader(headers);
+    }
+
     return headers;
   }
 }

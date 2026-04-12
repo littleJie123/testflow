@@ -8,11 +8,18 @@ const path_1 = __importDefault(require("path"));
 const HttpServer_1 = __importDefault(require("../webServer/HttpServer"));
 const Directory_1 = __importDefault(require("../testCase/Directory"));
 class TestRunner {
+    setHeadProcess(headerProcess) {
+        this.headerProcess = headerProcess;
+    }
+    getHeadProcess() {
+        return this.headerProcess;
+    }
     constructor() {
         this.beanMap = {};
         this.envConfig = {};
         this.defEnv = 'local';
         this.directory = new Directory_1.default('');
+        this.headerProcess = null;
     }
     getEnvs() {
         let list = [];
