@@ -46,6 +46,23 @@ function setKey(obj, key, param) {
   return param
 }
 class JsonUtil {
+  /**
+   * 进行克隆
+   * @param array 
+   * @param onlyCols 
+   */
+  static cloneList(array : any[], onlyCols: string[]):any[] {
+    let retList: any[] = [];
+    for (let row of array) {
+      let ret: any = {};
+      for(let col of onlyCols){
+        this.setByKeys(ret, col, this.getByKeys(row, col))
+      }
+      
+      retList.push(ret)
+    }
+    return retList
+  }
 
   /**
    * 判断两个类型相等。
@@ -70,6 +87,7 @@ class JsonUtil {
     if (this.isObj(obj1) && this.isObj(obj2)) {
       for (let e in obj2) {
         if (!this.isEqualObj(obj1[e], obj2[e])) {
+          
           return false;
         }
 

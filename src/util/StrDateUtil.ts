@@ -2,6 +2,8 @@ import { DateUtil } from "./DateUtil";
 
 export default class{
 
+ 
+
   static beforeDay(days?:number,today?:string){
     if(days == null){
       days = 1

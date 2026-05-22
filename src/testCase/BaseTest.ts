@@ -1,4 +1,4 @@
-import { after } from "node:test";
+ 
 import IAfterProcess from "../inf/IAfterProcess";
 import IRunOpt from "../inf/IRunOpt";
 import ITest from "../inf/ITest";
@@ -104,7 +104,7 @@ export default abstract class BaseTest implements ITest {
     }
     try {
       ret = await this.test();
-    } catch (e) {
+    } catch (e:any) {
       this.error(e.message);
       this.setRunStatus(S_Error);
     }
@@ -198,7 +198,7 @@ export default abstract class BaseTest implements ITest {
       await this.checkResult(result);
       await this.processResult(result);
       this.setRunStatus(S_Processed);
-    } catch (e) {
+    } catch (e:any) {
       this.processError(e);
       this.setRunStatus(S_Error);
       if (this.needThrowError()) {
@@ -244,7 +244,7 @@ export default abstract class BaseTest implements ITest {
       if (variable != null) {
         this.addVariable(variable);
       }
-    } catch (e) {
+    } catch (e:any) {
       throw new Error('添加变量出错:' + e.message);
     }
   }

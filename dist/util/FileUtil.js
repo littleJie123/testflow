@@ -12,7 +12,7 @@ var FileUtil = {
         if (src == null || fun == null)
             return;
         if (checkFun == null) {
-            checkFun = function (path) {
+            checkFun = function (strPth) {
                 return true;
             };
         }

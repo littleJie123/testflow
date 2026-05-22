@@ -37,8 +37,9 @@ export default class {
   }
 
   static expectEqualArray(array1: any[], array2: any[], opt?: {
-    msg?: string,
-    notCheckCols?: string[]
+    msg?: string;
+    notCheckCols?: string[];
+    onlyCols?:string[]
   }) {
     let msg = opt?.msg;
     if (array1.length != array2.length) {
@@ -47,6 +48,10 @@ export default class {
     let notCheckCols = opt?.notCheckCols;
     if (notCheckCols != null) {
       array2 = this.cloneList(array2, opt)
+    }
+    let onlyCols = opt?.onlyCols;
+    if(onlyCols!=null){
+      array2 = JsonUtil.cloneList(array2,onlyCols)
     }
     this.expectFindByArray(array1, array2, msg);
   }

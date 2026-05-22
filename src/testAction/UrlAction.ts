@@ -80,17 +80,21 @@ export default abstract class UrlAction extends BaseTest {
     }
     return headers;
   }
-  protected async doTest(): Promise<void> {
+  protected async submit(url:string,httpParam:any,headers:any):Promise<any> {
     let httpUtil = HttpUtil.get()
-    let datas = this.getVariable();
-    let url = StrUtil.format(this.parseHttpUrl(), datas);
-    let httpParam = this.parseHttpParam();
-    let headers = this.parseHttpHeaders()
-    let result = await httpUtil.requestStatusAndResult(
+    return await httpUtil.requestStatusAndResult(
       url,
       this.getMethod(),
       httpParam,
       headers)
+  }
+  protected async doTest(): Promise<void> {
+    
+    let datas = this.getVariable();
+    let url = StrUtil.format(this.parseHttpUrl(), datas);
+    let httpParam = this.parseHttpParam();
+    let headers = this.parseHttpHeaders()
+    let result = await this.submit(url,httpParam,headers);
     this.sendMsg('httpParam', {
       id: this.getTestId(),
       url,

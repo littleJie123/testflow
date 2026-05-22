@@ -1,18 +1,23 @@
 import IAfterProcess from "../inf/IAfterProcess";
 import IHttpActionParam from "../inf/IHttpActionParam";
 import { TestRunner } from "../testflow";
+import HttpUtil from "../util/HttpUtil";
 import UrlAction from "./UrlAction";
+export interface IUploadActionParam extends IHttpActionParam {
+  filePath?: string;
+}
 
 /**
+ * 
  * 请求http接口的接口
  */
 export default class extends UrlAction {
-  protected opt: IHttpActionParam;
+  protected opt: IUploadActionParam;
 
   needInScreen() {
     return true;
   }
-  constructor(param?: IHttpActionParam, afterProcess?: IAfterProcess) {
+  constructor(param?: IUploadActionParam, afterProcess?: IAfterProcess) {
     super(afterProcess);
     if (param == null) {
       param = {};
@@ -33,13 +38,7 @@ export default class extends UrlAction {
   protected getDefHttpParam(): IHttpActionParam {
     return null
   }
-  protected getMethod(): string {
-    let method = this.opt.method;
-    if (method == undefined) {
-      method = 'POST';
-    }
-    return method;
-  }
+   
   protected getHttpUrl(): string {
     return this.opt.url;
   }
@@ -54,7 +53,15 @@ export default class extends UrlAction {
     }
     return param;
   }
+  
+  protected async submit(url: string, httpParam: any, headers: any): Promise<any> {
+    let httpUtil = HttpUtil.get();
+    return await httpUtil.upload(url,this.getFilePath(),httpParam,headers);
+  }
 
+  protected getFilePath(): string {
+    return this.opt.filePath;
+  }
 
   protected getHeader() {
     let headers = this.opt?.headers;

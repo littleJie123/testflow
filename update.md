@@ -25,6 +25,22 @@
   - 更新了渲染逻辑，以区分普通测试用例和目录，并为目录添加了 📂 图标以增强视觉区分度。
   - 为目录增加了“进入”功能，并为非根目录提供了“上一级”导航。
 
+- **fix: 解决 VS Code 中无法识别 Node.js 类型（如 fs）的问题**
+  - 在 `tsconfig.json` 中明确指定 `"types": ["node"]`。
+  - 开启 `"skipLibCheck": true` 以避免库类型冲突。
+
+## 2026-05-11
+- **fix: 修复 VS Code 中无法识别 Node.js 类型（如 path, fs）的问题**
+  - 在 `tsconfig.json` 中明确指定 `"types": ["node"]`。
+  - 开启 `"skipLibCheck": true` 以避免库类型冲突。
+
+## 2026-05-09
+- **feature: 完成 HttpUtil 的 upload 方法**
+  - 在 `src/util/HttpUtil.ts` 中实现了 `upload` 方法。
+  - 使用 `FormData` 和 `fetch` 支持文件上传。
+  - 自动处理查询参数，并支持自定义请求头。
+  - 返回响应的 JSON 或文本结果。
+
 ## 2026-03-12
 - **feature: 增加日志关键字过滤功能**
   - 在 `detail.html` 的测试日志栏上方增加了一个输入框。

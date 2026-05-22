@@ -37,6 +37,22 @@ function setKey(obj, key, param) {
 }
 class JsonUtil {
     /**
+     * 进行克隆
+     * @param array
+     * @param onlyCols
+     */
+    static cloneList(array, onlyCols) {
+        let retList = [];
+        for (let row of array) {
+            let ret = {};
+            for (let col of onlyCols) {
+                this.setByKeys(ret, col, this.getByKeys(row, col));
+            }
+            retList.push(ret);
+        }
+        return retList;
+    }
+    /**
      * 判断两个类型相等。
      * @param obj1
      * @param obj2

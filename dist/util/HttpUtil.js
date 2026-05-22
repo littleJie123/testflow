@@ -1,10 +1,64 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-class default_1 {
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+class HttpUtil {
+    /**
+     * 将指定的文件上传到url中
+     * @param url
+     * @param filePath 文件目录
+     * @param data 参数
+     * @param headers
+     */
+    async upload(url, filePath, queryParams, headers) {
+        if (queryParams != null) {
+            const queryString = Object.keys(queryParams)
+                .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
+                .join('&');
+            url = `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
+            if (url.endsWith('&')) {
+                url = url.substring(0, url.length - 1);
+            }
+        }
+        try {
+            const formData = new FormData();
+            const fileBuffer = fs_1.default.readFileSync(filePath);
+            const fileName = path_1.default.basename(filePath);
+            const blob = new Blob([fileBuffer]);
+            formData.append('file', blob, fileName);
+            const options = {
+                method: 'POST',
+                headers: {
+                    ...headers,
+                },
+                body: formData,
+            };
+            const response = await fetch(url, options);
+            const contentType = response.headers.get('content-type');
+            let result = null;
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            }
+            else {
+                result = await response.text();
+            }
+            return {
+                result,
+                status: response.status
+            };
+        }
+        catch (error) {
+            console.error('上传出错:', error);
+            throw error;
+        }
+    }
     // 单例模式获取实例
     static get() {
         if (!this.instance) {
-            this.instance = new this();
+            this.instance = new HttpUtil();
         }
         return this.instance;
     }
@@ -78,5 +132,5 @@ class default_1 {
         }
     }
 }
-default_1.instance = null;
-exports.default = default_1;
+HttpUtil.instance = null;
+exports.default = HttpUtil;

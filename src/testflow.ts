@@ -6,6 +6,8 @@ export { default as UrlAction } from "./testAction/UrlAction";
 export { default as HttpAction } from "./testAction/HttpAction";
 export { default as IHttpActionParam } from "./inf/IHttpActionParam";
 export { default as ITest} from "./inf/ITest";
+export { default as UploadAction } from "./testAction/UploadAction";
+
 
 export { default as SetVariable } from "./testAction/SetVariable";
 export { default as ISetVariableParam } from "./inf/ISetVarableParam";
@@ -17,3 +19,5 @@ export {  DateUtil } from "./util/DateUtil";
 export { default as StrDateUtil} from "./util/StrDateUtil";
 export { default as JsonUtil} from "./util/JsonUtil";
 export { default as CheckUtil} from "./util/CheckUtil";
+
+export { IUploadActionParam } from "./testAction/UploadAction";

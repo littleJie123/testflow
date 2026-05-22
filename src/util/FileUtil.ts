@@ -6,7 +6,7 @@ var FileUtil = {
   each: function (src: string, fun: (str:string)=>void, checkFun?: Function): void {
     if (src == null || fun == null) return
     if (checkFun == null) {
-      checkFun = function (path) {
+      checkFun = function (strPth:string) {
         return true
       }
     }

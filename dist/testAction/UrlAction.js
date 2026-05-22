@@ -75,13 +75,16 @@ class UrlAction extends BaseTest_1.default {
         }
         return headers;
     }
-    async doTest() {
+    async submit(url, httpParam, headers) {
         let httpUtil = HttpUtil_1.default.get();
+        return await httpUtil.requestStatusAndResult(url, this.getMethod(), httpParam, headers);
+    }
+    async doTest() {
         let datas = this.getVariable();
         let url = StrUtil_1.StrUtil.format(this.parseHttpUrl(), datas);
         let httpParam = this.parseHttpParam();
         let headers = this.parseHttpHeaders();
-        let result = await httpUtil.requestStatusAndResult(url, this.getMethod(), httpParam, headers);
+        let result = await this.submit(url, httpParam, headers);
         this.sendMsg('httpParam', {
             id: this.getTestId(),
             url,

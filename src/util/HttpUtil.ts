@@ -1,10 +1,66 @@
-export default class {
-  private static instance: any = null;
+import fs from 'fs';
+import path from 'path';
+
+export default class HttpUtil {
+  private static instance: HttpUtil = null;
+
+
+  /**
+   * 将指定的文件上传到url中
+   * @param url 
+   * @param filePath 文件目录
+   * @param data 参数
+   * @param headers 
+   */
+  public async upload(url: string, filePath: string, queryParams?: any, headers?: any) {
+    if (queryParams != null) {
+      const queryString = Object.keys(queryParams)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
+        .join('&');
+      url = `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
+      if (url.endsWith('&')) {
+        url = url.substring(0, url.length - 1)
+      }
+    }
+
+    try {
+      const formData = new FormData();
+      const fileBuffer = fs.readFileSync(filePath);
+      const fileName = path.basename(filePath);
+      const blob = new Blob([fileBuffer]);
+      formData.append('file', blob, fileName);
+
+      const options: any = {
+        method: 'POST',
+        headers: {
+          ...headers,
+        },
+        body: formData,
+      };
+
+      const response = await fetch(url, options);
+      const contentType = response.headers.get('content-type');
+      let result:any = null;
+      if (contentType && contentType.includes('application/json')) {
+        result = await response.json();
+      } else {
+        result = await response.text();
+      }
+      return {
+        result,
+        status: response.status
+      }
+    } catch (error) {
+      console.error('上传出错:', error);
+      throw error;
+    }
+  }
+
 
   // 单例模式获取实例
-  public static get() {
+  public static get():HttpUtil {
     if (!this.instance) {
-      this.instance = new this();
+      this.instance = new HttpUtil();
     }
     return this.instance;
   }
@@ -36,7 +92,7 @@ export default class {
     data?: any,
     headers?: any
   ): Promise<any> {
-    let result = await this.requestStatusAndResult(url,method,data,headers)
+    let result = await this.requestStatusAndResult(url, method, data, headers)
     return result.result;
   }
 
@@ -55,8 +111,8 @@ export default class {
           .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
           .join('&');
         url = `${url}${url.includes('?') ? '&' : '?'}${queryString}`;
-        if(url.endsWith('&')){
-          url = url.substring(0,url.length-1)
+        if (url.endsWith('&')) {
+          url = url.substring(0, url.length - 1)
         }
       }
 
@@ -77,20 +133,20 @@ export default class {
       // 发送请求
       const response = await fetch(url, options);
 
-       
+
 
       // 返回响应数据
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-       
+
         return {
-          status:response.status,
-          result:await response.json()
+          status: response.status,
+          result: await response.json()
         };
       } else {
         return {
-          status:response.status,
-          result:await response.text()
+          status: response.status,
+          result: await response.text()
         };
       }
 

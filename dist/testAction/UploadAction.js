@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const testflow_1 = require("../testflow");
+const HttpUtil_1 = __importDefault(require("../util/HttpUtil"));
 const UrlAction_1 = __importDefault(require("./UrlAction"));
 /**
+ *
  * 请求http接口的接口
  */
 class default_1 extends UrlAction_1.default {
@@ -33,13 +35,6 @@ class default_1 extends UrlAction_1.default {
     getDefHttpParam() {
         return null;
     }
-    getMethod() {
-        let method = this.opt.method;
-        if (method == undefined) {
-            method = 'POST';
-        }
-        return method;
-    }
     getHttpUrl() {
         return this.opt.url;
     }
@@ -52,6 +47,13 @@ class default_1 extends UrlAction_1.default {
             param = {};
         }
         return param;
+    }
+    async submit(url, httpParam, headers) {
+        let httpUtil = HttpUtil_1.default.get();
+        return await httpUtil.upload(url, this.getFilePath(), httpParam, headers);
+    }
+    getFilePath() {
+        return this.opt.filePath;
     }
     getHeader() {
         var _a;

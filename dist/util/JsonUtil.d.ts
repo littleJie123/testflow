@@ -1,5 +1,11 @@
 declare class JsonUtil {
     /**
+     * 进行克隆
+     * @param array
+     * @param onlyCols
+     */
+    static cloneList(array: any[], onlyCols: string[]): any[];
+    /**
      * 判断两个类型相等。
      * @param obj1
      * @param obj2

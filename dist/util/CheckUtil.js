@@ -43,6 +43,10 @@ class default_1 {
         if (notCheckCols != null) {
             array2 = this.cloneList(array2, opt);
         }
+        let onlyCols = opt === null || opt === void 0 ? void 0 : opt.onlyCols;
+        if (onlyCols != null) {
+            array2 = JsonUtil_1.default.cloneList(array2, onlyCols);
+        }
         this.expectFindByArray(array1, array2, msg);
     }
     static expectEqualObj(obj1, obj2, msg) {

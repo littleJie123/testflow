@@ -9,6 +9,7 @@ export default class {
     static expectEqualArray(array1: any[], array2: any[], opt?: {
         msg?: string;
         notCheckCols?: string[];
+        onlyCols?: string[];
     }): void;
     static expectEqualObj(obj1: any, obj2: any, msg?: string): void;
     static expectEqual(value1: any, value2: any, msg?: string): void;
