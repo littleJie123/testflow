@@ -3,4 +3,8 @@ export default interface IAfterProcess {
     buildVariable?(result: any): any;
     parseHttpParam?(param: any, variable?: any): any;
     parseHttpHeader?(header: any): any;
+    needRunVariable?: {
+        key?: string;
+        not?: boolean;
+    };
 }

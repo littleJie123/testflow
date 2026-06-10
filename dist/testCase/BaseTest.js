@@ -134,6 +134,22 @@ class BaseTest {
         var _a, _b;
         return (_b = (_a = this.info) === null || _a === void 0 ? void 0 : _a.config) === null || _b === void 0 ? void 0 : _b.stop;
     }
+    needRun(variable) {
+        var _a, _b, _c, _d, _e;
+        if (((_a = this.afterProcess) === null || _a === void 0 ? void 0 : _a.needRunVariable) == null) {
+            return true;
+        }
+        let key = (_c = (_b = this.afterProcess) === null || _b === void 0 ? void 0 : _b.needRunVariable) === null || _c === void 0 ? void 0 : _c.key;
+        let not = (_e = (_d = this.afterProcess) === null || _d === void 0 ? void 0 : _d.needRunVariable) === null || _e === void 0 ? void 0 : _e.not;
+        if (key == null) {
+            return true;
+        }
+        let ret = variable === null || variable === void 0 ? void 0 : variable[key];
+        if (not) {
+            ret = !ret;
+        }
+        return ret;
+    }
     async test() {
         let logger = this.getTestLogger();
         this.setRunStatus(S_Runing);
@@ -143,10 +159,13 @@ class BaseTest {
         let times = 0;
         try {
             let date = new Date();
-            result = await this.doTest();
-            times = new Date().getTime() - date.getTime();
-            await this.checkResult(result);
-            await this.processResult(result);
+            let variable = this.getVariable();
+            if (this.needRun(variable)) {
+                result = await this.doTest();
+                times = new Date().getTime() - date.getTime();
+                await this.checkResult(result);
+                await this.processResult(result);
+            }
             this.setRunStatus(S_Processed);
         }
         catch (e) {

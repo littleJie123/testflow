@@ -44,6 +44,7 @@ export default abstract class BaseTest implements ITest {
     setTestLogger(logger: TestLogger): void;
     getTestLogger(): TestLogger;
     isStop(): boolean;
+    protected needRun(variable: any): boolean;
     test(): Promise<any>;
     protected processError(e: Error): void;
     protected error(message: string): void;

@@ -41,6 +41,8 @@ export default abstract class BaseTest implements ITest {
   protected webSocket: WebSocket;
 
 
+   
+
 
   constructor(afterProcess?: IAfterProcess) {
     this.afterProcess = afterProcess;
@@ -91,6 +93,7 @@ export default abstract class BaseTest implements ITest {
   }
 
   protected init() {
+    
     this.variable = null;
 
   }
@@ -184,6 +187,22 @@ export default abstract class BaseTest implements ITest {
     return this.info?.config?.stop;
   }
 
+  protected needRun(variable:any):boolean{
+    if(this.afterProcess?.needRunVariable == null){
+      return true;
+    }
+    let key = this.afterProcess?.needRunVariable?.key;
+    let not = this.afterProcess?.needRunVariable?.not;
+    if(key == null){
+      return true;
+    }
+    let ret = variable?.[key];
+    if(not){
+      ret = !ret;
+    }
+    return ret;
+  }
+
   async test(): Promise<any> {
     let logger = this.getTestLogger();
     this.setRunStatus(S_Runing);
@@ -193,10 +212,13 @@ export default abstract class BaseTest implements ITest {
     let times = 0;
     try {
       let date = new Date()
-      result = await this.doTest();
-      times = new Date().getTime()-date.getTime()
-      await this.checkResult(result);
-      await this.processResult(result);
+      let variable = this.getVariable()
+      if(this.needRun(variable)){
+        result = await this.doTest();
+        times = new Date().getTime()-date.getTime()
+        await this.checkResult(result);
+        await this.processResult(result);
+      }
       this.setRunStatus(S_Processed);
     } catch (e:any) {
       this.processError(e);

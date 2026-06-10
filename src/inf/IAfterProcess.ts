@@ -6,4 +6,9 @@ export default interface IAfterProcess {
   parseHttpParam?(param,variable?:any):any;
 
   parseHttpHeader?(header):any;
+
+  needRunVariable?:{
+    key?:string;
+    not?:boolean;
+  }
 }
