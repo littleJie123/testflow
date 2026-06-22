@@ -132,4 +132,12 @@ export default class {
       throw new Error(msg);
     }
   }
+
+  static expectTrue(val:boolean){
+    this.expectEqual(val,true)
+  }
+
+  static expectFlase(val:boolean){
+    this.expectEqual(val,false)
+  }
 }
