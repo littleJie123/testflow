@@ -63,6 +63,7 @@
     const modalContent = stepModal.querySelector(".modal-content-body");
     const closeBtn = document.querySelector(".close");
     const stepData = {};
+    let currentStepId = '';
 
     // WebSocket connection
 
@@ -91,6 +92,7 @@
 
 
     function showStepDetails(stepId) {
+      currentStepId = stepId;
       const data = stepData[stepId];
       const stepElement = document.getElementById(stepId);
       let status = '未知';
@@ -105,6 +107,7 @@
         modalContent.innerHTML = `
                 <div class="modal-header">
                     <button class="btn" onclick="rerunAction('${stepId}')">重新运行</button>
+                    <button class="btn" onclick="copyMd()">copymd</button>
                 </div>
                 <p><strong>Status:</strong> ${status}</p>
                 <p><strong>URL:</strong> <span id="modal-url">${data.url}</span></p>
@@ -132,9 +135,82 @@
     function copyResult() {
       const resultText = document.getElementById('modal-result').innerText;
       navigator.clipboard.writeText(resultText).then(() => {
-        alert('Result copied to clipboard!');
+        Util.showToast('Result copied to clipboard!');
       }, () => {
-        alert('Failed to copy result to clipboard.');
+        Util.showToast('Failed to copy result to clipboard.', 'error');
+      });
+    }
+
+    function getStepName(stepId) {
+      const stepElement = document.getElementById(stepId);
+      const title = stepElement?.querySelector('h3')?.textContent ?? stepId;
+      return title.replace(/^\d+\.\s*/, '');
+    }
+
+    function tryParseJson(text) {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return text;
+      }
+    }
+
+    function buildCaseInputText() {
+      const paramsText = document.getElementById('modal-params')?.innerText ?? '';
+      const param = tryParseJson(paramsText);
+      const paramStr = typeof param === 'string' ? param : JSON.stringify(param, null, 2);
+      return '```javascript\n' + paramStr + '\n```';
+    }
+
+    function cloneJson(obj) {
+      if (obj == null || typeof obj !== 'object') {
+        return obj;
+      }
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function getStepResultObj() {
+      let resultObj = stepData[currentStepId]?.result;
+      if (resultObj != null && typeof resultObj === 'object') {
+        return cloneJson(resultObj);
+      }
+      const resultText = document.getElementById('modal-result')?.innerText ?? '';
+      return tryParseJson(resultText);
+    }
+
+    function extractOutputResult(resultObj) {
+      if (!resultObj || typeof resultObj !== 'object') {
+        return resultObj;
+      }
+      let output = cloneJson(resultObj);
+      if (output.result != null && typeof output.result === 'object' && output.status != null) {
+        output = output.result;
+      }
+      if (output.result != null && typeof output.result === 'object') {
+        output = output.result;
+      }
+      return output;
+    }
+
+    function buildCaseOutputText() {
+      const resultObj = getStepResultObj();
+      let output = extractOutputResult(resultObj);
+      if (output && typeof output === 'object' && Array.isArray(output.content) && output.content.length > 2) {
+        output = { ...output, content: output.content.slice(0, 2) };
+      }
+      const outputStr = typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+      return '```javascript\n' + outputStr + '\n```';
+    }
+
+    function copyMd() {
+      const caseName = getStepName(currentStepId);
+      const caseInput = buildCaseInputText();
+      const caseOutput = buildCaseOutputText();
+      const markdown = `# 简介\n${caseName}\n# 输入\n${caseInput}\n# 输出\n${caseOutput}`;
+      navigator.clipboard.writeText(markdown).then(() => {
+        Util.showToast('Markdown copied to clipboard!');
+      }, () => {
+        Util.showToast('Failed to copy markdown to clipboard.', 'error');
       });
     }
 
@@ -158,6 +234,10 @@
 
         resultPre.innerHTML = Util.highlightJson(result);
 
+        if (stepData[actionId]) {
+          stepData[actionId].result = result.result ?? result;
+        }
+
         // Blink effect
         let count = 0;
         const interval = setInterval(() => {
@@ -170,7 +250,7 @@
         }, 200);
 
       } catch (error) {
-        alert('Headers 或 Params 不是有效的 JSON 格式，请检查后重试。\n' + error);
+        Util.showToast('Headers 或 Params 不是有效的 JSON 格式，请检查后重试。', 'error', 3000);
       }
     }
 
@@ -328,7 +408,7 @@
       if (errorStep) {
         errorStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
-        alert('没有发现错误的步骤');
+        Util.showToast('没有发现错误的步骤', 'info');
       }
     }
 
