@@ -5,13 +5,19 @@ import BaseTest from "./BaseTest";
  */
 export default abstract class TestCase extends BaseTest {
     protected index: number;
+    protected autoMdFilePath: string;
+    protected sourceFilePath: string;
     setIndex(index: any): void;
+    setAutoMdFilePath(filePath: string): void;
+    setSourceFilePath(filePath: string): void;
     protected processError(e: Error): void;
     needInScreen(): boolean;
     protected needThrowError(): boolean;
     protected couldLookDetail(): boolean;
+    clone(): TestCase;
     doTest(): Promise<any>;
     getActions(): BaseTest[];
+    private mergeAutoMdAction;
     protected abstract buildActions(): BaseTest[];
     abstract getName(): string;
     toJson(): any;

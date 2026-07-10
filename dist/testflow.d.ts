@@ -8,6 +8,7 @@ export { default as ITest } from "./inf/ITest";
 export { default as UploadAction } from "./testAction/UploadAction";
 export { default as SetVariable } from "./testAction/SetVariable";
 export { default as ISetVariableParam } from "./inf/ISetVarableParam";
+export { default as MdFileAction } from "./testAction/MdFileAction";
 export { default as IAfterProcess } from "./inf/IAfterProcess";
 export { ArrayUtil } from "./util/ArrayUtil";
 export { DateUtil } from "./util/DateUtil";

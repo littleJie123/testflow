@@ -8,6 +8,16 @@ export default class Directory extends TestCase {
 
   private map: { [key: string]: TestCase } = {};
 
+  private mdFiles: string[] = [];
+
+  addMdFile(filePath: string) {
+    this.mdFiles.push(filePath);
+  }
+
+  getMdFiles(): string[] {
+    return this.mdFiles;
+  }
+
   addChild(child: TestCase) {
     this.map[child.getTestId()] = child;
   }

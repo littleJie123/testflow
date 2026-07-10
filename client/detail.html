@@ -9,6 +9,9 @@
 </head>
 <script src="js/http.js"></script>
 <script src="js/util.js"></script>
+<script src="js/marked.min.js"></script>
+<script src="js/jsonViewer.js"></script>
+<script src="js/mdFile.js"></script>
 
 <body>
   <div class="header">
@@ -27,7 +30,22 @@
 
     <div class="actions-panel">
       <h2>测试步骤</h2>
+      <div class="step-search-toolbar">
+        <input type="text" id="step-search-input" class="step-search-input" placeholder="按步骤名称搜索">
+        <button class="btn" onclick="searchSteps()">搜索</button>
+        <button class="btn" onclick="moveStepSearch(-1)">上一处</button>
+        <button class="btn" onclick="moveStepSearch(1)">下一处</button>
+        <button class="btn" onclick="clearStepSearch()">清除</button>
+        <span class="json-search-status" id="step-search-status"></span>
+      </div>
       <div id="actionsList"></div>
+      <div class="actions-bottom-toolbar" id="actionsBottomToolbar">
+        <select id="envSelectActionsBottom" class="btn">
+          <option value="">选择环境</option>
+        </select>
+        <button class="btn" onclick="runTestCase()">运行测试</button>
+        <button class="btn" onclick="jumpToError()">跳到出错</button>
+      </div>
     </div>
     <div class="logs-panel">
       <h2>测试日志</h2>
@@ -39,18 +57,16 @@
     </div>
   </div>
 
-  <div class="toolbar" id="bottomToolbar" style="display: none; margin-top: 1rem;">
-    <select id="envSelectBottom" class="btn" style="margin-right: 10px;">
-      <option value="">选择环境</option>
-    </select>
-    <button class="btn" onclick="runTestCase()">运行测试</button>
-    <button class="btn" onclick="jumpToError()">跳到出错</button>
-  </div>
-
   <div id="stepModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <div class="modal-content-body"></div>
+      <div class="modal-split-layout">
+        <div class="modal-content-body" id="modalDetailBody"></div>
+        <div class="modal-logs-panel">
+          <div class="modal-logs-header">运行日志</div>
+          <div id="modalLogsList" class="modal-logs-list"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -60,10 +76,16 @@
     const urlParams = new URLSearchParams(window.location.search);
     testCaseId = urlParams.get('id');
     const stepModal = document.getElementById("stepModal");
-    const modalContent = stepModal.querySelector(".modal-content-body");
+    const modalContent = document.getElementById("modalDetailBody");
     const closeBtn = document.querySelector(".close");
     const stepData = {};
+    const actionMeta = {};
     let currentStepId = '';
+    let stepSearchHits = [];
+    let stepSearchIndex = -1;
+    let stepSearchKeyword = '';
+    let stepHasSearched = false;
+    let nestedModalParentId = null;
 
     // WebSocket connection
 
@@ -71,19 +93,60 @@
       stepData[msg.id] = msg;
     });
 
+    function normalizeStepStatus(status) {
+      return status === 'runing' ? 'running' : status;
+    }
+
+    function updateNestedStepStatus(stepId, status) {
+      for (const id in actionMeta) {
+        const meta = actionMeta[id];
+        if (meta.actionType !== 'testCase' || !meta.actions) {
+          continue;
+        }
+        const sub = meta.actions.find(a => a.id === stepId);
+        if (!sub) {
+          continue;
+        }
+        sub.status = status;
+        const subEl = document.getElementById(`tcsub-${stepId}`);
+        if (subEl) {
+          subEl.className = `testcase-sub-item ${normalizeStepStatus(status)}`;
+          const statusTxt = subEl.querySelector('.testcase-sub-status');
+          if (statusTxt) {
+            statusTxt.textContent = '状态: ' + getStatusText(status);
+          }
+        }
+        if (status === 'error') {
+          meta.status = 'error';
+          const parentEl = document.getElementById(id);
+          if (parentEl) {
+            parentEl.classList.remove('processed', 'error', 'running', 'init', 'runing');
+            parentEl.classList.add('error');
+            const parentStatusTxt = parentEl.querySelector('.statusTxt');
+            if (parentStatusTxt) {
+              parentStatusTxt.textContent = '状态: ' + getStatusText('error');
+            }
+          }
+        }
+        if (currentStepId === id && stepModal.style.display === 'block' && !nestedModalParentId) {
+          refreshTestCaseModalSubSteps(id);
+        }
+        break;
+      }
+    }
+
     http.on('runStatus', function (msg) {
       const stepElement = document.getElementById(msg.id);
       if (stepElement) {
         stepElement.classList.remove('processed', 'error', 'running', 'init', 'runing');
-        let status = msg.status;
-        if (status === 'runing') {
-          status = 'running';
-        }
+        let status = normalizeStepStatus(msg.status);
         stepElement.classList.add(status);
         const statusTxt = stepElement.querySelector('.statusTxt');
         if (statusTxt) {
           statusTxt.textContent = '状态: ' + getStatusText(msg.status);
         }
+      } else {
+        updateNestedStepStatus(msg.id, msg.status);
       }
     });
 
@@ -91,8 +154,377 @@
 
 
 
-    function showStepDetails(stepId) {
+    function clearStepSearchHighlight() {
+      document.querySelectorAll('.action-item.action-search-hit, .action-item.action-search-current').forEach(el => {
+        el.classList.remove('action-search-hit', 'action-search-current');
+      });
+    }
+
+    function updateStepSearchStatus() {
+      const statusEl = document.getElementById('step-search-status');
+      if (!statusEl) {
+        return;
+      }
+      if (!stepHasSearched || !stepSearchKeyword) {
+        statusEl.textContent = '';
+        return;
+      }
+      if (stepSearchHits.length === 0) {
+        statusEl.textContent = `未匹配到「${stepSearchKeyword}」`;
+        return;
+      }
+      statusEl.textContent = `匹配到 ${stepSearchHits.length} 处「${stepSearchKeyword}」 · 第 ${stepSearchIndex + 1}/${stepSearchHits.length} 处`;
+    }
+
+    function collectStepSearchHits(keyword) {
+      const lowerKeyword = keyword.toLowerCase();
+      const hits = [];
+      document.querySelectorAll('#actionsList .action-item').forEach(el => {
+        const meta = actionMeta[el.id];
+        const name = meta?.name ?? getStepName(el.id);
+        if (name.toLowerCase().includes(lowerKeyword)) {
+          hits.push(el);
+        }
+      });
+      return hits;
+    }
+
+    function focusStepSearchHit(index) {
+      document.querySelectorAll('.action-item.action-search-current').forEach(el => {
+        el.classList.remove('action-search-current');
+      });
+      if (index < 0 || index >= stepSearchHits.length) {
+        updateStepSearchStatus();
+        return false;
+      }
+      stepSearchIndex = index;
+      const currentHit = stepSearchHits[index];
+      currentHit.classList.add('action-search-current');
+      currentHit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      updateStepSearchStatus();
+      return true;
+    }
+
+    function searchSteps() {
+      const input = document.getElementById('step-search-input');
+      const keyword = input ? input.value.trim() : '';
+      if (!keyword) {
+        Util.showToast('请输入搜索关键字', 'info');
+        return false;
+      }
+
+      clearStepSearchHighlight();
+      stepSearchHits = collectStepSearchHits(keyword);
+      stepSearchKeyword = keyword;
+      stepHasSearched = true;
+      stepSearchIndex = -1;
+
+      if (stepSearchHits.length === 0) {
+        Util.showToast(`未搜索到「${keyword}」`, 'info');
+        updateStepSearchStatus();
+        return false;
+      }
+
+      stepSearchHits.forEach(el => el.classList.add('action-search-hit'));
+      return focusStepSearchHit(0);
+    }
+
+    function moveStepSearch(step) {
+      if (!stepHasSearched || stepSearchHits.length === 0) {
+        return searchSteps();
+      }
+
+      const nextIndex = stepSearchIndex + step;
+      if (step < 0 && stepSearchIndex <= 0) {
+        Util.showToast('已经是第一处', 'info');
+        return false;
+      }
+      if (step > 0 && stepSearchIndex >= stepSearchHits.length - 1) {
+        Util.showToast('已经是最后一处', 'info');
+        return false;
+      }
+      return focusStepSearchHit(nextIndex);
+    }
+
+    function clearStepSearch() {
+      const input = document.getElementById('step-search-input');
+      if (input) {
+        input.value = '';
+      }
+      stepSearchHits = [];
+      stepSearchIndex = -1;
+      stepHasSearched = false;
+      stepSearchKeyword = '';
+      clearStepSearchHighlight();
+      updateStepSearchStatus();
+    }
+
+    function handleStepSearchEnter() {
+      const input = document.getElementById('step-search-input');
+      const keyword = input ? input.value.trim() : '';
+      if (!keyword) {
+        Util.showToast('请输入搜索关键字', 'info');
+        return;
+      }
+      if (!stepHasSearched || keyword !== stepSearchKeyword) {
+        searchSteps();
+        return;
+      }
+      moveStepSearch(1);
+    }
+
+    function applyStepSearchAfterRender() {
+      if (!stepHasSearched || !stepSearchKeyword) {
+        return;
+      }
+      clearStepSearchHighlight();
+      stepSearchHits = collectStepSearchHits(stepSearchKeyword);
+      if (stepSearchHits.length === 0) {
+        stepSearchIndex = -1;
+        updateStepSearchStatus();
+        return;
+      }
+      stepSearchHits.forEach(el => el.classList.add('action-search-hit'));
+      const index = stepSearchIndex >= stepSearchHits.length ? 0 : Math.max(stepSearchIndex, 0);
+      focusStepSearchHit(index);
+    }
+
+    function bindStepSearchEvents() {
+      const input = document.getElementById('step-search-input');
+      if (!input || input.dataset.bound === '1') {
+        return;
+      }
+      input.dataset.bound = '1';
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleStepSearchEnter();
+        }
+      });
+    }
+
+    function buildResultSectionHtml() {
+      return `
+                <div class="result-section">
+                    <p class="result-http-status"><strong>Status:</strong> <span id="modal-result-status">-</span></p>
+                    <div class="result-toolbar">
+                        <span class="result-title">Result:</span>
+                        <button class="btn" onclick="copyResult()">copy result</button>
+                        <input type="text" id="json-search-input" class="json-search-input" placeholder="在 Result 中搜索关键字">
+                        <button class="btn" onclick="searchResultJson()">搜索</button>
+                        <button class="btn" onclick="moveResultSearch(-1)">上一处</button>
+                        <button class="btn" onclick="moveResultSearch(1)">下一处</button>
+                        <button class="btn" onclick="clearResultSearch()">清除</button>
+                        <button class="btn" onclick="expandResultJson()">全部展开</button>
+                        <button class="btn" onclick="collapseResultJson()">全部关闭</button>
+                        <span class="json-search-status" id="json-search-status"></span>
+                    </div>
+                    <div id="modal-result"></div>
+                </div>
+            `;
+    }
+
+    function extractResultStatus(resultObj) {
+      if (resultObj == null || typeof resultObj !== 'object') {
+        return null;
+      }
+      if (resultObj.status != null) {
+        return resultObj.status;
+      }
+      return null;
+    }
+
+    function getResultStatusClass(status) {
+      if (status == null) {
+        return 'result-status-unknown';
+      }
+      const code = Number(status);
+      if (Number.isNaN(code)) {
+        return 'result-status-unknown';
+      }
+      if (code >= 200 && code < 300) {
+        return 'result-status-ok';
+      }
+      if (code >= 400) {
+        return 'result-status-error';
+      }
+      return 'result-status-warn';
+    }
+
+    function renderResultStatus(data) {
+      const statusEl = document.getElementById('modal-result-status');
+      if (!statusEl) {
+        return;
+      }
+      const status = extractResultStatus(data);
+      const rowEl = statusEl.closest('.result-http-status');
+      statusEl.textContent = status == null ? '-' : String(status);
+      if (rowEl) {
+        rowEl.classList.remove('result-status-ok', 'result-status-error', 'result-status-warn', 'result-status-unknown');
+        rowEl.classList.add(getResultStatusClass(status));
+      }
+    }
+
+    function renderResultJson(data) {
+      const resultContainer = document.getElementById('modal-result');
+      if (!resultContainer) {
+        return;
+      }
+      renderResultStatus(data);
+      JsonViewer.render(resultContainer, extractOutputResult(data));
+    }
+
+    function searchResultJson() {
+      const input = document.getElementById('json-search-input');
+      JsonViewer.search(input ? input.value : '');
+    }
+
+    function moveResultSearch(step) {
+      JsonViewer.moveSearchHit(step);
+    }
+
+    function clearResultSearch() {
+      JsonViewer.clearSearch();
+    }
+
+    function expandResultJson() {
+      JsonViewer.expandAll();
+    }
+
+    function collapseResultJson() {
+      JsonViewer.collapseAll();
+    }
+
+    function bindResultSearchEvents() {
+      const input = document.getElementById('json-search-input');
+      if (!input || input.dataset.bound === '1') {
+        return;
+      }
+      input.dataset.bound = '1';
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          JsonViewer.handleSearchEnter();
+        }
+      });
+    }
+
+    function renderModalStepLogs(stepId, includeChildren) {
+      const modalLogsList = document.getElementById('modalLogsList');
+      if (!modalLogsList) {
+        return;
+      }
+      modalLogsList.innerHTML = '';
+      const logEntries = [];
+      document.querySelectorAll('#logsList .log-item').forEach(entry => {
+        const logStepId = entry.dataset.stepId;
+        const matched = includeChildren
+          ? (logStepId === stepId || logStepId.startsWith(stepId + '-'))
+          : (logStepId === stepId);
+        if (matched) {
+          logEntries.push(entry);
+        }
+      });
+      if (logEntries.length === 0) {
+        modalLogsList.innerHTML = '<div class="modal-logs-empty">暂无运行日志</div>';
+        return;
+      }
+      logEntries.forEach(entry => {
+        const clone = entry.cloneNode(true);
+        clone.removeAttribute('onclick');
+        clone.classList.remove('highlighted-log');
+        clone.style.display = '';
+        modalLogsList.appendChild(clone);
+      });
+      modalLogsList.scrollTop = modalLogsList.scrollHeight;
+    }
+
+    function syncModalStepLogsIfOpen() {
+      if (stepModal.style.display !== 'block' || !currentStepId) {
+        return;
+      }
+      const meta = actionMeta[currentStepId];
+      const includeChildren = meta?.actionType === 'testCase' && nestedModalParentId == null;
+      renderModalStepLogs(currentStepId, includeChildren);
+    }
+
+    function showSubStepLogs(subStepId) {
+      renderModalStepLogs(subStepId, false);
+      scrollToLog(subStepId);
+    }
+
+    function buildTestCaseSubStepHtml(sub, index, parentStepId) {
+      let lookBtn = '';
+      if (sub.couldLookDetail) {
+        lookBtn = `<button class="btn" onclick="showStepDetails('${sub.id}', '${parentStepId}')">查看</button>`;
+      }
+      const logBtn = `<button class="btn" onclick="showSubStepLogs('${sub.id}')">日志</button>`;
+      return `
+        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}" id="tcsub-${sub.id}">
+          <div class="testcase-sub-info">
+            <strong>${index + 1}. ${sub.name}</strong>
+            <div class="testcase-sub-status">状态: ${getStatusText(sub.status)}</div>
+          </div>
+          <div class="testcase-sub-actions">${lookBtn}${logBtn}</div>
+        </div>
+      `;
+    }
+
+    function buildTestCaseModalHtml(meta) {
+      const actions = meta.actions || [];
+      return `
+        <div class="modal-header">
+          <h3><span class="testcase-badge">TestCase</span> ${meta.name}</h3>
+          <div>状态: ${getStatusText(meta.status)}</div>
+        </div>
+        <div class="testcase-sub-steps" id="testcaseSubSteps">
+          ${actions.map((sub, index) => buildTestCaseSubStepHtml(sub, index, meta.id)).join('')}
+        </div>
+      `;
+    }
+
+    function refreshTestCaseModalSubSteps(stepId) {
+      const meta = actionMeta[stepId];
+      const container = document.getElementById('testcaseSubSteps');
+      if (!meta || !container) {
+        return;
+      }
+      container.innerHTML = (meta.actions || [])
+        .map((sub, index) => buildTestCaseSubStepHtml(sub, index, stepId))
+        .join('');
+    }
+
+    function showTestCaseDetails(stepId) {
+      nestedModalParentId = null;
       currentStepId = stepId;
+      const meta = actionMeta[stepId];
+      if (!meta) {
+        return;
+      }
+      modalContent.innerHTML = buildTestCaseModalHtml(meta);
+      renderModalStepLogs(stepId, true);
+      stepModal.style.display = 'block';
+    }
+
+    function backToTestCaseModal() {
+      if (!nestedModalParentId) {
+        return;
+      }
+      showTestCaseDetails(nestedModalParentId);
+    }
+
+    function showStepDetails(stepId, fromTestCaseParentId) {
+      nestedModalParentId = fromTestCaseParentId || null;
+      currentStepId = stepId;
+      const meta = actionMeta[stepId];
+      if (meta && meta.actionType === 'testCase') {
+        showTestCaseDetails(stepId);
+        return;
+      }
+      if (meta && meta.actionType === 'mdFile') {
+        showMdFileDetails(meta);
+        return;
+      }
       const data = stepData[stepId];
       const stepElement = document.getElementById(stepId);
       let status = '未知';
@@ -101,11 +533,18 @@
         if (statusClass) {
           status = getStatusText(statusClass);
         }
+      } else if (meta?.status) {
+        status = getStatusText(meta.status);
       }
+
+      const backBtn = nestedModalParentId
+        ? `<button class="btn" onclick="backToTestCaseModal()">返回 TestCase</button>`
+        : '';
 
       if (data) {
         modalContent.innerHTML = `
                 <div class="modal-header">
+                    ${backBtn}
                     <button class="btn" onclick="rerunAction('${stepId}')">重新运行</button>
                     <button class="btn" onclick="copyMd()">copymd</button>
                 </div>
@@ -116,24 +555,30 @@
                 <pre id="modal-headers" contenteditable="true"></pre>
                 <p><strong>Params:</strong></p>
                 <pre id="modal-params" contenteditable="true"></pre>
-                <p>
-                    <strong>Result:</strong>
-                    <button class="btn" onclick="copyResult()">copy result</button>
-                </p>
-                <pre id="modal-result"></pre>
+                ${buildResultSectionHtml()}
             `;
         document.getElementById('modal-headers').innerHTML = Util.highlightJson(data.headers);
         document.getElementById('modal-params').innerHTML = Util.highlightJson(data.param);
-        document.getElementById('modal-result').innerHTML = Util.highlightJson(data.result);
+        renderResultJson(data.result);
+        bindResultSearchEvents();
+        renderModalStepLogs(stepId, false);
         stepModal.style.display = "block";
       } else {
-        modalContent.innerHTML = `<p>No data available for this step.</p>`;
+        modalContent.innerHTML = `
+          <div class="modal-header">${backBtn}</div>
+          <p>No data available for this step.</p>
+        `;
+        renderModalStepLogs(stepId, false);
         stepModal.style.display = "block";
       }
     }
 
+    async function showMdFileDetails(meta) {
+      MdFileView.open(meta);
+    }
+
     function copyResult() {
-      const resultText = document.getElementById('modal-result').innerText;
+      const resultText = JsonViewer.getText();
       navigator.clipboard.writeText(resultText).then(() => {
         Util.showToast('Result copied to clipboard!');
       }, () => {
@@ -174,7 +619,7 @@
       if (resultObj != null && typeof resultObj === 'object') {
         return cloneJson(resultObj);
       }
-      const resultText = document.getElementById('modal-result')?.innerText ?? '';
+      const resultText = JsonViewer.getText();
       return tryParseJson(resultText);
     }
 
@@ -232,10 +677,11 @@
           param: param
         });
 
-        resultPre.innerHTML = Util.highlightJson(result);
+        const resultValue = result.result ?? result;
+        renderResultJson(resultValue);
 
         if (stepData[actionId]) {
-          stepData[actionId].result = result.result ?? result;
+          stepData[actionId].result = resultValue;
         }
 
         // Blink effect
@@ -255,6 +701,22 @@
     }
 
     function scrollToLog(stepId) {
+      const meta = actionMeta[stepId];
+      if (meta && isTestCaseAction(meta)) {
+        const logEntries = [];
+        document.querySelectorAll('#logsList .log-item').forEach(entry => {
+          const logStepId = entry.dataset.stepId;
+          if (logStepId === stepId || logStepId.startsWith(stepId + '-')) {
+            logEntries.push(entry);
+          }
+        });
+        if (logEntries.length > 0) {
+          document.querySelectorAll('.highlighted-log').forEach(el => el.classList.remove('highlighted-log'));
+          logEntries.forEach(entry => entry.classList.add('highlighted-log'));
+          logEntries[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
       const logEntries = document.querySelectorAll(`.log-item[data-step-id="${stepId}"]`);
       if (logEntries.length > 0) {
         // Remove highlight from previously highlighted logs
@@ -269,10 +731,12 @@
 
     closeBtn.onclick = function () {
       stepModal.style.display = "none";
+      nestedModalParentId = null;
     }
     window.onclick = function (event) {
       if (event.target == stepModal) {
         stepModal.style.display = "none";
+        nestedModalParentId = null;
       }
     }
 
@@ -282,6 +746,7 @@
     window.onload = function () {
 
       document.getElementById('pageTitle').textContent = `测试用例：${testCaseId}`;
+      bindStepSearchEvents();
       fetchEnvList();
       fetchTestCaseData();
     }
@@ -302,36 +767,118 @@
       }
     }
 
-    // 获取环境列表
+    function fillEnvSelect(selectElement, list) {
+      if (!selectElement) {
+        return;
+      }
+      const currentValue = selectElement.value;
+      selectElement.innerHTML = '<option value="">选择环境</option>';
+      if (list) {
+        list.forEach(env => {
+          const option = document.createElement('option');
+          option.value = env.env;
+          option.textContent = `${env.env} - ${env.host}`;
+          selectElement.appendChild(option);
+        });
+      }
+      if (currentValue) {
+        selectElement.value = currentValue;
+      }
+    }
+
+    function syncEnvSelectValue(value, source) {
+      const selects = [
+        document.getElementById('envSelect'),
+        document.getElementById('envSelectActionsBottom'),
+      ];
+      selects.forEach(select => {
+        if (select && select !== source) {
+          select.value = value;
+        }
+      });
+    }
+
+    function getSelectedEnv() {
+      const envSelect = document.getElementById('envSelect');
+      if (envSelect && envSelect.value) {
+        return envSelect.value;
+      }
+      const envSelectActionsBottom = document.getElementById('envSelectActionsBottom');
+      if (envSelectActionsBottom && envSelectActionsBottom.value) {
+        return envSelectActionsBottom.value;
+      }
+      return '';
+    }
+
+    function bindEnvSelectSync() {
+      ['envSelect', 'envSelectActionsBottom'].forEach(id => {
+        const select = document.getElementById(id);
+        if (!select || select.dataset.bound === '1') {
+          return;
+        }
+        select.dataset.bound = '1';
+        select.addEventListener('change', function () {
+          syncEnvSelectValue(this.value, this);
+        });
+      });
+    }
+
     async function fetchEnvList() {
       try {
         const data = await http.post(`/listEnv`, {});
-        const envSelect = document.getElementById('envSelect');
-        const envSelectBottom = document.getElementById('envSelectBottom');
-
-        const fillEnvSelect = (selectElement) => {
-          selectElement.innerHTML = '<option value="">选择环境</option>';
-          if (data && data.list) {
-            data.list.forEach(env => {
-              const option = document.createElement('option');
-              option.value = env.env;
-              option.textContent = `${env.env} - ${env.host}`;
-              selectElement.appendChild(option);
-            });
-          }
-        };
-
-        fillEnvSelect(envSelect);
-        if (envSelectBottom) {
-          fillEnvSelect(envSelectBottom);
-        }
+        const list = data?.list;
+        fillEnvSelect(document.getElementById('envSelect'), list);
+        fillEnvSelect(document.getElementById('envSelectActionsBottom'), list);
+        bindEnvSelectSync();
       } catch (error) {
         console.error('获取环境列表失败:', error);
       }
     }
 
+    function isMdFileAction(action) {
+      return action.actionType === 'mdFile';
+    }
+
+    function isTestCaseAction(action) {
+      return action.actionType === 'testCase';
+    }
+
+    function registerActionMeta(action) {
+      actionMeta[action.id] = action;
+      if (isTestCaseAction(action) && action.actions) {
+        action.actions.forEach(sub => {
+          actionMeta[sub.id] = sub;
+        });
+      }
+    }
+
+    function buildActionTitle(action, index) {
+      if (isMdFileAction(action)) {
+        return `<h3>${index}. <span class="md-badge">MD</span> ${action.name}</h3>`;
+      }
+      if (isTestCaseAction(action)) {
+        return `<h3>${index}. <span class="testcase-badge">TestCase</span> ${action.name}</h3>`;
+      }
+      return `<h3>${index}. ${action.name}</h3>`;
+    }
+
+    function buildActionButtons(action, index) {
+      const lookBtn = buildLookDetailBtn(action);
+      if (isMdFileAction(action)) {
+        return lookBtn;
+      }
+      if (isTestCaseAction(action)) {
+        return `${lookBtn}
+                        <button class="btn" onclick="scrollToLog('${action.id}')">日志</button>
+                        <button class="btn" onclick=runTestCase(${index})>运行</button>`;
+      }
+      return `${lookBtn}
+                        <button class="btn" onclick="scrollToLog('${action.id}')">日志</button>
+                        <button class="btn" onclick=runTestCase(${index})>运行</button>`;
+    }
+
     function buildLookDetailBtn(action) {
-      if (action.couldLookDetail) {
+      if (action.couldLookDetail || isTestCaseAction(action)) {
         return `<button class="btn" onclick="showStepDetails('${action.id}')">查看</button>`
       } else {
         return ''
@@ -339,28 +886,28 @@
     }
     // 渲染测试步骤
     function renderActions(actions) {
+      actions.forEach((action) => {
+        registerActionMeta(action);
+      });
       const actionsList = document.getElementById('actionsList');
       actionsList.innerHTML = actions.map((action, index) => `
-                <div class="action-item ${action.status}" id="${action.id}">
+                <div class="action-item ${action.status}${isMdFileAction(action) ? ' action-item-md' : ''}${isTestCaseAction(action) ? ' action-item-testcase' : ''}" id="${action.id}">
                     <div class="action-info">
-                        <h3>${index}. ${action.name}</h3>
+                        ${buildActionTitle(action, index)}
                         <div class="statusTxt">状态: ${getStatusText(action.status)}</div>
                     </div>
                     <div class="action-buttons">
-                        ${buildLookDetailBtn(action)}
-                        <button class="btn" onclick="scrollToLog('${action.id}')">日志</button>
-                        <button class="btn" onclick=runTestCase(${index})>运行</button>
+                        ${buildActionButtons(action, index)}
                     </div>
                 </div>
             `).join('');
 
-      const bottomToolbar = document.getElementById('bottomToolbar');
-      if (actions.length > 16) {
-        bottomToolbar.style.display = 'flex';
-      } else {
-        bottomToolbar.style.display = 'none';
+      const actionsBottomToolbar = document.getElementById('actionsBottomToolbar');
+      if (actionsBottomToolbar) {
+        actionsBottomToolbar.style.display = actions.length > 0 ? 'flex' : 'none';
       }
       adjustLogPanelHeight();
+      applyStepSearchAfterRender();
     }
 
 
@@ -435,9 +982,9 @@
           httpParam.index = index;
         }
         // 添加环境参数
-        const envSelect = document.getElementById('envSelect');
-        if (envSelect && envSelect.value) {
-          httpParam.env = envSelect.value;
+        const env = getSelectedEnv();
+        if (env) {
+          httpParam.env = env;
         }
         await http.post('/runTestCase', httpParam);
 
@@ -486,26 +1033,12 @@
       if (keyword) {
         filterLogs();
       }
+      syncModalStepLogsIfOpen();
     });
     const logsListElement = document.getElementById('logsList');
     if (logsListElement) {
       logsObserver.observe(logsListElement, { childList: true });
     }
-
-    // 同步环境选择
-    document.getElementById('envSelect').addEventListener('change', function () {
-      const envSelectBottom = document.getElementById('envSelectBottom');
-      if (envSelectBottom) {
-        envSelectBottom.value = this.value;
-      }
-    });
-
-    document.getElementById('envSelectBottom').addEventListener('change', function () {
-      const envSelect = document.getElementById('envSelect');
-      if (envSelect) {
-        envSelect.value = this.value;
-      }
-    });
   </script>
 </body>
 

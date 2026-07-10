@@ -3,6 +3,9 @@ import TestCase from "./TestCase";
 export default class Directory extends TestCase {
     private name;
     private map;
+    private mdFiles;
+    addMdFile(filePath: string): void;
+    getMdFiles(): string[];
     addChild(child: TestCase): void;
     getChildren(): TestCase[];
     getChildById(id: string): TestCase;

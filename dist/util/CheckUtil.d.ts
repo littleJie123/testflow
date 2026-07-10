@@ -17,4 +17,6 @@ export default class {
     static expectFindByArray(array: any[], findObjs: any[], msg?: string): void;
     static expectNotFind(array: any[], findObj: any, msg?: string): void;
     static expectNotNull(val: any, msg?: string): void;
+    static expectTrue(val: boolean): void;
+    static expectFlase(val: boolean): void;
 }

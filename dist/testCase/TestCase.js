@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const BaseTest_1 = __importDefault(require("./BaseTest"));
+const MdFileAction_1 = __importDefault(require("../testAction/MdFileAction"));
+const MdPathUtil_1 = __importDefault(require("../util/MdPathUtil"));
 /**
  * 测试用例
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例
@@ -11,6 +13,12 @@ const BaseTest_1 = __importDefault(require("./BaseTest"));
 class TestCase extends BaseTest_1.default {
     setIndex(index) {
         this.index = index;
+    }
+    setAutoMdFilePath(filePath) {
+        this.autoMdFilePath = filePath;
+    }
+    setSourceFilePath(filePath) {
+        this.sourceFilePath = filePath;
     }
     processError(e) {
         this.error(`${this.getName()} 运行出错!!`);
@@ -23,6 +31,12 @@ class TestCase extends BaseTest_1.default {
     }
     couldLookDetail() {
         return false;
+    }
+    clone() {
+        let ret = super.clone();
+        ret.setAutoMdFilePath(this.autoMdFilePath);
+        ret.setSourceFilePath(this.sourceFilePath);
+        return ret;
     }
     async doTest() {
         let result = null;
@@ -46,11 +60,15 @@ class TestCase extends BaseTest_1.default {
                 objAction.setEnv(this.env);
             }
             result = await action.test();
+            if (action.getRunStatus() === BaseTest_1.default.S_Error) {
+                throw new Error(`${action.getName()} 运行失败`);
+            }
         }
         return result;
     }
     getActions() {
         let list = this.buildActions();
+        list = this.mergeAutoMdAction(list);
         let id = 0;
         for (let row of list) {
             row.setTestId(`${this.testId}-${id++}`);
@@ -63,6 +81,19 @@ class TestCase extends BaseTest_1.default {
         }
     }
     ;
+    mergeAutoMdAction(list) {
+        if (this.autoMdFilePath == null) {
+            return list;
+        }
+        const alreadyHas = list.some((a) => {
+            return a instanceof MdFileAction_1.default
+                && MdPathUtil_1.default.sameMdFile(a.getFilePath(), this.autoMdFilePath);
+        });
+        if (alreadyHas) {
+            return list;
+        }
+        return [new MdFileAction_1.default(this.autoMdFilePath), ...list];
+    }
     toJson() {
         let json = {
             id: this.testId,

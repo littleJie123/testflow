@@ -6,7 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const HttpServer_1 = __importDefault(require("../webServer/HttpServer"));
+const TestCase_1 = __importDefault(require("../testCase/TestCase"));
 const Directory_1 = __importDefault(require("../testCase/Directory"));
+const MdPathUtil_1 = __importDefault(require("../util/MdPathUtil"));
 class TestRunner {
     setHeadProcess(headerProcess) {
         this.headerProcess = headerProcess;
@@ -62,6 +64,68 @@ class TestRunner {
         }
         return [];
     }
+    findMdFiles(path) {
+        let directory = this.getDirectoryByPath(path);
+        if (directory != null) {
+            return directory.getMdFiles();
+        }
+        return [];
+    }
+    searchAll(basePath, keyword) {
+        if (keyword == null || keyword === '') {
+            return [];
+        }
+        let directory = this.getDirectoryByPath(basePath);
+        if (directory == null) {
+            return [];
+        }
+        let results = [];
+        this.collectSearchResults(directory, basePath !== null && basePath !== void 0 ? basePath : '', keyword, results);
+        return results;
+    }
+    collectSearchResults(directory, currentPath, keyword, results) {
+        const lowerKeyword = keyword.toLowerCase();
+        const caseNameById = {};
+        for (let child of directory.getChildren()) {
+            if (!(child instanceof Directory_1.default)) {
+                caseNameById[child.getTestId()] = child.getName();
+            }
+        }
+        for (let child of directory.getChildren()) {
+            if (child instanceof Directory_1.default) {
+                const dirId = child.getTestId();
+                const subPath = currentPath ? `${currentPath}/${dirId}` : dirId;
+                if (this.matchSearchKeyword(lowerKeyword, child.getName(), dirId)) {
+                    let json = child.toJson();
+                    json.basePath = currentPath;
+                    results.push(json);
+                }
+                this.collectSearchResults(child, subPath, keyword, results);
+                continue;
+            }
+            let json = child.toJson();
+            if (this.matchSearchKeyword(lowerKeyword, json.name, json.id)) {
+                json.basePath = currentPath;
+                results.push(json);
+            }
+        }
+        for (let mdPath of directory.getMdFiles()) {
+            let json = MdPathUtil_1.default.toListJson(mdPath);
+            const displayName = caseNameById[json.name] || json.name;
+            if (this.matchSearchKeyword(lowerKeyword, displayName, json.id, json.name)) {
+                json.basePath = currentPath;
+                results.push(json);
+            }
+        }
+    }
+    matchSearchKeyword(lowerKeyword, ...fields) {
+        for (let field of fields) {
+            if (field != null && field.toLowerCase().includes(lowerKeyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
     getDirectoryByPath(path) {
         if (path == null || path == '') {
             return this.directory;
@@ -102,6 +166,9 @@ class TestRunner {
                     directory.addChild(childDirectory);
                     await this.scan(fullPath, childDirectory);
                 }
+                else if (file.endsWith('.md')) {
+                    directory.addMdFile(path_1.default.resolve(fullPath));
+                }
                 else {
                     if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
                         try {
@@ -113,6 +180,13 @@ class TestRunner {
                                     const fileName = path_1.default.basename(file, path_1.default.extname(file));
                                     if (testInstance.setTestId) {
                                         testInstance.setTestId(fileName);
+                                        if (testInstance instanceof TestCase_1.default) {
+                                            testInstance.setSourceFilePath(path_1.default.resolve(fullPath));
+                                            const mdPath = path_1.default.join(testPath, fileName + '.md');
+                                            if (fs_1.default.existsSync(mdPath)) {
+                                                testInstance.setAutoMdFilePath(path_1.default.resolve(mdPath));
+                                            }
+                                        }
                                         directory.addChild(testInstance);
                                     }
                                 }

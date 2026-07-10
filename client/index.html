@@ -24,6 +24,8 @@
   <script src="js/http.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/util.js"></script>
+  <script src="js/marked.min.js"></script>
+  <script src="js/mdFile.js"></script>
 </head>
 
 <body>
@@ -40,10 +42,22 @@
       <div class="content" id="content"></div>
     </div>
   </div>
+
+  <div id="stepModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="modal-content-body"></div>
+    </div>
+  </div>
+
   <script>
 
     let testCases = [];
     let filteredTestCases = [];
+    let mdFileMeta = {};
+    let caseNameById = {};
+    let isSearchMode = false;
+    let searchTimer = null;
     let http = Http.get()
     http.setClassName('test-case ')
     const urlParams = new URLSearchParams(window.location.search);
@@ -56,32 +70,107 @@
       } else {
         newUrl.searchParams.delete('path');
       }
-      window.history.pushState({}, '', newUrl);
+      window.history.pushState({ path }, '', newUrl);
     }
+
+    function syncPathFromUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      path = urlParams.get('path') || '';
+    }
+
+    window.addEventListener('popstate', function () {
+      syncPathFromUrl();
+      fetchData();
+    });
+    function buildCaseNameMap(list) {
+      caseNameById = {};
+      for (let item of list) {
+        if (item.type !== 'mdFile' && item.type !== 'directory') {
+          caseNameById[item.id] = item.name;
+        }
+      }
+    }
+
+    function getMdDisplayName(mdItem) {
+      return caseNameById[mdItem.name] || mdItem.name;
+    }
+
     async function fetchData() {
       try {
         const data = await http.post('/listTestCase', { path });
         console.log('获取数据成功:', data);
 
+        mdFileMeta = {};
         testCases = data.list || [];
+        isSearchMode = false;
+        buildCaseNameMap(testCases);
         handleSearch();
       } catch (error) {
         console.error('获取数据失败:', error);
       }
     }
 
-    function handleSearch() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      if (searchTerm === '') {
-        filteredTestCases = testCases;
-
-      } else {
-        filteredTestCases = testCases.filter(testCase =>
-          testCase.name.toLowerCase().includes(searchTerm) ||
-          testCase.id.toLowerCase().includes(searchTerm)
-        );
+    function getBasePathFromElement(el) {
+      const basePath = el?.closest('.test-case')?.dataset?.basePath;
+      if (basePath == null || basePath === '') {
+        return path;
       }
-      renderTestCases();
+      return basePath;
+    }
+
+    function isSearchSubDirResult(testCase) {
+      if (!isSearchMode) {
+        return false;
+      }
+      const basePath = testCase.basePath ?? '';
+      return basePath !== path;
+    }
+
+    function getSearchDirName(testCase) {
+      const basePath = testCase.basePath ?? '';
+      if (!isSearchSubDirResult(testCase)) {
+        return '';
+      }
+      if (path && basePath.startsWith(path + '/')) {
+        return basePath.slice(path.length + 1);
+      }
+      return basePath;
+    }
+
+    function buildSearchDirHtml(testCase) {
+      const dirName = getSearchDirName(testCase);
+      if (!dirName) {
+        return '';
+      }
+      return `<div class="search-dir-label"><span class="search-dir-badge">📂 ${dirName}</span></div>`;
+    }
+
+    function getSearchCardClass(testCase) {
+      return isSearchSubDirResult(testCase) ? ' search-subdir' : '';
+    }
+
+    async function handleSearch() {
+      const searchTerm = document.getElementById('searchInput').value.trim();
+      if (searchTimer) {
+        clearTimeout(searchTimer);
+      }
+      searchTimer = setTimeout(async () => {
+        if (searchTerm === '') {
+          isSearchMode = false;
+          filteredTestCases = testCases;
+          renderTestCases();
+          return;
+        }
+        try {
+          const data = await http.post('/listTestCase', { path, keyword: searchTerm });
+          isSearchMode = true;
+          filteredTestCases = data.list || [];
+          buildCaseNameMap(testCases.concat(filteredTestCases));
+          renderTestCases();
+        } catch (error) {
+          console.error('搜索失败:', error);
+        }
+      }, 200);
     }
 
     function renderTestCases() {
@@ -89,7 +178,7 @@
       const casesToRender = filteredTestCases.length > 0 || document.getElementById('searchInput').value ?
         filteredTestCases : testCases;
       let up = ''
-      if (path) {
+      if (path && !isSearchMode) {
         up = `
           <div class="test-case">
               <div class="test-case-content" >
@@ -111,47 +200,75 @@
       updateUrl()
       fetchData()
     }
-    function enterDirectory(id) {
-      if (path) {
-        path = path + '/' + id
+    function enterDirectory(id, btn) {
+      const parentPath = btn ? getBasePathFromElement(btn) : path;
+      if (parentPath) {
+        path = parentPath + '/' + id
       } else {
         path = id
       }
+      document.getElementById('searchInput').value = '';
+      isSearchMode = false;
       updateUrl()
       fetchData()
     }
     function renderTestCase(testCase) {
+      const basePathAttr = testCase.basePath != null ? testCase.basePath : path;
+      const searchDirHtml = buildSearchDirHtml(testCase);
+      const searchClass = getSearchCardClass(testCase);
+      if (testCase.type === 'mdFile') {
+        mdFileMeta[testCase.id] = testCase;
+        const displayName = getMdDisplayName(testCase);
+        return `
+          <div class="test-case init action-item-md${searchClass}" id="${testCase.id}" data-base-path="${basePathAttr}">
+              <div class="test-case-content">
+                  ${searchDirHtml}
+                  <h3><span class="md-badge">MD</span> ${displayName}</h3>
+                  <div>文件: ${testCase.name}.md</div>
+              </div>
+              <div>
+                  <button class="btn" onclick="showMdFile('${testCase.id}')">查看</button>
+              </div>
+          </div>
+      `;
+      }
       if (testCase.type === 'directory') {
         return `
-          <div class="test-case" id="${testCase.id}">
+          <div class="test-case${searchClass}" id="${testCase.id}" data-base-path="${basePathAttr}">
               <div class="test-case-content" >
+                  ${searchDirHtml}
                   <h3>📂 ${testCase.name}</h3>
                   <div>ID: ${Util.getId(testCase.id)}</div>
               </div>
               <div>
-                  <button class="btn" onclick="enterDirectory('${testCase.id}')">进入</button>
+                  <button class="btn" onclick="enterDirectory('${testCase.id}', this)">进入</button>
               </div>
           </div>
       `;
       }
       return `
-                <div class="test-case ${testCase.status}" id="${testCase.id}">
+                <div class="test-case ${testCase.status}${searchClass}" id="${testCase.id}" data-base-path="${basePathAttr}">
                     <div class="test-case-content" >
+                        ${searchDirHtml}
                         <h3>${testCase.name}</h3>
                         <div>ID: ${Util.getId(testCase.id)}</div>
                         <div>状态: ${Util.getStatusText(testCase.status)}</div>
-                        
                     </div>
                     <div>
-                        <button class="btn" onclick="show('${testCase.id}')">查看</button>
-                        <button class="btn" onclick="runTestCase('${testCase.id}')">运行</button>
+                        <button class="btn" onclick="show('${testCase.id}', this)">查看</button>
+                        <button class="btn" onclick="runTestCase('${testCase.id}', this)">运行</button>
                     </div>
                 </div>
             `;
     }
-    function show(id) {
-      let param = escape(`${path ? path + '/' : ''}${id}`)
+    function show(id, btn) {
+      const casePath = btn ? getBasePathFromElement(btn) : path;
+      let param = escape(`${casePath ? casePath + '/' : ''}${id}`)
       window.open(`/detail.html?id=${param}`, '_test');
+    }
+
+    function showMdFile(id) {
+      MdFileView.open(mdFileMeta[id]);
     }
 
 
@@ -173,11 +290,12 @@
       }
     }
 
-    async function runTestCase(id) {
+    async function runTestCase(id, btn) {
       try {
+        const casePath = btn ? getBasePathFromElement(btn) : path;
         const response = await http.post('/runTestCase', {
           id: id,
-          path
+          path: casePath
 
         });
 
@@ -192,14 +310,15 @@
 
 
     async function runAll() {
-      let cases = filteredTestCases.filter(row => row.type != 'directory')
-      const allIds = cases.map(testCase => testCase.id);
+      let cases = filteredTestCases.filter(row => row.type != 'directory' && row.type != 'mdFile')
       try {
-        const response = await http.post('/RunAllTestCase', {
-          ids: allIds,
-          path
-        });
-
+        for (let testCase of cases) {
+          const casePath = testCase.basePath != null ? testCase.basePath : path;
+          await http.post('/runTestCase', {
+            id: testCase.id,
+            path: casePath,
+          });
+        }
       } catch (error) {
         console.error('运行测试用例失败:', error);
       }

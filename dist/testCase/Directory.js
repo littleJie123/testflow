@@ -5,6 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const TestCase_1 = __importDefault(require("./TestCase"));
 class Directory extends TestCase_1.default {
+    addMdFile(filePath) {
+        this.mdFiles.push(filePath);
+    }
+    getMdFiles() {
+        return this.mdFiles;
+    }
     addChild(child) {
         this.map[child.getTestId()] = child;
     }
@@ -24,6 +30,7 @@ class Directory extends TestCase_1.default {
     constructor(name) {
         super();
         this.map = {};
+        this.mdFiles = [];
         this.name = name;
     }
     getName() {

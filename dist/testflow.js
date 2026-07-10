@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CheckUtil = exports.JsonUtil = exports.StrDateUtil = exports.DateUtil = exports.ArrayUtil = exports.SetVariable = exports.UploadAction = exports.HttpAction = exports.UrlAction = exports.BaseTest = exports.TestCase = exports.TestRunner = void 0;
+exports.CheckUtil = exports.JsonUtil = exports.StrDateUtil = exports.DateUtil = exports.ArrayUtil = exports.MdFileAction = exports.SetVariable = exports.UploadAction = exports.HttpAction = exports.UrlAction = exports.BaseTest = exports.TestCase = exports.TestRunner = void 0;
 var TestRunner_1 = require("./testRunner/TestRunner");
 Object.defineProperty(exports, "TestRunner", { enumerable: true, get: function () { return __importDefault(TestRunner_1).default; } });
 var TestCase_1 = require("./testCase/TestCase");
@@ -18,6 +18,8 @@ var UploadAction_1 = require("./testAction/UploadAction");
 Object.defineProperty(exports, "UploadAction", { enumerable: true, get: function () { return __importDefault(UploadAction_1).default; } });
 var SetVariable_1 = require("./testAction/SetVariable");
 Object.defineProperty(exports, "SetVariable", { enumerable: true, get: function () { return __importDefault(SetVariable_1).default; } });
+var MdFileAction_1 = require("./testAction/MdFileAction");
+Object.defineProperty(exports, "MdFileAction", { enumerable: true, get: function () { return __importDefault(MdFileAction_1).default; } });
 var ArrayUtil_1 = require("./util/ArrayUtil");
 Object.defineProperty(exports, "ArrayUtil", { enumerable: true, get: function () { return ArrayUtil_1.ArrayUtil; } });
 var DateUtil_1 = require("./util/DateUtil");

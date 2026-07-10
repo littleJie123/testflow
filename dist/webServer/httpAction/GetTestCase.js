@@ -15,10 +15,20 @@ class GetTestCase extends BaseAction_1.default {
         return {
             id: param.id,
             name: test.getName(),
-            actions: test.getActions().map((item) => {
-                return item.toJson();
-            })
+            actions: test.getActions().map((item) => this.serializeAction(item))
         };
+    }
+    serializeAction(item) {
+        const json = item.toJson();
+        if (item instanceof testflow_1.TestCase) {
+            const subActions = item.getActions();
+            if (subActions.length > 0) {
+                json.actionType = 'testCase';
+                json.couldLookDetail = true;
+                json.actions = subActions.map(sub => sub.toJson());
+            }
+        }
+        return json;
     }
 }
 exports.default = GetTestCase;

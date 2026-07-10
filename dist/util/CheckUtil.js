@@ -117,5 +117,11 @@ class default_1 {
             throw new Error(msg);
         }
     }
+    static expectTrue(val) {
+        this.expectEqual(val, true);
+    }
+    static expectFlase(val) {
+        this.expectEqual(val, false);
+    }
 }
 exports.default = default_1;

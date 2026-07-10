@@ -1,5 +1,4 @@
-import { TestCase, TestRunner } from "../../testflow";
-import IControl from "../../inf/IControl";
+import { BaseTest, TestCase, TestRunner } from "../../testflow";
 import BaseAction from "../BaseAction";
 
 export default class GetTestCase extends BaseAction {
@@ -12,10 +11,21 @@ export default class GetTestCase extends BaseAction {
     return {
       id: param.id,
       name: test.getName(),
-      actions: test.getActions().map((item) => {
-        return item.toJson();
-      })
+      actions: test.getActions().map((item) => this.serializeAction(item))
     }
+  }
+
+  private serializeAction(item: BaseTest): any {
+    const json: any = item.toJson();
+    if (item instanceof TestCase) {
+      const subActions = item.getActions();
+      if (subActions.length > 0) {
+        json.actionType = 'testCase';
+        json.couldLookDetail = true;
+        json.actions = subActions.map(sub => sub.toJson());
+      }
+    }
+    return json;
   }
 
 }

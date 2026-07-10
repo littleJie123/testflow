@@ -6,7 +6,7 @@ import TestCase from '../testCase/TestCase';
 import FileUtil from '../util/FileUtil';
 import { BaseTest } from '../testflow';
 import Directory from '../testCase/Directory';
-import { dir } from 'console';
+import MdPathUtil from '../util/MdPathUtil';
 
 interface EnvConfig {
   host: string;
@@ -94,6 +94,74 @@ export default class TestRunner {
     return []
   }
 
+  findMdFiles(path: string): string[] {
+    let directory = this.getDirectoryByPath(path);
+    if (directory != null) {
+      return directory.getMdFiles();
+    }
+    return [];
+  }
+
+  searchAll(basePath: string, keyword: string): any[] {
+    if (keyword == null || keyword === '') {
+      return [];
+    }
+    let directory = this.getDirectoryByPath(basePath);
+    if (directory == null) {
+      return [];
+    }
+    let results: any[] = [];
+    this.collectSearchResults(directory, basePath ?? '', keyword, results);
+    return results;
+  }
+
+  private collectSearchResults(directory: Directory, currentPath: string, keyword: string, results: any[]) {
+    const lowerKeyword = keyword.toLowerCase();
+    const caseNameById: { [key: string]: string } = {};
+    for (let child of directory.getChildren()) {
+      if (!(child instanceof Directory)) {
+        caseNameById[child.getTestId()] = child.getName();
+      }
+    }
+
+    for (let child of directory.getChildren()) {
+      if (child instanceof Directory) {
+        const dirId = child.getTestId();
+        const subPath = currentPath ? `${currentPath}/${dirId}` : dirId;
+        if (this.matchSearchKeyword(lowerKeyword, child.getName(), dirId)) {
+          let json: any = child.toJson();
+          json.basePath = currentPath;
+          results.push(json);
+        }
+        this.collectSearchResults(child, subPath, keyword, results);
+        continue;
+      }
+      let json: any = child.toJson();
+      if (this.matchSearchKeyword(lowerKeyword, json.name, json.id)) {
+        json.basePath = currentPath;
+        results.push(json);
+      }
+    }
+
+    for (let mdPath of directory.getMdFiles()) {
+      let json: any = MdPathUtil.toListJson(mdPath);
+      const displayName = caseNameById[json.name] || json.name;
+      if (this.matchSearchKeyword(lowerKeyword, displayName, json.id, json.name)) {
+        json.basePath = currentPath;
+        results.push(json);
+      }
+    }
+  }
+
+  private matchSearchKeyword(lowerKeyword: string, ...fields: (string | undefined)[]): boolean {
+    for (let field of fields) {
+      if (field != null && field.toLowerCase().includes(lowerKeyword)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private getDirectoryByPath(path: string): Directory {
     if (path == null || path == '') {
       return this.directory
@@ -140,6 +208,8 @@ export default class TestRunner {
           childDirectory.setTestId(file);
           directory.addChild(childDirectory);
           await this.scan(fullPath, childDirectory);
+        } else if (file.endsWith('.md')) {
+          directory.addMdFile(path.resolve(fullPath));
         } else {
           if ((file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts')))) {
             try {
@@ -151,6 +221,16 @@ export default class TestRunner {
                   const fileName = path.basename(file, path.extname(file));
                   if (testInstance.setTestId) {
                     testInstance.setTestId(fileName);
+                    if (testInstance instanceof TestCase) {
+                      testInstance.setSourceFilePath(path.resolve(fullPath));
+                      const mdPath = path.join(
+                        testPath,
+                        fileName + '.md'
+                      );
+                      if (fs.existsSync(mdPath)) {
+                        testInstance.setAutoMdFilePath(path.resolve(mdPath));
+                      }
+                    }
                     directory.addChild(testInstance);
                   }
                 }

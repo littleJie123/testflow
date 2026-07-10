@@ -166,10 +166,14 @@ class HttpServer {
         }
     }
     async process(req, res) {
-        // 处理健康检查请求
         let url = req.url || '';
+        const queryPart = url.includes('?') ? url.substring(url.indexOf('?')) : '';
         url = url.split('?')[0];
-        if (req.url === '/debug/health') {
+        if (url === '/' || url === '') {
+            url = '/index.html';
+            req.url = url + queryPart;
+        }
+        if (url === '/debug/health') {
             const responseData = JSON.stringify({ health: true });
             res.writeHead(200, {
                 'Content-Type': 'application/json',

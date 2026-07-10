@@ -7,11 +7,7 @@ export default class GetTestCase extends BaseAction {
     } | {
         id: any;
         name: string;
-        actions: {
-            name: string;
-            status: string;
-            id: string;
-            couldLookDetail: boolean;
-        }[];
+        actions: any[];
     }>;
+    private serializeAction;
 }

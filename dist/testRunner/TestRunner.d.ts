@@ -26,6 +26,10 @@ export default class TestRunner {
     getStringArrayFromPath(strPath: string): string[];
     getTestById(id: string, path?: string): TestCase;
     findAllTest(path: string): TestCase[];
+    findMdFiles(path: string): string[];
+    searchAll(basePath: string, keyword: string): any[];
+    private collectSearchResults;
+    private matchSearchKeyword;
     private getDirectoryByPath;
     /**
      * 扫描指定目录下的文件，

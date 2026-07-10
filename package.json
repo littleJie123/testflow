@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "description": "一个单元测试框架",
   "main": "dist/testflow.js",
+  "bin": {
+    "testflow-copy-md": "dist/scripts/copyMd.js"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint --fix src --ext .ts",
-    "start": "tsc && node dist/main.js",
+    "copyMd": "testflow-copy-md",
+    "start": "tsc && npm run copyMd && node dist/main.js",
     "test": "jest"
   },
   "keywords": [
