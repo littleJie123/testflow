@@ -15,6 +15,8 @@ const S_Error = 'error';
 class BaseTest {
     constructor(afterProcess) {
         this.runStatus = S_Init;
+        /** 是否在 detail 页面高亮显示该步骤 */
+        this.highlight = false;
         this.afterProcess = afterProcess;
     }
     needThrowError() {
@@ -231,11 +233,25 @@ class BaseTest {
             name: this.getName(),
             status: this.runStatus,
             id: this.testId,
-            couldLookDetail: this.couldLookDetail()
+            couldLookDetail: this.couldLookDetail(),
+            highlight: this.needHighlight()
         };
     }
     couldLookDetail() {
         return true;
+    }
+    /**
+     * 是否在客户端步骤列表中高亮显示
+     */
+    needHighlight() {
+        return this.highlight;
+    }
+    /**
+     * 设置是否高亮，可链式调用：new XxxAction().setHighlight()
+     */
+    setHighlight(highlight = true) {
+        this.highlight = highlight;
+        return this;
     }
     getParamMeta() {
         return null;

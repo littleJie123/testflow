@@ -4,4 +4,5 @@ export default interface IHttpActionParam {
     method?: string;
     headers?: any;
     param?: any;
+    highlight?: any;
 }

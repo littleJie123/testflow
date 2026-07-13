@@ -32,6 +32,11 @@ const MdFileView = {
       return;
     }
     this.currentMdFilePath = meta.filePath;
+    const titleEl = document.getElementById('modalStepTitle');
+    if (titleEl) {
+      titleEl.textContent = meta.name || meta.srcPath || meta.filePath || '';
+      titleEl.style.display = titleEl.textContent ? 'block' : 'none';
+    }
     this.modalContent.innerHTML = `
       <div class="modal-header">
         <button class="btn" id="md-edit-btn" onclick="MdFileView.edit()">修改</button>

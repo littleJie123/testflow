@@ -29,6 +29,7 @@ class default_1 extends UrlAction_1.default {
             }
         }
         this.opt = param;
+        this.highlight = param === null || param === void 0 ? void 0 : param.highlight;
     }
     getDefHttpParam() {
         return null;

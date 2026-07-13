@@ -9,4 +9,6 @@ export default interface IHttpActionParam{
 
   
   param?:any;
+
+  highlight?:any;
 }

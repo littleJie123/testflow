@@ -193,10 +193,14 @@ body {
   word-break: break-all;
 }
 
-.modal-header {
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #e5e5e5;
+.modal-step-title {
+  font-size: 18px;
+  font-weight: bold;
+  padding: 0 28px 12px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e5e5e5;
+  flex-shrink: 0;
+  word-break: break-all;
 }
 
 .close {
@@ -355,6 +359,31 @@ body {
 .action-item-testcase {
     border-left: 4px solid #9333ea;
     background-color: #faf5ff;
+}
+
+.action-item.action-item-highlight,
+.testcase-sub-item.action-item-highlight {
+    border: 2px solid #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    background-color: #fffbeb;
+}
+
+.action-item.action-item-highlight .action-info h3,
+.testcase-sub-item.action-item-highlight .testcase-sub-info strong {
+    color: #b45309;
+}
+
+.action-item.action-item-highlight.processed {
+    background-color: #fef3c7;
+}
+
+.action-item.action-item-highlight.error {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+}
+
+.action-item.action-item-highlight.error .action-info h3 {
+    color: #b91c1c;
 }
 
 .testcase-sub-steps {

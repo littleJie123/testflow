@@ -123,7 +123,7 @@ export default abstract class TestCase extends BaseTest {
       id: this.testId,
       name: this.getName(),
       status: this.getRunStatus(),
-
+      highlight: this.needHighlight(),
     }
     return json;
   }

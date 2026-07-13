@@ -99,6 +99,7 @@ class TestCase extends BaseTest_1.default {
             id: this.testId,
             name: this.getName(),
             status: this.getRunStatus(),
+            highlight: this.needHighlight(),
         };
         return json;
     }

@@ -17,6 +17,8 @@ export default abstract class BaseTest implements ITest {
     protected info: ITestCaseInfo;
     protected testId: string;
     protected webSocket: WebSocket;
+    /** 是否在 detail 页面高亮显示该步骤 */
+    protected highlight: boolean;
     constructor(afterProcess?: IAfterProcess);
     protected needThrowError(): boolean;
     protected sendMsg(eventId: string, param: any): void;
@@ -68,8 +70,17 @@ export default abstract class BaseTest implements ITest {
         status: string;
         id: string;
         couldLookDetail: boolean;
+        highlight: boolean;
     };
     protected couldLookDetail(): boolean;
+    /**
+     * 是否在客户端步骤列表中高亮显示
+     */
+    needHighlight(): boolean;
+    /**
+     * 设置是否高亮，可链式调用：new XxxAction().setHighlight()
+     */
+    setHighlight(highlight?: boolean): this;
     getParamMeta(): any;
     buildDefParam(): {};
     protected expectEqual(value1: any, value2: any, msg?: string): void;

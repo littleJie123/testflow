@@ -45,6 +45,7 @@ export default class MdFileAction extends BaseTest {
       status: this.getRunStatus(),
       id: this.getTestId(),
       couldLookDetail: true,
+      highlight: this.needHighlight(),
       actionType: 'mdFile',
       filePath: this.filePath,
       srcPath: paths.srcPath,

@@ -60,6 +60,7 @@
   <div id="stepModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
+      <div class="modal-step-title" id="modalStepTitle"></div>
       <div class="modal-split-layout">
         <div class="modal-content-body" id="modalDetailBody"></div>
         <div class="modal-logs-panel">
@@ -459,8 +460,9 @@
         lookBtn = `<button class="btn" onclick="showStepDetails('${sub.id}', '${parentStepId}')">查看</button>`;
       }
       const logBtn = `<button class="btn" onclick="showSubStepLogs('${sub.id}')">日志</button>`;
+      const highlightClass = sub.highlight ? ' action-item-highlight' : '';
       return `
-        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}" id="tcsub-${sub.id}">
+        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}${highlightClass}" id="tcsub-${sub.id}">
           <div class="testcase-sub-info">
             <strong>${index + 1}. ${sub.name}</strong>
             <div class="testcase-sub-status">状态: ${getStatusText(sub.status)}</div>
@@ -501,6 +503,7 @@
       if (!meta) {
         return;
       }
+      setModalTitle(stepId);
       modalContent.innerHTML = buildTestCaseModalHtml(meta);
       renderModalStepLogs(stepId, true);
       stepModal.style.display = 'block';
@@ -516,6 +519,7 @@
     function showStepDetails(stepId, fromTestCaseParentId) {
       nestedModalParentId = fromTestCaseParentId || null;
       currentStepId = stepId;
+      setModalTitle(stepId);
       const meta = actionMeta[stepId];
       if (meta && meta.actionType === 'testCase') {
         showTestCaseDetails(stepId);
@@ -587,9 +591,25 @@
     }
 
     function getStepName(stepId) {
+      const meta = actionMeta[stepId];
+      if (meta?.name) {
+        return meta.name;
+      }
       const stepElement = document.getElementById(stepId);
       const title = stepElement?.querySelector('h3')?.textContent ?? stepId;
       return title.replace(/^\d+\.\s*/, '');
+    }
+
+    function setModalTitle(stepIdOrName) {
+      const titleEl = document.getElementById('modalStepTitle');
+      if (!titleEl) {
+        return;
+      }
+      const name = actionMeta[stepIdOrName]
+        ? getStepName(stepIdOrName)
+        : (stepIdOrName || '');
+      titleEl.textContent = name;
+      titleEl.style.display = name ? 'block' : 'none';
     }
 
     function tryParseJson(text) {
@@ -891,7 +911,7 @@
       });
       const actionsList = document.getElementById('actionsList');
       actionsList.innerHTML = actions.map((action, index) => `
-                <div class="action-item ${action.status}${isMdFileAction(action) ? ' action-item-md' : ''}${isTestCaseAction(action) ? ' action-item-testcase' : ''}" id="${action.id}">
+                <div class="action-item ${action.status}${isMdFileAction(action) ? ' action-item-md' : ''}${isTestCaseAction(action) ? ' action-item-testcase' : ''}${action.highlight ? ' action-item-highlight' : ''}" id="${action.id}">
                     <div class="action-info">
                         ${buildActionTitle(action, index)}
                         <div class="statusTxt">状态: ${getStatusText(action.status)}</div>

@@ -27,7 +27,9 @@ export default class extends UrlAction {
         }
       }
     }
+
     this.opt = param;
+    this.highlight = param?.highlight
   }
 
   protected getDefHttpParam(): IHttpActionParam {
