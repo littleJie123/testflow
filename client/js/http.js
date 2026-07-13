@@ -101,7 +101,17 @@ Http.get().on(
   function (data) {
     let div = document.getElementById(data.id);
     if (div) {
-      div.className = ( Http.get().className ?? 'action-item ') + data.status;
+      // 只改状态类，保留 action-item-highlight / md / testcase / search 等修饰类
+      const statusSet = ['processed', 'error', 'running', 'runing', 'init'];
+      const kept = Array.from(div.classList).filter(c => !statusSet.includes(c));
+      let status = data.status === 'runing' ? 'running' : data.status;
+      if (!statusSet.includes(status)) {
+        status = data.status;
+      }
+      if (kept.length === 0) {
+        kept.push((Http.get().className || 'action-item ').trim());
+      }
+      div.className = kept.concat([status]).filter(Boolean).join(' ');
     }else{
       let toolbar = document.getElementById('statusDiv');
       if (toolbar) {

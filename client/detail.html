@@ -111,7 +111,8 @@
         sub.status = status;
         const subEl = document.getElementById(`tcsub-${stepId}`);
         if (subEl) {
-          subEl.className = `testcase-sub-item ${normalizeStepStatus(status)}`;
+          const highlightClass = sub.highlight ? ' action-item-highlight' : '';
+          subEl.className = `testcase-sub-item ${normalizeStepStatus(status)}${highlightClass}`;
           const statusTxt = subEl.querySelector('.testcase-sub-status');
           if (statusTxt) {
             statusTxt.textContent = '状态: ' + getStatusText(status);
@@ -142,6 +143,10 @@
         stepElement.classList.remove('processed', 'error', 'running', 'init', 'runing');
         let status = normalizeStepStatus(msg.status);
         stepElement.classList.add(status);
+        const meta = actionMeta[msg.id];
+        if (meta?.highlight) {
+          stepElement.classList.add('action-item-highlight');
+        }
         const statusTxt = stepElement.querySelector('.statusTxt');
         if (statusTxt) {
           statusTxt.textContent = '状态: ' + getStatusText(msg.status);

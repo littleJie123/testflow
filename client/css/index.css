@@ -361,28 +361,56 @@ body {
     background-color: #faf5ff;
 }
 
-.action-item.action-item-highlight,
+/* highlight 步骤：各运行状态都保留醒目边框与底色，不被普通 processed/error 样式盖住 */
+.actions-panel .action-item.action-item-highlight,
 .testcase-sub-item.action-item-highlight {
     border: 2px solid #f59e0b;
-    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.28);
     background-color: #fffbeb;
 }
 
-.action-item.action-item-highlight .action-info h3,
+.actions-panel .action-item.action-item-highlight .action-info h3,
 .testcase-sub-item.action-item-highlight .testcase-sub-info strong {
     color: #b45309;
 }
 
-.action-item.action-item-highlight.processed {
+.actions-panel .action-item.action-item-highlight.init,
+.testcase-sub-item.action-item-highlight.init {
+    background-color: #fffbeb;
+    border-color: #f59e0b;
+}
+
+.actions-panel .action-item.action-item-highlight.running,
+.actions-panel .action-item.action-item-highlight.runing,
+.testcase-sub-item.action-item-highlight.running,
+.testcase-sub-item.action-item-highlight.runing {
     background-color: #fef3c7;
+    border-color: #d97706;
+    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.3);
 }
 
-.action-item.action-item-highlight.error {
-    background-color: #fee2e2;
+.actions-panel .action-item.action-item-highlight.processed,
+.testcase-sub-item.action-item-highlight.processed {
+    /* 成功后仍保留高亮边框，底色用偏绿但仍区别于普通 processed */
+    background-color: #d1fae5;
+    border: 2px solid #f59e0b;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+}
+
+.actions-panel .action-item.action-item-highlight.processed .action-info h3,
+.testcase-sub-item.action-item-highlight.processed .testcase-sub-info strong {
+    color: #b45309;
+}
+
+.actions-panel .action-item.action-item-highlight.error,
+.testcase-sub-item.action-item-highlight.error {
+    background-color: #fef2f2;
     border-color: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
 }
 
-.action-item.action-item-highlight.error .action-info h3 {
+.actions-panel .action-item.action-item-highlight.error .action-info h3,
+.testcase-sub-item.action-item-highlight.error .testcase-sub-info strong {
     color: #b91c1c;
 }
 
