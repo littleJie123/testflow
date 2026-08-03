@@ -41,6 +41,17 @@ body {
   background-color: #f0f0f0;
 }
 
+.btn-sm {
+  padding: 0.1rem 0.4rem;
+  font-size: 12px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+#modal-url {
+  word-break: break-all;
+}
+
 .test-case {
   border: 1px solid #ddd;
   padding: 1rem;
@@ -159,6 +170,15 @@ body {
   max-height: calc(96vh - 56px);
 }
 
+/* md 弹窗：隐藏右侧运行日志，正文占满 */
+.modal.md-file-view .modal-logs-panel {
+  display: none !important;
+}
+
+.modal.md-file-view .modal-content-body {
+  flex: 1 1 100%;
+}
+
 .modal-logs-header {
   font-weight: bold;
   margin-bottom: 10px;
@@ -197,10 +217,40 @@ body {
   font-size: 18px;
   font-weight: bold;
   padding: 0 28px 12px 0;
-  margin-bottom: 12px;
-  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 4px;
+  border-bottom: none;
   flex-shrink: 0;
   word-break: break-all;
+}
+
+.modal-step-remark {
+  display: none;
+  font-size: 14px;
+  font-weight: normal;
+  color: #666;
+  line-height: 1.5;
+  padding: 0 28px 12px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e5e5e5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.action-remark {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.modal-inline-remark {
+  margin: 8px 0 12px;
+}
+
+.testcase-sub-remark {
+  margin: 4px 0 6px;
 }
 
 .close {
@@ -432,6 +482,12 @@ body {
     border-radius: 4px;
     background: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+}
+
+.testcase-sub-item.testcase-sub-selected {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
 }
 
 .testcase-sub-item.processed {

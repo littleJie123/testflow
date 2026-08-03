@@ -16,14 +16,24 @@ const MdFileView = {
     this.closeBtn = this.modal.querySelector('.close');
     if (this.closeBtn) {
       this.closeBtn.onclick = () => {
+        this.setLogsPanelVisible(true);
         this.modal.style.display = 'none';
       };
     }
     window.addEventListener('click', (event) => {
       if (event.target === this.modal) {
+        this.setLogsPanelVisible(true);
         this.modal.style.display = 'none';
       }
     });
+  },
+
+  setLogsPanelVisible(visible) {
+    const logsPanel = this.modal?.querySelector('.modal-logs-panel');
+    if (logsPanel) {
+      logsPanel.style.display = visible ? '' : 'none';
+    }
+    this.modal?.classList.toggle('md-file-view', !visible);
   },
 
   async open(meta) {
@@ -32,10 +42,22 @@ const MdFileView = {
       return;
     }
     this.currentMdFilePath = meta.filePath;
+    // md 弹窗不展示运行日志
+    this.setLogsPanelVisible(false);
     const titleEl = document.getElementById('modalStepTitle');
     if (titleEl) {
       titleEl.textContent = meta.name || meta.srcPath || meta.filePath || '';
       titleEl.style.display = titleEl.textContent ? 'block' : 'none';
+    }
+    const remarkEl = document.getElementById('modalStepRemark');
+    if (remarkEl) {
+      if (meta.remark) {
+        remarkEl.textContent = meta.remark;
+        remarkEl.style.display = 'block';
+      } else {
+        remarkEl.textContent = '';
+        remarkEl.style.display = 'none';
+      }
     }
     this.modalContent.innerHTML = `
       <div class="modal-header">

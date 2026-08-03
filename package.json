@@ -19,6 +19,9 @@
   ],
   "author": "gmj",
   "license": "MIT",
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
   "devDependencies": {
     "@types/jest": "^24.9.1",
     "@types/node": "^22.15.19",

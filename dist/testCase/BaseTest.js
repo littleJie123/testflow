@@ -51,6 +51,8 @@ class BaseTest {
         let clazz = this.clazz;
         let ret = new clazz();
         ret.setTestId(this.getTestId());
+        ret.setRemark(this.remark);
+        ret.setHighlight(this.highlight);
         return ret;
     }
     init() {
@@ -234,8 +236,19 @@ class BaseTest {
             status: this.runStatus,
             id: this.testId,
             couldLookDetail: this.couldLookDetail(),
-            highlight: this.needHighlight()
+            highlight: this.needHighlight(),
+            remark: this.getRemark()
         };
+    }
+    getRemark() {
+        return this.remark;
+    }
+    /**
+     * 设置备注，可链式调用：new XxxAction().setRemark('...')
+     */
+    setRemark(remark) {
+        this.remark = remark;
+        return this;
     }
     couldLookDetail() {
         return true;

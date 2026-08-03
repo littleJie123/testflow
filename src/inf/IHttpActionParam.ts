@@ -11,4 +11,7 @@ export default interface IHttpActionParam{
   param?:any;
 
   highlight?:any;
+
+  /** 步骤备注，展示在 detail 步骤列表与弹窗 */
+  remark?: string;
 }

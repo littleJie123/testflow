@@ -42,6 +42,7 @@ class MdFileAction extends BaseTest_1.default {
             id: this.getTestId(),
             couldLookDetail: true,
             highlight: this.needHighlight(),
+            remark: this.getRemark(),
             actionType: 'mdFile',
             filePath: this.filePath,
             srcPath: paths.srcPath,

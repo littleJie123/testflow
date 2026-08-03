@@ -5,6 +5,12 @@ class SetVariable extends testflow_1.BaseTest {
     constructor(opt) {
         super();
         this.variableParam = opt;
+        if ((opt === null || opt === void 0 ? void 0 : opt.remark) != null) {
+            this.remark = opt.remark;
+        }
+        if ((opt === null || opt === void 0 ? void 0 : opt.highlight) != null) {
+            this.highlight = opt.highlight;
+        }
     }
     getName() {
         return `设置变量:${this.variableParam.name}`;

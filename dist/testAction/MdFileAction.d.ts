@@ -13,6 +13,7 @@ export default class MdFileAction extends BaseTest {
         id: string;
         couldLookDetail: boolean;
         highlight: boolean;
+        remark: string;
         actionType: string;
         filePath: string;
         srcPath: string;

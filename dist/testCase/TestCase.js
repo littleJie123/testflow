@@ -11,6 +11,15 @@ const MdPathUtil_1 = __importDefault(require("../util/MdPathUtil"));
  * 子类请以Test开头命名，这回被TestRunner 识别为测试用例
  */
 class TestCase extends BaseTest_1.default {
+    constructor(opt) {
+        super();
+        if ((opt === null || opt === void 0 ? void 0 : opt.remark) != null) {
+            this.remark = opt.remark;
+        }
+        if ((opt === null || opt === void 0 ? void 0 : opt.highlight) != null) {
+            this.highlight = opt.highlight;
+        }
+    }
     setIndex(index) {
         this.index = index;
     }
@@ -100,6 +109,7 @@ class TestCase extends BaseTest_1.default {
             name: this.getName(),
             status: this.getRunStatus(),
             highlight: this.needHighlight(),
+            remark: this.getRemark(),
         };
         return json;
     }

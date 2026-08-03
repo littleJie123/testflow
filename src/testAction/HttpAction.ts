@@ -30,6 +30,9 @@ export default class extends UrlAction {
 
     this.opt = param;
     this.highlight = param?.highlight
+    if (param?.remark != null) {
+      this.remark = param.remark;
+    }
   }
 
   protected getDefHttpParam(): IHttpActionParam {

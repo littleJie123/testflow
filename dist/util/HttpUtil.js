@@ -83,6 +83,38 @@ class HttpUtil {
         let result = await this.requestStatusAndResult(url, method, data, headers);
         return result.result;
     }
+    /**
+     * 请求返回下载流（如 excel）。
+     * 若服务端返回 json（一般是报错），result 为解析后的 json，isJson=true；
+     * 否则 result 为 Buffer。
+     */
+    async requestBuffer(url, method, data, headers) {
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers,
+            },
+        };
+        if (data && method !== 'GET') {
+            options.body = JSON.stringify(data);
+        }
+        const response = await fetch(url, options);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return {
+                status: response.status,
+                result: await response.json(),
+                isJson: true
+            };
+        }
+        let arrayBuffer = await response.arrayBuffer();
+        return {
+            status: response.status,
+            result: Buffer.from(arrayBuffer),
+            isJson: false
+        };
+    }
     // 核心请求方法
     async requestStatusAndResult(url, method, data, headers) {
         try {

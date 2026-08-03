@@ -17,5 +17,15 @@ export default class HttpUtil {
     put(url: string, data?: any, headers?: any): Promise<any>;
     delete(url: string, data?: any, headers?: any): Promise<any>;
     request(url: string, method: string, data?: any, headers?: any): Promise<any>;
+    /**
+     * 请求返回下载流（如 excel）。
+     * 若服务端返回 json（一般是报错），result 为解析后的 json，isJson=true；
+     * 否则 result 为 Buffer。
+     */
+    requestBuffer(url: string, method: string, data?: any, headers?: any): Promise<{
+        status: number;
+        result: any;
+        isJson: boolean;
+    }>;
     requestStatusAndResult(url: string, method: string, data?: any, headers?: any): Promise<any>;
 }

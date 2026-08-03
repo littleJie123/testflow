@@ -43,9 +43,8 @@ export default abstract class BaseTest implements ITest {
   /** 是否在 detail 页面高亮显示该步骤 */
   protected highlight: boolean = false;
 
-
-   
-
+  /** 步骤/用例备注，展示在 detail 步骤列表与弹窗 */
+  protected remark?: string;
 
   constructor(afterProcess?: IAfterProcess) {
     this.afterProcess = afterProcess;
@@ -92,6 +91,8 @@ export default abstract class BaseTest implements ITest {
 
     let ret = new clazz();
     ret.setTestId(this.getTestId());
+    ret.setRemark(this.remark);
+    ret.setHighlight(this.highlight);
     return ret;
   }
 
@@ -298,8 +299,21 @@ export default abstract class BaseTest implements ITest {
       status: this.runStatus,
       id: this.testId,
       couldLookDetail: this.couldLookDetail(),
-      highlight: this.needHighlight()
+      highlight: this.needHighlight(),
+      remark: this.getRemark()
     }
+  }
+
+  getRemark(): string {
+    return this.remark;
+  }
+
+  /**
+   * 设置备注，可链式调用：new XxxAction().setRemark('...')
+   */
+  setRemark(remark?: string): this {
+    this.remark = remark;
+    return this;
   }
 
   protected couldLookDetail() {

@@ -61,6 +61,7 @@
     <div class="modal-content">
       <span class="close">&times;</span>
       <div class="modal-step-title" id="modalStepTitle"></div>
+      <div class="modal-step-remark" id="modalStepRemark"></div>
       <div class="modal-split-layout">
         <div class="modal-content-body" id="modalDetailBody"></div>
         <div class="modal-logs-panel">
@@ -182,13 +183,49 @@
       statusEl.textContent = `匹配到 ${stepSearchHits.length} 处「${stepSearchKeyword}」 · 第 ${stepSearchIndex + 1}/${stepSearchHits.length} 处`;
     }
 
+    function escapeHtml(text) {
+      if (text == null || text === '') {
+        return '';
+      }
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function buildRemarkHtml(remark, className) {
+      if (!remark) {
+        return '';
+      }
+      const cls = className || 'action-remark';
+      return `<div class="${cls}">${escapeHtml(remark)}</div>`;
+    }
+
+    function setModalRemark(stepId) {
+      const remarkEl = document.getElementById('modalStepRemark');
+      if (!remarkEl) {
+        return;
+      }
+      const remark = actionMeta[stepId]?.remark;
+      if (remark) {
+        remarkEl.textContent = remark;
+        remarkEl.style.display = 'block';
+      } else {
+        remarkEl.textContent = '';
+        remarkEl.style.display = 'none';
+      }
+    }
+
     function collectStepSearchHits(keyword) {
       const lowerKeyword = keyword.toLowerCase();
       const hits = [];
       document.querySelectorAll('#actionsList .action-item').forEach(el => {
         const meta = actionMeta[el.id];
         const name = meta?.name ?? getStepName(el.id);
-        if (name.toLowerCase().includes(lowerKeyword)) {
+        const remark = meta?.remark ?? '';
+        if (name.toLowerCase().includes(lowerKeyword)
+          || String(remark).toLowerCase().includes(lowerKeyword)) {
           hits.push(el);
         }
       });
@@ -455,19 +492,34 @@
     }
 
     function showSubStepLogs(subStepId) {
+      // TestCase 弹窗内选中子步骤：顶部标题/备注切到当前子 action
+      const subMeta = actionMeta[subStepId];
+      const titleEl = document.getElementById('modalStepTitle');
+      if (titleEl && subMeta?.name) {
+        titleEl.textContent = subMeta.name;
+        titleEl.style.display = 'block';
+      }
+      setModalRemark(subStepId);
+      markTestCaseSubSelected(subStepId);
       renderModalStepLogs(subStepId, false);
       scrollToLog(subStepId);
+    }
+
+    function markTestCaseSubSelected(subStepId) {
+      document.querySelectorAll('#testcaseSubSteps .testcase-sub-item').forEach(el => {
+        el.classList.toggle('testcase-sub-selected', el.id === `tcsub-${subStepId}`);
+      });
     }
 
     function buildTestCaseSubStepHtml(sub, index, parentStepId) {
       let lookBtn = '';
       if (sub.couldLookDetail) {
-        lookBtn = `<button class="btn" onclick="showStepDetails('${sub.id}', '${parentStepId}')">查看</button>`;
+        lookBtn = `<button class="btn" onclick="event.stopPropagation();showStepDetails('${sub.id}', '${parentStepId}')">查看</button>`;
       }
-      const logBtn = `<button class="btn" onclick="showSubStepLogs('${sub.id}')">日志</button>`;
+      const logBtn = `<button class="btn" onclick="event.stopPropagation();showSubStepLogs('${sub.id}')">日志</button>`;
       const highlightClass = sub.highlight ? ' action-item-highlight' : '';
       return `
-        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}${highlightClass}" id="tcsub-${sub.id}">
+        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}${highlightClass}" id="tcsub-${sub.id}" onclick="showSubStepLogs('${sub.id}')">
           <div class="testcase-sub-info">
             <strong>${index + 1}. ${sub.name}</strong>
             <div class="testcase-sub-status">状态: ${getStatusText(sub.status)}</div>
@@ -481,7 +533,6 @@
       const actions = meta.actions || [];
       return `
         <div class="modal-header">
-          <h3><span class="testcase-badge">TestCase</span> ${meta.name}</h3>
           <div>状态: ${getStatusText(meta.status)}</div>
         </div>
         <div class="testcase-sub-steps" id="testcaseSubSteps">
@@ -501,6 +552,14 @@
         .join('');
     }
 
+    function showModalLogsPanel() {
+      const logsPanel = stepModal.querySelector('.modal-logs-panel');
+      if (logsPanel) {
+        logsPanel.style.display = '';
+      }
+      stepModal.classList.remove('md-file-view');
+    }
+
     function showTestCaseDetails(stepId) {
       nestedModalParentId = null;
       currentStepId = stepId;
@@ -508,7 +567,9 @@
       if (!meta) {
         return;
       }
+      showModalLogsPanel();
       setModalTitle(stepId);
+      setModalRemark(stepId);
       modalContent.innerHTML = buildTestCaseModalHtml(meta);
       renderModalStepLogs(stepId, true);
       stepModal.style.display = 'block';
@@ -525,6 +586,7 @@
       nestedModalParentId = fromTestCaseParentId || null;
       currentStepId = stepId;
       setModalTitle(stepId);
+      setModalRemark(stepId);
       const meta = actionMeta[stepId];
       if (meta && meta.actionType === 'testCase') {
         showTestCaseDetails(stepId);
@@ -534,6 +596,7 @@
         showMdFileDetails(meta);
         return;
       }
+      showModalLogsPanel();
       const data = stepData[stepId];
       const stepElement = document.getElementById(stepId);
       let status = '未知';
@@ -558,7 +621,11 @@
                     <button class="btn" onclick="copyMd()">copymd</button>
                 </div>
                 <p><strong>Status:</strong> ${status}</p>
-                <p><strong>URL:</strong> <span id="modal-url">${data.url}</span></p>
+                <p><strong>URL:</strong>
+                  <span id="modal-url">${data.url ?? ''}</span>
+                  <button class="btn btn-sm" onclick="copyModalUrl()" type="button">copy url</button>
+                  <button class="btn btn-sm" onclick="copyModalUrlWithParams()" type="button">copy url+参数</button>
+                </p>
                 <p><strong>Method:</strong> <span id="modal-method">${data.method}</span></p>
                 <p><strong>Headers:</strong></p>
                 <pre id="modal-headers" contenteditable="true"></pre>
@@ -580,6 +647,65 @@
         renderModalStepLogs(stepId, false);
         stepModal.style.display = "block";
       }
+    }
+
+    function copyToClipboard(text, successMsg) {
+      navigator.clipboard.writeText(text).then(() => {
+        Util.showToast(successMsg || '已复制到粘贴板');
+      }, () => {
+        Util.showToast('复制失败', 'error');
+      });
+    }
+
+    function copyModalUrl() {
+      const url = document.getElementById('modal-url')?.innerText?.trim() ?? '';
+      if (!url) {
+        Util.showToast('URL 为空', 'info');
+        return;
+      }
+      copyToClipboard(url, 'URL 已复制');
+    }
+
+    function buildQueryFromParams(param) {
+      if (param == null || typeof param !== 'object' || Array.isArray(param)) {
+        return '';
+      }
+      const parts = [];
+      for (const key of Object.keys(param)) {
+        const val = param[key];
+        if (val == null) {
+          continue;
+        }
+        let str;
+        if (typeof val === 'object') {
+          str = JSON.stringify(val);
+        } else {
+          str = String(val);
+        }
+        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(str)}`);
+      }
+      return parts.join('&');
+    }
+
+    function copyModalUrlWithParams() {
+      const url = document.getElementById('modal-url')?.innerText?.trim() ?? '';
+      if (!url) {
+        Util.showToast('URL 为空', 'info');
+        return;
+      }
+      const paramsText = document.getElementById('modal-params')?.innerText ?? '';
+      let param;
+      try {
+        param = paramsText.trim() === '' ? {} : JSON.parse(paramsText);
+      } catch (e) {
+        Util.showToast('Params 不是有效的 JSON', 'error');
+        return;
+      }
+      const query = buildQueryFromParams(param);
+      const fullUrl = query
+        ? (url.indexOf('?') >= 0 ? `${url}&${query}` : `${url}?${query}`)
+        : url;
+      copyToClipboard(fullUrl, 'URL+参数 已复制');
     }
 
     async function showMdFileDetails(meta) {
@@ -615,6 +741,9 @@
         : (stepIdOrName || '');
       titleEl.textContent = name;
       titleEl.style.display = name ? 'block' : 'none';
+      if (actionMeta[stepIdOrName]) {
+        setModalRemark(stepIdOrName);
+      }
     }
 
     function tryParseJson(text) {

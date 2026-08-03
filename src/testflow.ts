@@ -5,8 +5,10 @@ export { default as UrlAction } from "./testAction/UrlAction";
 
 export { default as HttpAction } from "./testAction/HttpAction";
 export { default as IHttpActionParam } from "./inf/IHttpActionParam";
+export { default as IBaseTestOpt } from "./inf/IBaseTestOpt";
 export { default as ITest} from "./inf/ITest";
 export { default as UploadAction } from "./testAction/UploadAction";
+export { default as DownloadExcelAction } from "./testAction/DownloadExcelAction";
 
 
 export { default as SetVariable } from "./testAction/SetVariable";

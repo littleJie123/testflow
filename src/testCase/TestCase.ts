@@ -1,4 +1,5 @@
 import ITest from "../inf/ITest";
+import IBaseTestOpt from "../inf/IBaseTestOpt";
 import TestLogger from "../testLog/TestLogger";
 import TestRunner from "../testRunner/TestRunner";
 import BaseTest from "./BaseTest";
@@ -13,6 +14,16 @@ export default abstract class TestCase extends BaseTest {
   protected index: number;
   protected autoMdFilePath: string;
   protected sourceFilePath: string;
+
+  constructor(opt?: IBaseTestOpt) {
+    super();
+    if (opt?.remark != null) {
+      this.remark = opt.remark;
+    }
+    if (opt?.highlight != null) {
+      this.highlight = opt.highlight;
+    }
+  }
 
   setIndex(index: any) {
     this.index = index;
@@ -124,6 +135,7 @@ export default abstract class TestCase extends BaseTest {
       name: this.getName(),
       status: this.getRunStatus(),
       highlight: this.needHighlight(),
+      remark: this.getRemark(),
     }
     return json;
   }

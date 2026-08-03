@@ -1,3 +1,4 @@
+import IBaseTestOpt from "../inf/IBaseTestOpt";
 import BaseTest from "./BaseTest";
 /**
  * 测试用例
@@ -7,6 +8,7 @@ export default abstract class TestCase extends BaseTest {
     protected index: number;
     protected autoMdFilePath: string;
     protected sourceFilePath: string;
+    constructor(opt?: IBaseTestOpt);
     setIndex(index: any): void;
     setAutoMdFilePath(filePath: string): void;
     setSourceFilePath(filePath: string): void;
