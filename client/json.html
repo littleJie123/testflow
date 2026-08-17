@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON 格式化</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    .json-page {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .json-input-pane {
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+      height: 100vh;
+      border-right: 1px solid #d0d0d0;
+      box-sizing: border-box;
+      background: #fff;
+    }
+
+    .json-input-meta {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #6b7280;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    #jsonInput {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      resize: none;
+      border: none;
+      padding: 12px 14px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      outline: none;
+      box-sizing: border-box;
+      background: #fff;
+      color: #222;
+    }
+
+    .json-output-pane {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+      height: 100vh;
+      padding: 12px;
+      background: #eef0f3;
+      color: #1f2937;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .json-search-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      flex: 0 0 auto;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    .json-search-input {
+      flex: 1;
+      min-width: 180px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+
+    .json-search-status {
+      font-size: 13px;
+      color: #6c757d;
+      min-width: 80px;
+    }
+
+    .btn {
+      padding: 0.25rem 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #fff;
+    }
+
+    .btn:hover {
+      background-color: #f0f0f0;
+    }
+
+    .json-result-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .json-card {
+      flex: 1;
+      min-height: 0;
+      box-sizing: border-box;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+
+    #jsonOutput {
+      margin: 0;
+      padding: 16px 18px;
+      line-height: 1.6;
+      white-space: pre;
+      word-break: normal;
+      overflow: auto;
+    }
+
+    #jsonOutput.is-empty {
+      color: #9ca3af;
+      white-space: pre-wrap;
+    }
+
+    #jsonOutput.is-error {
+      color: #dc2626;
+      white-space: pre-wrap;
+    }
+
+    #jsonOutput.is-hidden {
+      display: none;
+    }
+
+    #jsonVirtual {
+      display: none;
+      position: relative;
+      overflow: auto;
+    }
+
+    #jsonVirtual.is-show {
+      display: block;
+    }
+
+    #jsonInner {
+      position: relative;
+      min-width: 100%;
+    }
+
+    #jsonWindow {
+      position: absolute;
+      left: 0;
+      top: 0;
+      min-width: 100%;
+      box-sizing: border-box;
+      padding: 0 18px;
+    }
+
+    .json-line {
+      display: flex;
+      align-items: center;
+      height: 22px;
+      line-height: 22px;
+      white-space: pre;
+      overflow-x: visible;
+      overflow-y: hidden;
+      box-sizing: border-box;
+    }
+
+    .json-placeholder {
+      display: inline-block;
+      width: 20px;
+      flex-shrink: 0;
+    }
+
+    .json-toggle {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid #4a90e2;
+      background: #eef5ff;
+      color: #4a90e2;
+      font-size: 13px;
+      line-height: 14px;
+      padding: 0;
+      margin-right: 4px;
+      flex-shrink: 0;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .json-toggle.is-expanded {
+      border-color: #d9534f;
+      background: #fff0f0;
+      color: #d9534f;
+    }
+
+    #jsonVirtual .json-preview {
+      color: #7c3aed;
+      font-style: italic;
+    }
+
+    #jsonVirtual .json-bracket,
+    #jsonVirtual .json-comma {
+      color: #6b7280;
+    }
+
+    #jsonVirtual .json-key {
+      color: #7c3aed;
+      font-weight: 600;
+    }
+
+    #jsonVirtual .json-string {
+      color: #0f766e;
+      font-weight: 700;
+    }
+
+    #jsonVirtual .json-number {
+      color: #2563eb;
+      font-style: italic;
+    }
+
+    #jsonVirtual .json-boolean-true {
+      color: #16a34a;
+    }
+
+    #jsonVirtual .json-boolean-false {
+      color: #dc2626;
+    }
+
+    #jsonVirtual .json-null {
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    #jsonVirtual .json-colon {
+      color: #9ca3af;
+    }
+
+    .json-search-hit {
+      background: #fff3cd;
+      color: #664d03;
+      padding: 0 2px;
+      border-radius: 2px;
+      box-shadow: inset 0 0 0 1px #ffc107;
+    }
+
+    .json-search-hit.json-search-current {
+      background: #ffc107;
+      box-shadow: inset 0 0 0 2px #fd7e14;
+    }
+
+    #jsonVirtual::selection,
+    #jsonVirtual *::selection {
+      background: #dbeafe;
+      color: inherit;
+    }
+
+    #jsonStatus {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      z-index: 2;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #fff;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      pointer-events: none;
+      display: none;
+    }
+
+    #jsonStatus.is-show {
+      display: block;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 10px 20px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.info {
+      background-color: #17a2b8;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="json-page">
+    <div class="json-input-pane">
+      <div class="json-input-meta">字节长度：<span id="jsonByteLength">0</span></div>
+      <textarea id="jsonInput" spellcheck="false" autocomplete="off" autocapitalize="off"
+        placeholder="在此粘贴或输入 JSON 字符串"></textarea>
+    </div>
+    <div class="json-output-pane">
+      <div class="json-search-toolbar">
+        <input type="text" id="json-search-input" class="json-search-input" placeholder="在 JSON 中搜索关键字">
+        <button type="button" class="btn" id="json-search-btn">搜索</button>
+        <button type="button" class="btn" id="json-search-prev">上一处</button>
+        <button type="button" class="btn" id="json-search-next">下一处</button>
+        <button type="button" class="btn" id="json-search-clear">清除</button>
+        <button type="button" class="btn" id="json-expand-btn">全部展开</button>
+        <button type="button" class="btn" id="json-collapse-btn">全部关闭</button>
+        <span class="json-search-status" id="json-search-status"></span>
+      </div>
+      <div class="json-result-wrap">
+        <div id="jsonStatus"></div>
+        <pre id="jsonOutput" class="json-card is-empty">在左侧输入 JSON，右侧将显示格式化结果</pre>
+        <div id="jsonVirtual" class="json-card">
+          <div id="jsonInner">
+            <div id="jsonWindow"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const MAX_INPUT_CHARS = 2 * 1024 * 1024;
+      const WORKER_TIMEOUT_MS = 8000;
+      const LINE_HEIGHT = 22;
+      const BUFFER_LINES = 40;
+      const MAX_SEARCH_HITS = 10000;
+      const inputEl = document.getElementById('jsonInput');
+      const byteLengthEl = document.getElementById('jsonByteLength');
+      const textEncoder = new TextEncoder();
+      const outputEl = document.getElementById('jsonOutput');
+      const statusEl = document.getElementById('jsonStatus');
+      const virtualEl = document.getElementById('jsonVirtual');
+      const innerEl = document.getElementById('jsonInner');
+      const windowEl = document.getElementById('jsonWindow');
+      const searchInputEl = document.getElementById('json-search-input');
+      const searchStatusEl = document.getElementById('json-search-status');
+
+      let worker = null;
+      let reqId = 0;
+      let debounceTimer = null;
+      let timeoutTimer = null;
+      let pendingId = 0;
+      let displayLines = [];
+      let rootNode = null;
+      let collapsedIds = new Set();
+      let renderedStart = -1;
+      let renderedEnd = -1;
+      let rafId = 0;
+      let searchHits = [];
+      let hitsByLine = new Map();
+      let currentSearchIndex = -1;
+      let hasSearched = false;
+      let lastSearchKeyword = '';
+
+      function formatByteLength(bytes) {
+        if (bytes >= 1024 * 1024) {
+          return trimByteNum(bytes / (1024 * 1024)) + 'M';
+        }
+        if (bytes >= 1024) {
+          return trimByteNum(bytes / 1024) + 'K';
+        }
+        return String(bytes);
+      }
+
+      function trimByteNum(num) {
+        return String(Math.round(num * 100) / 100);
+      }
+
+      function updateByteLength() {
+        byteLengthEl.textContent = formatByteLength(textEncoder.encode(inputEl.value).length);
+      }
+
+      function showToast(message, type, duration) {
+        type = type || 'info';
+        duration = duration || 2000;
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'toastContainer';
+          container.className = 'toast-container';
+          document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'toast ' + type;
+        toast.textContent = message;
+        container.appendChild(toast);
+        requestAnimationFrame(function () {
+          toast.classList.add('show');
+        });
+        setTimeout(function () {
+          toast.classList.remove('show');
+          setTimeout(function () {
+            toast.remove();
+            if (container.childElementCount === 0) {
+              container.remove();
+            }
+          }, 300);
+        }, duration);
+      }
+
+      function showStatus(text) {
+        if (!text) {
+          statusEl.classList.remove('is-show');
+          statusEl.textContent = '';
+          return;
+        }
+        statusEl.textContent = text;
+        statusEl.classList.add('is-show');
+      }
+
+      function updateSearchStatus() {
+        if (!hasSearched || !lastSearchKeyword) {
+          searchStatusEl.textContent = '';
+          return;
+        }
+        if (searchHits.length === 0) {
+          searchStatusEl.textContent = 'JSON 中未匹配到「' + lastSearchKeyword + '」';
+          return;
+        }
+        searchStatusEl.textContent = 'JSON 中匹配到 ' + searchHits.length + ' 处「'
+          + lastSearchKeyword + '」 · 第 ' + (currentSearchIndex + 1) + '/' + searchHits.length + ' 处';
+      }
+
+      function resetSearchState(keepInput) {
+        searchHits = [];
+        hitsByLine = new Map();
+        currentSearchIndex = -1;
+        hasSearched = false;
+        lastSearchKeyword = '';
+        if (!keepInput) {
+          searchInputEl.value = '';
+        }
+        searchStatusEl.textContent = '';
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function isPrimitive(value) {
+        return value === null
+          || typeof value === 'boolean'
+          || typeof value === 'number'
+          || typeof value === 'string';
+      }
+
+      function getPreview(value) {
+        if (Array.isArray(value)) {
+          return 'Array[' + value.length + ']';
+        }
+        if (value && typeof value === 'object') {
+          return '{ ' + Object.keys(value).length + ' keys }';
+        }
+        return '';
+      }
+
+      function buildTree(value, key, depth, idHolder) {
+        const id = idHolder.n++;
+        if (isPrimitive(value)) {
+          return { id: id, type: 'primitive', key: key, value: value, depth: depth, children: null };
+        }
+        if (Array.isArray(value)) {
+          if (value.length === 0) {
+            return { id: id, type: 'empty-array', key: key, depth: depth, children: [] };
+          }
+          const children = [];
+          for (let i = 0; i < value.length; i++) {
+            children.push(buildTree(value[i], null, depth + 1, idHolder));
+          }
+          return {
+            id: id,
+            type: 'array',
+            key: key,
+            depth: depth,
+            children: children,
+            preview: getPreview(value)
+          };
+        }
+        if (value && typeof value === 'object') {
+          const keys = Object.keys(value);
+          if (keys.length === 0) {
+            return { id: id, type: 'empty-object', key: key, depth: depth, children: [] };
+          }
+          const children = [];
+          for (let i = 0; i < keys.length; i++) {
+            children.push(buildTree(value[keys[i]], keys[i], depth + 1, idHolder));
+          }
+          return {
+            id: id,
+            type: 'object',
+            key: key,
+            depth: depth,
+            children: children,
+            preview: getPreview(value)
+          };
+        }
+        return { id: id, type: 'primitive', key: key, value: String(value), depth: depth, children: null };
+      }
+
+      function commaHtml() {
+        return '<span class="json-comma">,</span>';
+      }
+
+      function keyHtml(key) {
+        return '<span class="json-key">' + escapeHtml(JSON.stringify(key)) + '</span><span class="json-colon">:</span> ';
+      }
+
+      function keyText(key) {
+        return JSON.stringify(key) + ': ';
+      }
+
+      function valueHtml(value) {
+        if (value === null) {
+          return '<span class="json-null">null</span>';
+        }
+        if (typeof value === 'boolean') {
+          return '<span class="json-boolean-' + value + '">' + value + '</span>';
+        }
+        if (typeof value === 'number') {
+          return '<span class="json-number">' + String(value) + '</span>';
+        }
+        return '<span class="json-string">' + escapeHtml(JSON.stringify(value)) + '</span>';
+      }
+
+      function toggleButton(id, expanded) {
+        return '<button type="button" class="json-toggle' + (expanded ? ' is-expanded' : '')
+          + '" data-toggle-id="' + id + '">' + (expanded ? '−' : '+') + '</button>';
+      }
+
+      function placeholderHtml() {
+        return '<span class="json-placeholder"></span>';
+      }
+
+      function makeRow(depth, html, text) {
+        return { depth: depth, html: html, text: text };
+      }
+
+      function makePrimitiveRow(node, isLast) {
+        let html = '';
+        let text = '';
+        if (node.key != null) {
+          html += keyHtml(node.key);
+          text += keyText(node.key);
+        }
+        html += valueHtml(node.value);
+        text += JSON.stringify(node.value);
+        if (!isLast) {
+          html += commaHtml();
+          text += ',';
+        }
+        return makeRow(node.depth, html, text);
+      }
+
+      function makeEmptyRow(node, isLast) {
+        const token = node.type === 'empty-array' ? '[]' : '{}';
+        let html = '';
+        let text = '';
+        if (node.key != null) {
+          html += keyHtml(node.key);
+          text += keyText(node.key);
+        }
+        html += '<span class="json-bracket">' + token + '</span>';
+        text += token;
+        if (!isLast) {
+          html += commaHtml();
+          text += ',';
+        }
+        return makeRow(node.depth, html, text);
+      }
+
+      function makeOpenRow(node, isLast, isRoot, expanded) {
+        const openToken = node.type === 'array' ? '[' : '{';
+        let html = '';
+        let text = '';
+        if (node.key != null) {
+          html += keyHtml(node.key);
+          text += keyText(node.key);
+        }
+        html += toggleButton(node.id, expanded);
+        if (expanded) {
+          html += '<span class="json-bracket">' + openToken + '</span>';
+          text += openToken;
+        } else {
+          html += '<span class="json-preview">' + escapeHtml(node.preview) + '</span>';
+          text += node.preview;
+          if (!isLast && !isRoot) {
+            html += commaHtml();
+            text += ',';
+          }
+        }
+        return makeRow(node.depth, html, text);
+      }
+
+      function makeCloseRow(node, isLast, isRoot) {
+        const token = node.type === 'array' ? ']' : '}';
+        let html = placeholderHtml() + '<span class="json-bracket">' + token + '</span>';
+        let text = token;
+        if (!isLast && !isRoot) {
+          html += commaHtml();
+          text += ',';
+        }
+        return makeRow(node.depth, html, text);
+      }
+
+      function flattenNode(node, isLast, isRoot, lines) {
+        if (node.type === 'primitive') {
+          lines.push(makePrimitiveRow(node, isLast));
+          return;
+        }
+        if (node.type === 'empty-object' || node.type === 'empty-array') {
+          lines.push(makeEmptyRow(node, isLast));
+          return;
+        }
+        const expanded = !collapsedIds.has(node.id);
+        lines.push(makeOpenRow(node, isLast, isRoot, expanded));
+        if (!expanded) {
+          return;
+        }
+        for (let i = 0; i < node.children.length; i++) {
+          flattenNode(node.children[i], i === node.children.length - 1, false, lines);
+        }
+        lines.push(makeCloseRow(node, isLast, isRoot));
+      }
+
+      function collectCollapsible(node, set) {
+        if (node.type === 'object' || node.type === 'array') {
+          if (node.depth > 0) {
+            set.add(node.id);
+          }
+          for (let i = 0; i < node.children.length; i++) {
+            collectCollapsible(node.children[i], set);
+          }
+        }
+      }
+
+      function rebuildDisplayLines() {
+        displayLines = [];
+        if (rootNode) {
+          flattenNode(rootNode, true, true, displayLines);
+        }
+        innerEl.style.height = (displayLines.length * LINE_HEIGHT) + 'px';
+        renderedStart = -1;
+        if (hasSearched && lastSearchKeyword) {
+          searchHits = collectSearchHits(lastSearchKeyword);
+          buildHitsByLine();
+          if (currentSearchIndex >= searchHits.length) {
+            currentSearchIndex = searchHits.length - 1;
+          }
+          updateSearchStatus();
+        }
+      }
+
+      function toggleNode(id) {
+        if (collapsedIds.has(id)) {
+          collapsedIds.delete(id);
+        } else {
+          collapsedIds.add(id);
+        }
+        rebuildDisplayLines();
+        renderVisible(true);
+      }
+
+      function expandAll() {
+        if (!rootNode) {
+          showToast('请先在左侧输入 JSON', 'info');
+          return;
+        }
+        collapsedIds = new Set();
+        rebuildDisplayLines();
+        renderVisible(true);
+      }
+
+      function collapseAll() {
+        if (!rootNode) {
+          showToast('请先在左侧输入 JSON', 'info');
+          return;
+        }
+        collapsedIds = new Set();
+        collectCollapsible(rootNode, collapsedIds);
+        rebuildDisplayLines();
+        virtualEl.scrollTop = 0;
+        renderVisible(true);
+      }
+
+      function collectSearchHits(keyword) {
+        const lowerKeyword = keyword.toLowerCase();
+        const kwLen = keyword.length;
+        const hits = [];
+        for (let i = 0; i < displayLines.length; i++) {
+          const lowerText = displayLines[i].text.toLowerCase();
+          let idx = 0;
+          let start = lowerText.indexOf(lowerKeyword, idx);
+          while (start !== -1) {
+            hits.push({ line: i, start: start, length: kwLen });
+            if (hits.length >= MAX_SEARCH_HITS) {
+              return hits;
+            }
+            idx = start + kwLen;
+            start = lowerText.indexOf(lowerKeyword, idx);
+          }
+        }
+        return hits;
+      }
+
+      function buildHitsByLine() {
+        hitsByLine = new Map();
+        for (let i = 0; i < searchHits.length; i++) {
+          const hit = searchHits[i];
+          let list = hitsByLine.get(hit.line);
+          if (!list) {
+            list = [];
+            hitsByLine.set(hit.line, list);
+          }
+          list.push(hit);
+        }
+      }
+
+      function wrapHitsInLine(lineEl, lineIndex) {
+        const lineHits = hitsByLine.get(lineIndex);
+        if (!lineHits || !lineHits.length) {
+          return;
+        }
+        const currentHit = currentSearchIndex >= 0 ? searchHits[currentSearchIndex] : null;
+        const nodes = [];
+        let offset = 0;
+        const walker = document.createTreeWalker(lineEl, NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          const parent = node.parentElement;
+          if (parent && parent.closest && parent.closest('.json-toggle')) {
+            continue;
+          }
+          const len = node.textContent.length;
+          nodes.push({ node: node, start: offset, end: offset + len });
+          offset += len;
+        }
+
+        for (let n = 0; n < nodes.length; n++) {
+          const item = nodes[n];
+          const text = item.node.textContent;
+          const hitsInNode = [];
+          for (let h = 0; h < lineHits.length; h++) {
+            const hit = lineHits[h];
+            if (hit.start < item.end && hit.start + hit.length > item.start) {
+              hitsInNode.push(hit);
+            }
+          }
+          if (!hitsInNode.length) {
+            continue;
+          }
+
+          const fragments = [];
+          let cursor = 0;
+          for (let h = 0; h < hitsInNode.length; h++) {
+            const hit = hitsInNode[h];
+            const localStart = Math.max(0, hit.start - item.start);
+            const localEnd = Math.min(text.length, hit.start + hit.length - item.start);
+            if (localStart > cursor) {
+              fragments.push(document.createTextNode(text.slice(cursor, localStart)));
+            }
+            const mark = document.createElement('mark');
+            mark.className = 'json-search-hit';
+            if (currentHit && currentHit.line === hit.line && currentHit.start === hit.start) {
+              mark.classList.add('json-search-current');
+            }
+            mark.textContent = text.slice(localStart, localEnd);
+            fragments.push(mark);
+            cursor = localEnd;
+          }
+          if (cursor < text.length) {
+            fragments.push(document.createTextNode(text.slice(cursor)));
+          }
+          const parent = item.node.parentNode;
+          for (let f = 0; f < fragments.length; f++) {
+            parent.insertBefore(fragments[f], item.node);
+          }
+          parent.removeChild(item.node);
+        }
+      }
+
+      function applySearchHighlights() {
+        if (!lastSearchKeyword || !searchHits.length) {
+          return;
+        }
+        const lines = windowEl.children;
+        for (let i = 0; i < lines.length; i++) {
+          wrapHitsInLine(lines[i], renderedStart + i);
+        }
+      }
+
+      function getVisibleRange() {
+        const scrollTop = virtualEl.scrollTop;
+        const viewHeight = virtualEl.clientHeight || 0;
+        const start = Math.max(0, Math.floor(scrollTop / LINE_HEIGHT) - BUFFER_LINES);
+        const visibleCount = Math.ceil(viewHeight / LINE_HEIGHT) + BUFFER_LINES * 2;
+        const end = Math.min(displayLines.length, start + Math.max(visibleCount, 1));
+        return { start: start, end: end };
+      }
+
+      function renderVisible(force) {
+        if (!displayLines.length) {
+          return;
+        }
+        const range = getVisibleRange();
+        if (!force && range.start === renderedStart && range.end === renderedEnd) {
+          return;
+        }
+        renderedStart = range.start;
+        renderedEnd = range.end;
+
+        let html = '';
+        for (let i = range.start; i < range.end; i++) {
+          const line = displayLines[i];
+          html += '<div class="json-line" style="padding-left:' + (line.depth * 18)
+            + 'px">' + line.html + '</div>';
+        }
+        windowEl.style.top = (range.start * LINE_HEIGHT) + 'px';
+        windowEl.innerHTML = html;
+        applySearchHighlights();
+      }
+
+      function scheduleRender() {
+        if (rafId) {
+          return;
+        }
+        rafId = requestAnimationFrame(function () {
+          rafId = 0;
+          renderVisible(false);
+        });
+      }
+
+      function focusSearchHit(index) {
+        if (index < 0 || index >= searchHits.length) {
+          updateSearchStatus();
+          return false;
+        }
+        currentSearchIndex = index;
+        const hit = searchHits[index];
+        const viewHeight = virtualEl.clientHeight || 0;
+        const targetTop = hit.line * LINE_HEIGHT - Math.floor(viewHeight / 2) + Math.floor(LINE_HEIGHT / 2);
+        virtualEl.scrollTop = Math.max(0, Math.min(targetTop, virtualEl.scrollHeight - viewHeight));
+        renderVisible(true);
+        updateSearchStatus();
+        return true;
+      }
+
+      function searchJson() {
+        const keyword = searchInputEl.value.trim();
+        if (!keyword) {
+          showToast('请输入搜索关键字', 'info');
+          return false;
+        }
+        if (!displayLines.length) {
+          showToast('请先在左侧输入 JSON', 'info');
+          return false;
+        }
+
+        collapsedIds = new Set();
+        rebuildDisplayLines();
+
+        lastSearchKeyword = keyword;
+        hasSearched = true;
+        searchHits = collectSearchHits(keyword);
+        buildHitsByLine();
+        currentSearchIndex = -1;
+
+        if (searchHits.length === 0) {
+          showToast('未搜索到「' + keyword + '」', 'info');
+          renderVisible(true);
+          updateSearchStatus();
+          return false;
+        }
+
+        return focusSearchHit(0);
+      }
+
+      function moveSearchHit(step) {
+        if (!hasSearched || searchHits.length === 0) {
+          return searchJson();
+        }
+        const nextIndex = currentSearchIndex + step;
+        if (step < 0 && currentSearchIndex <= 0) {
+          showToast('已经是第一处', 'info');
+          return false;
+        }
+        if (step > 0 && currentSearchIndex >= searchHits.length - 1) {
+          showToast('已经是最后一处', 'info');
+          return false;
+        }
+        return focusSearchHit(nextIndex);
+      }
+
+      function clearSearch() {
+        resetSearchState(false);
+        if (displayLines.length) {
+          renderVisible(true);
+        }
+      }
+
+      function handleSearchEnter() {
+        const keyword = searchInputEl.value.trim();
+        if (!keyword) {
+          showToast('请输入搜索关键字', 'info');
+          return;
+        }
+        if (!hasSearched || keyword !== lastSearchKeyword) {
+          searchJson();
+          return;
+        }
+        moveSearchHit(1);
+      }
+
+      function clearVirtual() {
+        displayLines = [];
+        rootNode = null;
+        collapsedIds = new Set();
+        renderedStart = -1;
+        renderedEnd = -1;
+        windowEl.innerHTML = '';
+        innerEl.style.height = '0px';
+        virtualEl.classList.remove('is-show');
+        virtualEl.scrollTop = 0;
+        outputEl.classList.remove('is-hidden');
+        resetSearchState(true);
+      }
+
+      function showPretty(pretty) {
+        let data;
+        try {
+          data = JSON.parse(pretty);
+        } catch (err) {
+          setOutput(err && err.message ? err.message : 'JSON 解析失败', 'is-error');
+          return;
+        }
+        outputEl.classList.remove('is-empty', 'is-error');
+        outputEl.classList.add('is-hidden');
+        outputEl.textContent = '';
+        collapsedIds = new Set();
+        rootNode = buildTree(data, null, 0, { n: 1 });
+        resetSearchState(true);
+        rebuildDisplayLines();
+        virtualEl.classList.add('is-show');
+        virtualEl.scrollTop = 0;
+        renderVisible(true);
+      }
+
+      function setOutput(text, mode) {
+        clearVirtual();
+        outputEl.classList.remove('is-empty', 'is-error');
+        if (mode) {
+          outputEl.classList.add(mode);
+        }
+        outputEl.textContent = text;
+      }
+
+      function showTooLarge() {
+        showStatus('');
+        setOutput('字符串太大了，无法解析', 'is-error');
+      }
+
+      function destroyWorker() {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+          timeoutTimer = null;
+        }
+        if (worker) {
+          worker.terminate();
+          worker = null;
+        }
+      }
+
+      function createWorker() {
+        const next = new Worker('/js/jsonFormatWorker.js');
+        next.onmessage = function (event) {
+          const data = event.data || {};
+          if (data.id !== pendingId) {
+            return;
+          }
+          if (timeoutTimer) {
+            clearTimeout(timeoutTimer);
+            timeoutTimer = null;
+          }
+          showStatus('');
+          if (data.tooLarge) {
+            showTooLarge();
+            return;
+          }
+          if (!data.ok) {
+            setOutput(data.error || 'JSON 解析失败', 'is-error');
+            return;
+          }
+          if (!data.pretty) {
+            setOutput('在左侧输入 JSON，右侧将显示格式化结果', 'is-empty');
+            return;
+          }
+          showPretty(data.pretty);
+        };
+        next.onerror = function () {
+          if (timeoutTimer) {
+            clearTimeout(timeoutTimer);
+            timeoutTimer = null;
+          }
+          showStatus('');
+          setOutput('解析 Worker 出错，请缩小 JSON 后再试', 'is-error');
+          destroyWorker();
+        };
+        return next;
+      }
+
+      function getWorker() {
+        if (!worker) {
+          worker = createWorker();
+        }
+        return worker;
+      }
+
+      function formatJson() {
+        const text = inputEl.value;
+        if (text.length > MAX_INPUT_CHARS) {
+          pendingId = 0;
+          showTooLarge();
+          return;
+        }
+
+        if (!window.Worker) {
+          formatOnMainThread(text);
+          return;
+        }
+
+        reqId += 1;
+        pendingId = reqId;
+        showStatus('解析中…');
+
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+        }
+        timeoutTimer = setTimeout(function () {
+          destroyWorker();
+          showStatus('');
+          setOutput('解析超时。字符串可能过大或结构过深，已停止解析', 'is-error');
+        }, WORKER_TIMEOUT_MS);
+
+        try {
+          getWorker().postMessage({ id: pendingId, text: text });
+        } catch (err) {
+          destroyWorker();
+          showStatus('');
+          setOutput('无法将字符串交给解析线程，请缩小后再试', 'is-error');
+        }
+      }
+
+      function formatOnMainThread(text) {
+        const trimmed = text.trim();
+        if (!trimmed) {
+          setOutput('在左侧输入 JSON，右侧将显示格式化结果', 'is-empty');
+          return;
+        }
+        try {
+          const pretty = JSON.stringify(JSON.parse(trimmed), null, 2);
+          if (pretty.length > 8 * 1024 * 1024) {
+            showTooLarge();
+            return;
+          }
+          showPretty(pretty);
+        } catch (err) {
+          setOutput(err && err.message ? err.message : 'JSON 解析失败', 'is-error');
+        }
+      }
+
+      function scheduleFormat() {
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+        const delay = inputEl.value.length > 200000 ? 400 : 180;
+        debounceTimer = setTimeout(formatJson, delay);
+      }
+
+      virtualEl.addEventListener('scroll', scheduleRender, { passive: true });
+      if (window.ResizeObserver) {
+        new ResizeObserver(function () {
+          renderVisible(true);
+        }).observe(virtualEl);
+      } else {
+        window.addEventListener('resize', scheduleRender);
+      }
+
+      document.getElementById('json-search-btn').addEventListener('click', searchJson);
+      document.getElementById('json-search-prev').addEventListener('click', function () {
+        moveSearchHit(-1);
+      });
+      document.getElementById('json-search-next').addEventListener('click', function () {
+        moveSearchHit(1);
+      });
+      document.getElementById('json-search-clear').addEventListener('click', clearSearch);
+      document.getElementById('json-expand-btn').addEventListener('click', expandAll);
+      document.getElementById('json-collapse-btn').addEventListener('click', collapseAll);
+      searchInputEl.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleSearchEnter();
+        }
+      });
+      windowEl.addEventListener('click', function (event) {
+        const btn = event.target.closest ? event.target.closest('[data-toggle-id]') : null;
+        if (!btn) {
+          return;
+        }
+        event.preventDefault();
+        toggleNode(Number(btn.getAttribute('data-toggle-id')));
+      });
+
+      function getJsonFromUrl() {
+        const search = window.location.search || '';
+        if (!search) {
+          return '';
+        }
+        const query = search.charAt(0) === '?' ? search.slice(1) : search;
+        const marker = 'json=';
+        const index = query.indexOf(marker);
+        if (index === -1) {
+          return '';
+        }
+        const raw = query.slice(index + marker.length);
+        if (!raw) {
+          return '';
+        }
+        try {
+          return decodeURIComponent(raw);
+        } catch (err) {
+          return raw;
+        }
+      }
+
+      function getJsonFromStorage() {
+        const search = window.location.search || '';
+        if (search.indexOf('from=storage') === -1) {
+          return '';
+        }
+        try {
+          const text = localStorage.getItem('jsonParserPayload') || '';
+          localStorage.removeItem('jsonParserPayload');
+          return text;
+        } catch (err) {
+          return '';
+        }
+      }
+
+      function applyJsonFromUrl() {
+        const json = getJsonFromUrl() || getJsonFromStorage();
+        if (!json) {
+          return;
+        }
+        inputEl.value = json;
+        formatJson();
+      }
+
+      inputEl.addEventListener('input', function () {
+        updateByteLength();
+        scheduleFormat();
+      });
+      applyJsonFromUrl();
+      updateByteLength();
+    })();
+  </script>
+</body>
+
+</html>

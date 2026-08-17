@@ -360,6 +360,7 @@
                         <button class="btn" onclick="clearResultSearch()">清除</button>
                         <button class="btn" onclick="expandResultJson()">全部展开</button>
                         <button class="btn" onclick="collapseResultJson()">全部关闭</button>
+                        <button class="btn" onclick="openJsonParser()">解析json</button>
                         <span class="json-search-status" id="json-search-status"></span>
                     </div>
                     <div id="modal-result"></div>
@@ -436,6 +437,35 @@
 
     function collapseResultJson() {
       JsonViewer.collapseAll();
+    }
+
+    function openJsonParser() {
+      if (JsonViewer.data == null) {
+        Util.showToast('当前没有可解析的 JSON', 'info');
+        return;
+      }
+      const jsonText = typeof JsonViewer.data === 'string'
+        ? JsonViewer.data
+        : JSON.stringify(JsonViewer.data);
+      if (!jsonText) {
+        Util.showToast('当前没有可解析的 JSON', 'info');
+        return;
+      }
+      const encoded = encodeURIComponent(jsonText);
+      let url = 'json.html?json=' + encoded;
+      if (url.length > 80000) {
+        try {
+          localStorage.setItem('jsonParserPayload', jsonText);
+        } catch (err) {
+          Util.showToast('JSON 太大，无法跳转解析页', 'error');
+          return;
+        }
+        url = 'json.html?from=storage';
+      }
+      const win = window.open(url, '_blank');
+      if (!win) {
+        location.href = url;
+      }
     }
 
     function bindResultSearchEvents() {
