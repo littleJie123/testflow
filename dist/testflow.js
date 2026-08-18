@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CheckUtil = exports.JsonUtil = exports.StrDateUtil = exports.DateUtil = exports.ArrayUtil = exports.MdFileAction = exports.SetVariable = exports.DownloadExcelAction = exports.UploadAction = exports.HttpAction = exports.UrlAction = exports.BaseTest = exports.TestCase = exports.TestRunner = void 0;
+exports.CheckUtil = exports.JsonUtil = exports.StrDateUtil = exports.DateUtil = exports.ArrayUtil = exports.MdFileAction = exports.SetVariable = exports.MultiSheetDownloadAction = exports.DownloadExcelAction = exports.UploadAction = exports.HttpAction = exports.UrlAction = exports.BaseTest = exports.TestCase = exports.TestRunner = void 0;
 var TestRunner_1 = require("./testRunner/TestRunner");
 Object.defineProperty(exports, "TestRunner", { enumerable: true, get: function () { return __importDefault(TestRunner_1).default; } });
 var TestCase_1 = require("./testCase/TestCase");
@@ -18,6 +18,8 @@ var UploadAction_1 = require("./testAction/UploadAction");
 Object.defineProperty(exports, "UploadAction", { enumerable: true, get: function () { return __importDefault(UploadAction_1).default; } });
 var DownloadExcelAction_1 = require("./testAction/DownloadExcelAction");
 Object.defineProperty(exports, "DownloadExcelAction", { enumerable: true, get: function () { return __importDefault(DownloadExcelAction_1).default; } });
+var MultiSheetDownloadAction_1 = require("./testAction/MultiSheetDownloadAction");
+Object.defineProperty(exports, "MultiSheetDownloadAction", { enumerable: true, get: function () { return __importDefault(MultiSheetDownloadAction_1).default; } });
 var SetVariable_1 = require("./testAction/SetVariable");
 Object.defineProperty(exports, "SetVariable", { enumerable: true, get: function () { return __importDefault(SetVariable_1).default; } });
 var MdFileAction_1 = require("./testAction/MdFileAction");

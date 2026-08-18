@@ -75,11 +75,19 @@ export default class DownloadExcelAction extends HttpAction {
     return StrUtil.format(this.sheetName, this.getVariable());
   }
 
+  protected readWorkbook(buffer: Buffer) {
+    return XLSX.read(buffer, { type: 'buffer' });
+  }
+
+  protected sheetToJson(sheet: XLSX.WorkSheet): any[] {
+    return XLSX.utils.sheet_to_json(sheet, { defval: null });
+  }
+
   /**
    * 解析 excel buffer：默认第一个 sheet，可指定 sheetName；第一行为表头
    */
-  protected parseExcel(buffer: Buffer): any[] {
-    let workbook = XLSX.read(buffer, { type: 'buffer' });
+  protected parseExcel(buffer: Buffer): any {
+    let workbook = this.readWorkbook(buffer);
     let want = this.resolveSheetName();
     let sheetName = want ?? workbook.SheetNames[0];
     if (sheetName == null) {
@@ -90,7 +98,6 @@ export default class DownloadExcelAction extends HttpAction {
         `Excel 无 sheet「${want}」，实际: ${JSON.stringify(workbook.SheetNames)}`
       );
     }
-    let sheet = workbook.Sheets[sheetName];
-    return XLSX.utils.sheet_to_json(sheet, { defval: null });
+    return this.sheetToJson(workbook.Sheets[sheetName]);
   }
 }

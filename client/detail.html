@@ -655,11 +655,14 @@
                   <span id="modal-url">${data.url ?? ''}</span>
                   <button class="btn btn-sm" onclick="copyModalUrl()" type="button">copy url</button>
                   <button class="btn btn-sm" onclick="copyModalUrlWithParams()" type="button">copy url+参数</button>
+                  <button class="btn btn-sm" onclick="copyModalPath()" type="button">copy 路径</button>
                 </p>
                 <p><strong>Method:</strong> <span id="modal-method">${data.method}</span></p>
                 <p><strong>Headers:</strong></p>
                 <pre id="modal-headers" contenteditable="true"></pre>
-                <p><strong>Params:</strong></p>
+                <p><strong>Params:</strong>
+                  <button class="btn btn-sm" onclick="copyModalParams()" type="button">copy</button>
+                </p>
                 <pre id="modal-params" contenteditable="true"></pre>
                 ${buildResultSectionHtml()}
             `;
@@ -696,6 +699,29 @@
       copyToClipboard(url, 'URL 已复制');
     }
 
+    function extractUrlPath(url) {
+      try {
+        const parsed = new URL(url);
+        return parsed.pathname + parsed.search + parsed.hash;
+      } catch (e) {
+        try {
+          const parsed = new URL(url, 'http://dummy.local');
+          return parsed.pathname + parsed.search + parsed.hash;
+        } catch (e2) {
+          return url;
+        }
+      }
+    }
+
+    function copyModalPath() {
+      const url = document.getElementById('modal-url')?.innerText?.trim() ?? '';
+      if (!url) {
+        Util.showToast('URL 为空', 'info');
+        return;
+      }
+      copyToClipboard(extractUrlPath(url), '路径已复制');
+    }
+
     function buildQueryFromParams(param) {
       if (param == null || typeof param !== 'object' || Array.isArray(param)) {
         return '';
@@ -715,6 +741,15 @@
         parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(str)}`);
       }
       return parts.join('&');
+    }
+
+    function copyModalParams() {
+      const paramsText = document.getElementById('modal-params')?.innerText ?? '';
+      if (!paramsText.trim()) {
+        Util.showToast('Params 为空', 'info');
+        return;
+      }
+      copyToClipboard(paramsText, 'Params 已复制');
     }
 
     function copyModalUrlWithParams() {

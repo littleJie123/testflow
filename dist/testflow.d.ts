@@ -8,6 +8,8 @@ export { default as IBaseTestOpt } from "./inf/IBaseTestOpt";
 export { default as ITest } from "./inf/ITest";
 export { default as UploadAction } from "./testAction/UploadAction";
 export { default as DownloadExcelAction } from "./testAction/DownloadExcelAction";
+export { default as MultiSheetDownloadAction } from "./testAction/MultiSheetDownloadAction";
+export type { MultiSheetExcelResult } from "./testAction/MultiSheetDownloadAction";
 export { default as SetVariable } from "./testAction/SetVariable";
 export { default as ISetVariableParam } from "./inf/ISetVarableParam";
 export { default as MdFileAction } from "./testAction/MdFileAction";

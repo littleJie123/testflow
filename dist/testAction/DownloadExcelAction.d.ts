@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import HttpAction from "./HttpAction";
 import IHttpActionParam from "../inf/IHttpActionParam";
 import IAfterProcess from "../inf/IAfterProcess";
@@ -19,8 +20,10 @@ export default class DownloadExcelAction extends HttpAction {
     /** 将参数拼到 URL query（复杂对象转 JSON 字符串） */
     private appendQuery;
     private resolveSheetName;
+    protected readWorkbook(buffer: Buffer): XLSX.WorkBook;
+    protected sheetToJson(sheet: XLSX.WorkSheet): any[];
     /**
      * 解析 excel buffer：默认第一个 sheet，可指定 sheetName；第一行为表头
      */
-    protected parseExcel(buffer: Buffer): any[];
+    protected parseExcel(buffer: Buffer): any;
 }
