@@ -846,14 +846,10 @@
       if (!resultObj || typeof resultObj !== 'object') {
         return resultObj;
       }
-      let output = cloneJson(resultObj);
-      if (output.result != null && typeof output.result === 'object' && output.status != null) {
-        output = output.result;
+      if (Object.prototype.hasOwnProperty.call(resultObj, 'result')) {
+        return cloneJson(resultObj.result);
       }
-      if (output.result != null && typeof output.result === 'object') {
-        output = output.result;
-      }
-      return output;
+      return cloneJson(resultObj);
     }
 
     function buildCaseOutputText() {
@@ -896,7 +892,7 @@
           param: param
         });
 
-        const resultValue = result.result ?? result;
+        const resultValue = result;
         renderResultJson(resultValue);
 
         if (stepData[actionId]) {

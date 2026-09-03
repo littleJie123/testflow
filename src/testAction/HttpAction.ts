@@ -12,6 +12,18 @@ export default class extends UrlAction {
   needInScreen() {
     return true;
   }
+
+  protected checkHttpStatus(result: any): void {
+    let expectHttpStatus = this.opt?.exceptHttpStatus;
+    if(expectHttpStatus == null){
+      super.checkHttpStatus(result)
+    }else{
+      if(this.httpStatus != expectHttpStatus){
+        throw new Error(`期望的状态是${expectHttpStatus},实际是${this.httpStatus}`);
+        
+      }
+    }
+  }
   constructor(param?: IHttpActionParam, afterProcess?: IAfterProcess) {
     super(afterProcess);
     if (param == null) {

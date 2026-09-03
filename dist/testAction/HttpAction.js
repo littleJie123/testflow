@@ -12,6 +12,18 @@ class default_1 extends UrlAction_1.default {
     needInScreen() {
         return true;
     }
+    checkHttpStatus(result) {
+        var _a;
+        let expectHttpStatus = (_a = this.opt) === null || _a === void 0 ? void 0 : _a.exceptHttpStatus;
+        if (expectHttpStatus == null) {
+            super.checkHttpStatus(result);
+        }
+        else {
+            if (this.httpStatus != expectHttpStatus) {
+                throw new Error(`期望的状态是${expectHttpStatus},实际是${this.httpStatus}`);
+            }
+        }
+    }
     constructor(param, afterProcess) {
         super(afterProcess);
         if (param == null) {

@@ -7,6 +7,7 @@ import UrlAction from "./UrlAction";
 export default class extends UrlAction {
     protected opt: IHttpActionParam;
     needInScreen(): boolean;
+    protected checkHttpStatus(result: any): void;
     constructor(param?: IHttpActionParam, afterProcess?: IAfterProcess);
     protected getDefHttpParam(): IHttpActionParam;
     protected getMethod(): string;

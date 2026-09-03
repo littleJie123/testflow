@@ -84,17 +84,17 @@ class UrlAction extends BaseTest_1.default {
         let url = StrUtil_1.StrUtil.format(this.parseHttpUrl(), datas);
         let httpParam = this.parseHttpParam();
         let headers = this.parseHttpHeaders();
-        let result = await this.submit(url, httpParam, headers);
+        let httpResult = await this.submit(url, httpParam, headers);
         this.sendMsg('httpParam', {
             id: this.getTestId(),
             url,
             param: httpParam,
             headers,
-            result,
+            result: httpResult,
             method: this.getMethod()
         });
-        this.httpStatus = result.status;
-        return result.result;
+        this.httpStatus = httpResult.status;
+        return httpResult.result;
     }
     buildDefParam() {
         let httpParam = this.getHttpParam();

@@ -5,7 +5,10 @@ import HttpUtil from "../util/HttpUtil";
 import JsonUtil from "../util/JsonUtil";
 import { StrUtil } from "../util/StrUtil";
 
-
+interface HttpResult{
+  status:number;
+  result:any;
+}
 
 export default abstract class UrlAction extends BaseTest {
   protected httpStatus?: number;
@@ -17,6 +20,7 @@ export default abstract class UrlAction extends BaseTest {
   }
 
   protected checkHttpStatus(result: any) {
+   
     if (this.httpStatus != null) {
       if (this.httpStatus >= 400) {
         let loger = this.getTestLogger();
@@ -80,7 +84,7 @@ export default abstract class UrlAction extends BaseTest {
     }
     return headers;
   }
-  protected async submit(url:string,httpParam:any,headers:any):Promise<any> {
+  protected async submit(url:string,httpParam:any,headers:any):Promise<HttpResult> {
     let httpUtil = HttpUtil.get()
     return await httpUtil.requestStatusAndResult(
       url,
@@ -94,17 +98,17 @@ export default abstract class UrlAction extends BaseTest {
     let url = StrUtil.format(this.parseHttpUrl(), datas);
     let httpParam = this.parseHttpParam();
     let headers = this.parseHttpHeaders()
-    let result = await this.submit(url,httpParam,headers);
+    let httpResult = await this.submit(url,httpParam,headers);
     this.sendMsg('httpParam', {
       id: this.getTestId(),
       url,
       param: httpParam,
       headers,
-      result,
+      result: httpResult,
       method: this.getMethod()
     });
-    this.httpStatus = result.status;
-    return result.result;
+    this.httpStatus = httpResult.status;
+    return httpResult.result;
   }
 
 

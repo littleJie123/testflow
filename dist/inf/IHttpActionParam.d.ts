@@ -9,4 +9,6 @@ export default interface IHttpActionParam {
     remark?: string;
     /** DownloadExcelAction：要解析的 sheet 名；默认第一个 */
     sheetName?: string;
+    /**运行后期望的http status */
+    exceptHttpStatus?: number;
 }

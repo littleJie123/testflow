@@ -1,4 +1,8 @@
 import BaseTest from "../testCase/BaseTest";
+interface HttpResult {
+    status: number;
+    result: any;
+}
 export default abstract class UrlAction extends BaseTest {
     protected httpStatus?: number;
     protected checkResult(result: any): Promise<void>;
@@ -10,8 +14,9 @@ export default abstract class UrlAction extends BaseTest {
     protected parseHttpUrl(): string;
     protected parseHttpParam(): any;
     protected parseHttpHeaders(): any;
-    protected submit(url: string, httpParam: any, headers: any): Promise<any>;
+    protected submit(url: string, httpParam: any, headers: any): Promise<HttpResult>;
     protected doTest(): Promise<void>;
     buildDefParam(): any;
     getHeaderMeta(): any;
 }
+export {};
