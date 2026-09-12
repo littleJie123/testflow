@@ -395,6 +395,7 @@
       let currentSearchIndex = -1;
       let hasSearched = false;
       let lastSearchKeyword = '';
+      let isBeautifyingInput = false;
 
       function formatByteLength(bytes) {
         if (bytes >= 1024 * 1024) {
@@ -1114,6 +1115,28 @@
         }
       }
 
+      function beautifyInputIfNeeded() {
+        if (isBeautifyingInput) {
+          return;
+        }
+        const raw = inputEl.value;
+        if (!raw || !raw.trim()) {
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          const pretty = JSON.stringify(parsed, null, 2);
+          if (raw !== pretty) {
+            isBeautifyingInput = true;
+            inputEl.value = pretty;
+            inputEl.selectionStart = inputEl.selectionEnd = pretty.length;
+            isBeautifyingInput = false;
+          }
+        } catch (err) {
+          // 非法 JSON 保持原样，等待用户继续输入
+        }
+      }
+
       function scheduleFormat() {
         if (debounceTimer) {
           clearTimeout(debounceTimer);
@@ -1184,11 +1207,31 @@
           return '';
         }
         try {
-          const text = localStorage.getItem('jsonParserPayload') || '';
+          const text = sessionStorage.getItem('jsonParserPayload') || localStorage.getItem('jsonParserPayload') || '';
+          sessionStorage.removeItem('jsonParserPayload');
           localStorage.removeItem('jsonParserPayload');
           return text;
         } catch (err) {
           return '';
+        }
+      }
+
+      function applyJsonPayload(json) {
+        if (!json) {
+          return;
+        }
+        inputEl.value = json;
+        beautifyInputIfNeeded();
+        formatJson();
+      }
+
+      function handleReceiveMessage(event) {
+        const data = event && event.data;
+        if (!data || data.type !== 'jsonParserPayload') {
+          return;
+        }
+        if (typeof data.json === 'string') {
+          applyJsonPayload(data.json);
         }
       }
 
@@ -1197,14 +1240,15 @@
         if (!json) {
           return;
         }
-        inputEl.value = json;
-        formatJson();
+        applyJsonPayload(json);
       }
 
       inputEl.addEventListener('input', function () {
         updateByteLength();
+        beautifyInputIfNeeded();
         scheduleFormat();
       });
+      window.addEventListener('message', handleReceiveMessage, false);
       applyJsonFromUrl();
       updateByteLength();
     })();

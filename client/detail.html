@@ -451,21 +451,31 @@
         Util.showToast('当前没有可解析的 JSON', 'info');
         return;
       }
-      const encoded = encodeURIComponent(jsonText);
-      let url = 'json.html?json=' + encoded;
-      if (url.length > 80000) {
+
+      const win = window.open('json.html', '_blank');
+      if (!win) {
         try {
-          localStorage.setItem('jsonParserPayload', jsonText);
+          sessionStorage.setItem('jsonParserPayload', jsonText);
         } catch (err) {
           Util.showToast('JSON 太大，无法跳转解析页', 'error');
           return;
         }
-        url = 'json.html?from=storage';
+        window.location.href = 'json.html?from=storage';
+        return;
       }
-      const win = window.open(url, '_blank');
-      if (!win) {
-        location.href = url;
-      }
+
+      setTimeout(function () {
+        try {
+          win.postMessage({ type: 'jsonParserPayload', json: jsonText }, '*');
+        } catch (err) {
+          try {
+            sessionStorage.setItem('jsonParserPayload', jsonText);
+            win.location.href = 'json.html?from=storage';
+          } catch (storageErr) {
+            Util.showToast('JSON 太大，无法跳转解析页', 'error');
+          }
+        }
+      }, 200);
     }
 
     function bindResultSearchEvents() {
