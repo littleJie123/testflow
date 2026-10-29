@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL 参数替换</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: #202a30;
+      background: #f3f6f4;
+      font-family: "Microsoft YaHei", sans-serif;
+    }
+
+    .sql-page {
+      display: flex;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .pane {
+      display: flex;
+      flex: 1 1 50%;
+      flex-direction: column;
+      min-width: 0;
+      padding: 18px;
+    }
+
+    .input-pane {
+      border-right: 1px solid #d5ded9;
+      background: #fff;
+    }
+
+    .output-pane {
+      background: #edf2ef;
+    }
+
+    .pane-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex: 0 0 auto;
+      margin-bottom: 12px;
+    }
+
+    .output-heading {
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .copy-button {
+      padding: 6px 12px;
+      border: 1px solid #23836b;
+      border-radius: 4px;
+      background: #23836b;
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .copy-button:hover:not(:disabled) {
+      background: #176b57;
+    }
+
+    .copy-button:disabled {
+      border-color: #cbd5d0;
+      background: #dfe6e2;
+      color: #829088;
+      cursor: not-allowed;
+    }
+
+    .pane-note {
+      color: #718078;
+      font-size: 12px;
+    }
+
+    #sqlInput,
+    #sqlOutput {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      margin: 0;
+      padding: 16px;
+      overflow: auto;
+      border: 1px solid #d5ded9;
+      border-radius: 4px;
+      background: #fff;
+      color: #202a30;
+      font: 14px/1.6 Consolas, "Courier New", monospace;
+      tab-size: 2;
+    }
+
+    #sqlInput {
+      resize: none;
+      outline: none;
+    }
+
+    #sqlInput:focus {
+      border-color: #23836b;
+      box-shadow: 0 0 0 2px rgba(35, 131, 107, 0.12);
+    }
+
+    #sqlInput::placeholder {
+      color: #9aa7a0;
+    }
+
+    #sqlOutput {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #sqlOutput.is-empty {
+      color: #9aa7a0;
+    }
+
+    #sqlOutput.is-error {
+      border-color: #efb4ad;
+      background: #fff8f7;
+      color: #bf3025;
+    }
+
+    @media (max-width: 700px) {
+      html,
+      body {
+        height: auto;
+        min-height: 100%;
+        overflow: auto;
+      }
+
+      .sql-page {
+        min-height: 100vh;
+        height: auto;
+        flex-direction: column;
+      }
+
+      .pane {
+        flex: none;
+        min-height: 50vh;
+      }
+
+      .input-pane {
+        border-right: 0;
+        border-bottom: 1px solid #d5ded9;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="sql-page">
+    <section class="pane input-pane" aria-labelledby="inputHeading">
+      <div class="pane-heading">
+        <h1 id="inputHeading">日志输入</h1>
+        <span class="pane-note">最后一行填写逗号分隔的参数值</span>
+      </div>
+      <textarea id="sqlInput" spellcheck="false" aria-label="SQL 日志输入" placeholder="delete from workbench where workbench_id in (?,?,?)&#10;5,6,7"></textarea>
+    </section>
+    <section class="pane output-pane" aria-labelledby="outputHeading">
+      <div class="pane-heading output-heading">
+        <h1 id="outputHeading">可执行 SQL</h1>
+        <button id="copyButton" class="copy-button" type="button" disabled>Copy</button>
+      </div>
+      <pre id="sqlOutput" class="is-empty" aria-live="polite">转换后的 SQL 将显示在这里</pre>
+    </section>
+  </main>
+
+  <script>
+    const sqlInput = document.getElementById('sqlInput');
+    const sqlOutput = document.getElementById('sqlOutput');
+    const copyButton = document.getElementById('copyButton');
+
+    function formatSqlValue(value) {
+      const dateMatch = value.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+GMT[+-]\d{4}(?:\s+\([^)]*\))?$/);
+      if (dateMatch) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = String(months.indexOf(dateMatch[1]) + 1).padStart(2, '0');
+        const day = dateMatch[2].padStart(2, '0');
+        return `'${dateMatch[3]}-${month}-${day} ${dateMatch[4]}:${dateMatch[5]}:${dateMatch[6]}'`;
+      }
+
+      if (/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(value) || /^(?:NULL|TRUE|FALSE)$/i.test(value)) {
+        return value;
+      }
+
+      return `'${value.replace(/'/g, "''")}'`;
+    }
+
+    function wrapSqlLines(sql, maxLength = 100) {
+      let result = '';
+      let line = '';
+      let safeBreaks = [];
+      let quote = '';
+      let lineComment = false;
+      let blockComment = false;
+
+      for (let index = 0; index < sql.length; index++) {
+        const character = sql[index];
+        const nextCharacter = sql[index + 1];
+
+        if (character === '\n') {
+          result += line + character;
+          line = '';
+          safeBreaks = [];
+          lineComment = false;
+          continue;
+        }
+
+        if (!quote && !lineComment && !blockComment && /\s/.test(character)) {
+          safeBreaks.push(line.length);
+        }
+        line += character;
+
+        if (lineComment) {
+          continue;
+        }
+        if (blockComment) {
+          if (character === '*' && nextCharacter === '/') {
+            line += nextCharacter;
+            index++;
+            blockComment = false;
+          }
+          continue;
+        }
+        if (quote) {
+          if (character === '\\' && quote !== '`' && nextCharacter) {
+            line += nextCharacter;
+            index++;
+          } else if (character === quote && nextCharacter === quote) {
+            line += nextCharacter;
+            index++;
+          } else if (character === quote) {
+            quote = '';
+          }
+          continue;
+        }
+
+        if (character === '-' && nextCharacter === '-') {
+          line += nextCharacter;
+          index++;
+          lineComment = true;
+        } else if (character === '#') {
+          lineComment = true;
+        } else if (character === '/' && nextCharacter === '*') {
+          line += nextCharacter;
+          index++;
+          blockComment = true;
+        } else if (character === '\'' || character === '"' || character === '`') {
+          quote = character;
+        }
+
+        if (line.length > maxLength) {
+          const breakAt = safeBreaks.filter(position => position > 0 && position <= maxLength).pop();
+          if (breakAt !== undefined) {
+            const remainder = line.slice(breakAt + 1);
+            const removedWhitespace = remainder.match(/^\s*/)[0].length;
+            result += line.slice(0, breakAt).trimEnd() + '\n  ';
+            line = remainder.slice(removedWhitespace);
+            safeBreaks = safeBreaks
+              .filter(position => position > breakAt + removedWhitespace)
+              .map(position => position - breakAt - removedWhitespace - 1);
+          }
+        }
+      }
+
+      return result + line;
+    }
+
+    function replacePlaceholders(sql, values) {
+      let result = '';
+      let valueIndex = 0;
+      let quote = '';
+      let lineComment = false;
+      let blockComment = false;
+
+      for (let index = 0; index < sql.length; index++) {
+        const character = sql[index];
+        const nextCharacter = sql[index + 1];
+
+        if (lineComment) {
+          result += character;
+          if (character === '\n') lineComment = false;
+          continue;
+        }
+
+        if (blockComment) {
+          result += character;
+          if (character === '*' && nextCharacter === '/') {
+            result += nextCharacter;
+            index++;
+            blockComment = false;
+          }
+          continue;
+        }
+
+        if (quote) {
+          result += character;
+          if (character === '\\' && quote !== '`' && nextCharacter) {
+            result += nextCharacter;
+            index++;
+          } else if (character === quote && nextCharacter === quote) {
+            result += nextCharacter;
+            index++;
+          } else if (character === quote) {
+            quote = '';
+          }
+          continue;
+        }
+
+        if (character === '-' && nextCharacter === '-') {
+          result += character + nextCharacter;
+          index++;
+          lineComment = true;
+        } else if (character === '#') {
+          result += character;
+          lineComment = true;
+        } else if (character === '/' && nextCharacter === '*') {
+          result += character + nextCharacter;
+          index++;
+          blockComment = true;
+        } else if (character === '\'' || character === '"' || character === '`') {
+          result += character;
+          quote = character;
+        } else if (character === '?') {
+          result += formatSqlValue(values[valueIndex++]);
+        } else {
+          result += character;
+        }
+      }
+
+      return { result, count: valueIndex };
+    }
+
+    function showResult(text, state) {
+      sqlOutput.textContent = text;
+      sqlOutput.className = state;
+      copyButton.disabled = state !== '';
+    }
+
+    async function copySql() {
+      const sql = sqlOutput.textContent;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(sql);
+        } else {
+          const temporaryInput = document.createElement('textarea');
+          temporaryInput.value = sql;
+          temporaryInput.style.position = 'fixed';
+          temporaryInput.style.opacity = '0';
+          document.body.appendChild(temporaryInput);
+          temporaryInput.select();
+          const copied = document.execCommand('copy');
+          temporaryInput.remove();
+          if (!copied) throw new Error('Clipboard copy failed');
+        }
+
+        copyButton.textContent = 'Copied';
+        setTimeout(() => copyButton.textContent = 'Copy', 1200);
+      } catch (error) {
+        copyButton.textContent = 'Failed';
+        setTimeout(() => copyButton.textContent = 'Copy', 1200);
+      }
+    }
+
+    function convertSql() {
+      const input = sqlInput.value;
+      if (!input.trim()) {
+        showResult('转换后的 SQL 将显示在这里', 'is-empty');
+        return;
+      }
+
+      const lines = input.split(/\r?\n/);
+      while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+      if (lines.length < 2) {
+        showResult('日志至少需要包含 SQL 和最后一行参数值。', 'is-error');
+        return;
+      }
+
+      const sql = lines.slice(0, -1).join('\n').trimEnd().replace(/^\s*\[[^\]\r\n]*\]:\s*/, '');
+      const valueLine = lines[lines.length - 1].trim();
+      const values = valueLine ? valueLine.split(',').map(value => value.trim()) : [];
+      const converted = replacePlaceholders(sql, values);
+
+      if (converted.count !== values.length) {
+        showResult(`占位符数量为 ${converted.count}，参数值数量为 ${values.length}，两者不一致。`, 'is-error');
+        return;
+      }
+
+      showResult(wrapSqlLines(converted.result), '');
+    }
+
+    sqlInput.addEventListener('input', convertSql);
+    copyButton.addEventListener('click', copySql);
+  </script>
+</body>
+
+</html>

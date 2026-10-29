@@ -22,6 +22,11 @@ export default abstract class TestCase extends BaseTest {
     private mergeAutoMdAction;
     protected abstract buildActions(): BaseTest[];
     abstract getName(): string;
+    /**
+     * 自身标记了高亮，或任一子步骤高亮，都视为高亮。
+     * 子步骤如果也是 TestCase，会继续看它的子步骤。
+     */
+    needHighlight(): boolean;
     toJson(): any;
     toString(): string;
 }

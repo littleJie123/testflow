@@ -57,6 +57,11 @@
     </div>
   </div>
 
+  <div id="stepRemarkTip" class="step-remark-tip">
+    <div class="step-remark-tip-label">备注</div>
+    <div class="step-remark-tip-body" id="stepRemarkTipBody"></div>
+  </div>
+
   <div id="stepModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
@@ -344,6 +349,102 @@
           handleStepSearchEnter();
         }
       });
+    }
+
+    function hideStepRemarkTip() {
+      const tip = document.getElementById('stepRemarkTip');
+      if (!tip) {
+        return;
+      }
+      tip.classList.remove('visible');
+      tip.dataset.stepId = '';
+      const body = document.getElementById('stepRemarkTipBody');
+      if (body) {
+        body.textContent = '';
+      }
+    }
+
+    function positionStepRemarkTip(card, tip) {
+      const rect = card.getBoundingClientRect();
+      const gap = 8;
+      tip.style.left = '0px';
+      tip.style.top = '0px';
+      const tipRect = tip.getBoundingClientRect();
+      let left = rect.left;
+      let top = rect.bottom + gap;
+      if (top + tipRect.height > window.innerHeight - 8) {
+        top = rect.top - tipRect.height - gap;
+      }
+      if (left + tipRect.width > window.innerWidth - 8) {
+        left = window.innerWidth - tipRect.width - 8;
+      }
+      if (left < 8) {
+        left = 8;
+      }
+      if (top < 8) {
+        top = 8;
+      }
+      tip.style.left = `${left}px`;
+      tip.style.top = `${top}px`;
+    }
+
+    function showStepRemarkTip(card) {
+      const remark = actionMeta[card.id]?.remark;
+      const tip = document.getElementById('stepRemarkTip');
+      const body = document.getElementById('stepRemarkTipBody');
+      if (!tip || !body) {
+        return;
+      }
+      if (!remark) {
+        hideStepRemarkTip();
+        return;
+      }
+      if (tip.dataset.stepId === card.id && tip.classList.contains('visible')) {
+        return;
+      }
+      body.textContent = remark;
+      tip.dataset.stepId = card.id;
+      tip.classList.add('visible');
+      positionStepRemarkTip(card, tip);
+    }
+
+    function bindStepRemarkTip() {
+      const list = document.getElementById('actionsList');
+      if (!list || list.dataset.remarkTipBound === '1') {
+        return;
+      }
+      list.dataset.remarkTipBound = '1';
+      list.addEventListener('mouseover', (event) => {
+        const card = event.target.closest('.action-item');
+        if (!card || !list.contains(card)) {
+          return;
+        }
+        showStepRemarkTip(card);
+      });
+      list.addEventListener('mouseout', (event) => {
+        const card = event.target.closest('.action-item');
+        if (!card) {
+          return;
+        }
+        const related = event.relatedTarget;
+        if (related && card.contains(related)) {
+          return;
+        }
+        hideStepRemarkTip();
+      });
+      list.addEventListener('mousedown', hideStepRemarkTip);
+      window.addEventListener('scroll', () => {
+        const tip = document.getElementById('stepRemarkTip');
+        if (!tip || !tip.classList.contains('visible') || !tip.dataset.stepId) {
+          return;
+        }
+        const card = document.getElementById(tip.dataset.stepId);
+        if (!card) {
+          hideStepRemarkTip();
+          return;
+        }
+        positionStepRemarkTip(card, tip);
+      }, true);
     }
 
     function buildResultSectionHtml() {
@@ -972,6 +1073,7 @@
 
       document.getElementById('pageTitle').textContent = `测试用例：${testCaseId}`;
       bindStepSearchEvents();
+      bindStepRemarkTip();
       fetchEnvList();
       fetchTestCaseData();
     }

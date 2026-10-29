@@ -103,6 +103,22 @@ class TestCase extends BaseTest_1.default {
         }
         return [new MdFileAction_1.default(this.autoMdFilePath), ...list];
     }
+    /**
+     * 自身标记了高亮，或任一子步骤高亮，都视为高亮。
+     * 子步骤如果也是 TestCase，会继续看它的子步骤。
+     */
+    needHighlight() {
+        if (super.needHighlight()) {
+            return true;
+        }
+        let actions = this.buildActions();
+        for (let action of actions) {
+            if (action.needHighlight()) {
+                return true;
+            }
+        }
+        return false;
+    }
     toJson() {
         let json = {
             id: this.testId,

@@ -245,6 +245,40 @@ body {
   word-break: break-word;
 }
 
+.step-remark-tip {
+  display: none;
+  position: fixed;
+  z-index: 900;
+  max-width: 420px;
+  max-height: 40vh;
+  overflow: auto;
+  padding: 10px 12px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+}
+
+.step-remark-tip.visible {
+  display: block;
+}
+
+.step-remark-tip-label {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.step-remark-tip-body {
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .modal-inline-remark {
   margin: 8px 0 12px;
 }
