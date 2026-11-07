@@ -22,7 +22,7 @@ export default class GetTestCase extends BaseAction {
       if (subActions.length > 0) {
         json.actionType = 'testCase';
         json.couldLookDetail = true;
-        json.actions = subActions.map(sub => sub.toJson());
+        json.actions = subActions.map(sub => this.serializeAction(sub));
       }
     }
     return json;

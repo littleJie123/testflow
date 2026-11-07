@@ -31,7 +31,7 @@
     <div class="actions-panel">
       <h2>测试步骤</h2>
       <div class="step-search-toolbar">
-        <input type="text" id="step-search-input" class="step-search-input" placeholder="按步骤名称搜索">
+        <input type="text" id="step-search-input" class="step-search-input" placeholder="按步骤名称、备注或 URL 搜索">
         <button class="btn" onclick="searchSteps()">搜索</button>
         <button class="btn" onclick="moveStepSearch(-1)">上一处</button>
         <button class="btn" onclick="moveStepSearch(1)">下一处</button>
@@ -119,6 +119,9 @@
         if (subEl) {
           const highlightClass = sub.highlight ? ' action-item-highlight' : '';
           subEl.className = `testcase-sub-item ${normalizeStepStatus(status)}${highlightClass}`;
+          if (isSearchHitMeta(sub)) {
+            subEl.classList.add('action-search-hit');
+          }
           const statusTxt = subEl.querySelector('.testcase-sub-status');
           if (statusTxt) {
             statusTxt.textContent = '状态: ' + getStatusText(status);
@@ -167,7 +170,7 @@
 
 
     function clearStepSearchHighlight() {
-      document.querySelectorAll('.action-item.action-search-hit, .action-item.action-search-current').forEach(el => {
+      document.querySelectorAll('.action-search-hit, .action-search-current').forEach(el => {
         el.classList.remove('action-search-hit', 'action-search-current');
       });
     }
@@ -222,15 +225,54 @@
       }
     }
 
+    function textIncludesKeyword(text, lowerKeyword) {
+      return text != null && String(text).toLowerCase().includes(lowerKeyword);
+    }
+
+    function actionMatchesKeyword(meta, lowerKeyword) {
+      if (!meta) {
+        return false;
+      }
+      if (textIncludesKeyword(meta.name, lowerKeyword)
+        || textIncludesKeyword(meta.remark, lowerKeyword)
+        || textIncludesKeyword(meta.url, lowerKeyword)
+        || textIncludesKeyword(stepData[meta.id]?.url, lowerKeyword)) {
+        return true;
+      }
+      if (Array.isArray(meta.actions)) {
+        return meta.actions.some(sub => actionMatchesKeyword(sub, lowerKeyword));
+      }
+      return false;
+    }
+
+    function isSearchHitMeta(meta) {
+      if (!stepHasSearched || !stepSearchKeyword || !meta) {
+        return false;
+      }
+      return actionMatchesKeyword(meta, stepSearchKeyword.toLowerCase());
+    }
+
+    function applyModalStepSearchHighlight() {
+      document.querySelectorAll('#testcaseSubSteps .testcase-sub-item').forEach(el => {
+        const stepId = el.id.startsWith('tcsub-') ? el.id.substring(6) : '';
+        el.classList.toggle('action-search-hit', isSearchHitMeta(actionMeta[stepId]));
+      });
+    }
+
+    function scrollModalSearchHitIntoView() {
+      const firstHit = document.querySelector('#testcaseSubSteps .testcase-sub-item.action-search-hit');
+      if (firstHit) {
+        firstHit.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
     function collectStepSearchHits(keyword) {
       const lowerKeyword = keyword.toLowerCase();
       const hits = [];
       document.querySelectorAll('#actionsList .action-item').forEach(el => {
         const meta = actionMeta[el.id];
-        const name = meta?.name ?? getStepName(el.id);
-        const remark = meta?.remark ?? '';
-        if (name.toLowerCase().includes(lowerKeyword)
-          || String(remark).toLowerCase().includes(lowerKeyword)) {
+        if (actionMatchesKeyword(meta, lowerKeyword)
+          || textIncludesKeyword(getStepName(el.id), lowerKeyword)) {
           hits.push(el);
         }
       });
@@ -274,6 +316,7 @@
       }
 
       stepSearchHits.forEach(el => el.classList.add('action-search-hit'));
+      applyModalStepSearchHighlight();
       return focusStepSearchHit(0);
     }
 
@@ -333,6 +376,7 @@
         return;
       }
       stepSearchHits.forEach(el => el.classList.add('action-search-hit'));
+      applyModalStepSearchHighlight();
       const index = stepSearchIndex >= stepSearchHits.length ? 0 : Math.max(stepSearchIndex, 0);
       focusStepSearchHit(index);
     }
@@ -659,10 +703,12 @@
       }
       const logBtn = `<button class="btn" onclick="event.stopPropagation();showSubStepLogs('${sub.id}')">日志</button>`;
       const highlightClass = sub.highlight ? ' action-item-highlight' : '';
+      const searchClass = isSearchHitMeta(sub) ? ' action-search-hit' : '';
+      const badge = sub.actionType === 'testCase' ? '<span class="testcase-badge">TestCase</span> ' : '';
       return `
-        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}${highlightClass}" id="tcsub-${sub.id}" onclick="showSubStepLogs('${sub.id}')">
+        <div class="testcase-sub-item ${normalizeStepStatus(sub.status)}${highlightClass}${searchClass}" id="tcsub-${sub.id}" onclick="showSubStepLogs('${sub.id}')">
           <div class="testcase-sub-info">
-            <strong>${index + 1}. ${sub.name}</strong>
+            <strong>${index + 1}. ${badge}${sub.name}</strong>
             <div class="testcase-sub-status">状态: ${getStatusText(sub.status)}</div>
           </div>
           <div class="testcase-sub-actions">${lookBtn}${logBtn}</div>
@@ -672,8 +718,12 @@
 
     function buildTestCaseModalHtml(meta) {
       const actions = meta.actions || [];
+      const backBtn = nestedModalParentId
+        ? `<button class="btn" onclick="backToTestCaseModal()">返回 TestCase</button>`
+        : '';
       return `
         <div class="modal-header">
+          ${backBtn}
           <div>状态: ${getStatusText(meta.status)}</div>
         </div>
         <div class="testcase-sub-steps" id="testcaseSubSteps">
@@ -691,6 +741,7 @@
       container.innerHTML = (meta.actions || [])
         .map((sub, index) => buildTestCaseSubStepHtml(sub, index, stepId))
         .join('');
+      applyModalStepSearchHighlight();
     }
 
     function showModalLogsPanel() {
@@ -702,7 +753,6 @@
     }
 
     function showTestCaseDetails(stepId) {
-      nestedModalParentId = null;
       currentStepId = stepId;
       const meta = actionMeta[stepId];
       if (!meta) {
@@ -712,15 +762,19 @@
       setModalTitle(stepId);
       setModalRemark(stepId);
       modalContent.innerHTML = buildTestCaseModalHtml(meta);
+      applyModalStepSearchHighlight();
       renderModalStepLogs(stepId, true);
       stepModal.style.display = 'block';
+      scrollModalSearchHitIntoView();
     }
 
     function backToTestCaseModal() {
       if (!nestedModalParentId) {
         return;
       }
-      showTestCaseDetails(nestedModalParentId);
+      const parentId = nestedModalParentId;
+      nestedModalParentId = actionMeta[parentId]?.parentId || null;
+      showTestCaseDetails(parentId);
     }
 
     function showStepDetails(stepId, fromTestCaseParentId) {
@@ -1170,11 +1224,14 @@
       return action.actionType === 'testCase';
     }
 
-    function registerActionMeta(action) {
+    function registerActionMeta(action, parentId) {
+      if (parentId) {
+        action.parentId = parentId;
+      }
       actionMeta[action.id] = action;
-      if (isTestCaseAction(action) && action.actions) {
+      if (Array.isArray(action.actions)) {
         action.actions.forEach(sub => {
-          actionMeta[sub.id] = sub;
+          registerActionMeta(sub, action.id);
         });
       }
     }

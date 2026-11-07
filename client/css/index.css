@@ -364,12 +364,14 @@ body {
   z-index: 2;
 }
 
-.action-item.action-search-hit {
+.action-item.action-search-hit,
+.testcase-sub-item.action-search-hit {
   outline: 2px solid #ffc107;
   background-color: #fff8e1 !important;
 }
 
-.action-item.action-search-current {
+.action-item.action-search-current,
+.testcase-sub-item.action-search-current {
   outline: 3px solid #fd7e14;
   background-color: #ffe8a1 !important;
   box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.25);

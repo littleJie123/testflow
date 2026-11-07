@@ -111,7 +111,18 @@ export default abstract class UrlAction extends BaseTest {
     return httpResult.result;
   }
 
-
+  toJson() {
+    const json: any = super.toJson();
+    try {
+      const url = this.getHttpUrl();
+      if (url != null && url !== '') {
+        json.url = url;
+      }
+    } catch (e) {
+      // 取不到 url 时不影响步骤列表
+    }
+    return json;
+  }
 
   buildDefParam() {
     let httpParam = this.getHttpParam();
