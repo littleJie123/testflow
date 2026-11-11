@@ -336,9 +336,14 @@ body {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 -15px 12px;
+  padding: 10px 15px;
+  background: #fff;
   border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.15);
 }
 
 .step-search-input {
